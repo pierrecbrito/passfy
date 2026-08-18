@@ -65,6 +65,49 @@
   right: -28px;
 }
 
+/* Custom animations for Ticket Stack on Auth page */
+@keyframes ticketFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(32px) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ticketFloat1 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(-0.5deg); }
+}
+
+@keyframes ticketFloat2 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(0.4deg); }
+}
+
+@keyframes ticketFloat3 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-3px) rotate(-0.3deg); }
+}
+
+.animate-ticket-1 {
+  animation: ticketFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both, ticketFloat1 5s ease-in-out 0.8s infinite;
+}
+
+.animate-ticket-2 {
+  animation: ticketFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both, ticketFloat2 5.5s ease-in-out 1s infinite;
+}
+
+.animate-ticket-3 {
+  animation: ticketFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both, ticketFloat3 6s ease-in-out 1.2s infinite;
+}
+
+.animate-ticket-4 {
+  animation: ticketFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.7s both;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
