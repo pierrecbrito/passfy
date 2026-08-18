@@ -5,6 +5,8 @@ export interface QrPayload {
   ticketId: string;
   eventId: string;
   seatId?: string | null;
+  holderName?: string | null;
+  ticketType?: string | null;
   timestamp: number;
 }
 

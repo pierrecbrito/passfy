@@ -97,6 +97,35 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, isPublicView = f
               {ticket.seat?.label ? `Poltrona ${ticket.seat.label}` : 'Pista Geral'}
             </span>
           </div>
+
+          {/* Holder Name & Ticket Modality */}
+          <div className="pt-2 border-t border-slate-200/60 col-span-2 flex items-center justify-between">
+            <div>
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">
+                Titular do Ingresso
+              </span>
+              <span className="text-slate-900 font-bold">
+                {ticket.holderName || ticket.user?.name || 'Cliente Passfy'}
+              </span>
+            </div>
+
+            <div className="text-right">
+              <span
+                className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-extrabold ${
+                  ticket.ticketType === 'MEIA_ESTUDANTE'
+                    ? 'bg-purple-50 border border-purple-200 text-purple-700'
+                    : 'bg-blue-50 border border-blue-200 text-[#2b55f5]'
+                }`}
+              >
+                {ticket.ticketType === 'MEIA_ESTUDANTE' ? 'Meia Estudante' : 'Inteira'}
+              </span>
+              {ticket.studentId && (
+                <span className="block text-[9px] font-mono text-slate-500 mt-0.5">
+                  ID: {ticket.studentId}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

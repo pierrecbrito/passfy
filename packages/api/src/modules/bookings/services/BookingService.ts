@@ -7,7 +7,7 @@ import crypto from 'crypto';
 
 export class BookingService {
   static async processCheckout(userId: string, data: CheckoutSimulationInput) {
-    const { eventId, seatIds, quantity, paymentMethod, simulateStatus, declineReason } = data;
+    const { eventId, seatIds, quantity, attendees = [], paymentMethod, simulateStatus, declineReason } = data;
 
     // 1. Fetch event
     const event = await prisma.event.findUnique({
@@ -47,7 +47,6 @@ export class BookingService {
     // 3. Execute atomic purchase in ACID transaction
     return prisma.$transaction(async (tx) => {
       let totalAmount = 0;
-      let purchasedItemsCount = 0;
       const createdTickets = [];
 
       if (event.type === 'SEATED') {
@@ -56,7 +55,6 @@ export class BookingService {
         }
 
         // Concurrency Guard: Atomic update of available seats
-        // We update where id IN (...) AND isAvailable = true
         const updateResult = await tx.seat.updateMany({
           where: {
             id: { in: seatIds },
@@ -68,8 +66,6 @@ export class BookingService {
           },
         });
 
-        // If the number of updated rows is different from the requested seats count,
-        // it means another concurrent request booked one or more of these seats!
         if (updateResult.count !== seatIds.length) {
           throw new AppError(
             'Um ou mais assentos selecionados acabaram de ser reservados por outro cliente. Por favor, escolha outros lugares.',
@@ -83,8 +79,19 @@ export class BookingService {
           where: { id: { in: seatIds } },
         });
 
-        purchasedItemsCount = seats.length;
-        totalAmount = Number(event.price) * purchasedItemsCount;
+        // Compute total amount with possible student half-price discounts
+        const reservationItemsData = seats.map((seat, index) => {
+          const attendee = attendees.find((a) => a.seatId === seat.id) || attendees[index];
+          const isStudent = attendee?.ticketType === 'MEIA_ESTUDANTE';
+          const itemPrice = isStudent ? Number(event.price) * 0.5 : Number(event.price);
+          totalAmount += itemPrice;
+
+          return {
+            seatId: seat.id,
+            price: itemPrice,
+            attendee,
+          };
+        });
 
         // Create confirmed reservation
         const reservation = await tx.reservation.create({
@@ -95,24 +102,31 @@ export class BookingService {
             totalAmount,
             expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
             items: {
-              create: seats.map((seat) => ({
-                seatId: seat.id,
-                price: event.price,
+              create: reservationItemsData.map((item) => ({
+                seatId: item.seatId,
+                price: item.price,
               })),
             },
           },
         });
 
         // Generate cryptographic tickets for each seat
-        for (const seat of seats) {
+        for (const item of reservationItemsData) {
+          const seat = seats.find((s) => s.id === item.seatId)!;
           const ticketId = crypto.randomUUID();
           const ticketCode = CryptoProvider.generateRandomCode('PAS');
           const shareToken = crypto.randomUUID();
+
+          const holderName = item.attendee?.name || null;
+          const ticketType = item.attendee?.ticketType || 'INTEIRA';
+          const studentId = ticketType === 'MEIA_ESTUDANTE' ? item.attendee?.studentIdNumber || null : null;
 
           const { token: qrToken, signature: qrSignature } = CryptoProvider.sign({
             ticketId,
             eventId: event.id,
             seatId: seat.id,
+            holderName,
+            ticketType,
             timestamp: Date.now(),
           });
 
@@ -124,6 +138,9 @@ export class BookingService {
               qrSignature,
               shareToken,
               status: TicketStatus.ISSUED,
+              holderName,
+              ticketType,
+              studentId,
               userId,
               eventId: event.id,
               seatId: seat.id,
@@ -155,8 +172,17 @@ export class BookingService {
           );
         }
 
-        purchasedItemsCount = requestedQty;
-        totalAmount = Number(event.price) * purchasedItemsCount;
+        const reservationItemsData = Array.from({ length: requestedQty }).map((_, index) => {
+          const attendee = attendees[index];
+          const isStudent = attendee?.ticketType === 'MEIA_ESTUDANTE';
+          const itemPrice = isStudent ? Number(event.price) * 0.5 : Number(event.price);
+          totalAmount += itemPrice;
+
+          return {
+            price: itemPrice,
+            attendee,
+          };
+        });
 
         const reservation = await tx.reservation.create({
           data: {
@@ -166,22 +192,29 @@ export class BookingService {
             totalAmount,
             expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
             items: {
-              create: Array.from({ length: requestedQty }).map(() => ({
-                price: event.price,
+              create: reservationItemsData.map((item) => ({
+                price: item.price,
               })),
             },
           },
         });
 
         for (let i = 0; i < requestedQty; i++) {
+          const item = reservationItemsData[i];
           const ticketId = crypto.randomUUID();
           const ticketCode = CryptoProvider.generateRandomCode('PAS');
           const shareToken = crypto.randomUUID();
+
+          const holderName = item.attendee?.name || null;
+          const ticketType = item.attendee?.ticketType || 'INTEIRA';
+          const studentId = ticketType === 'MEIA_ESTUDANTE' ? item.attendee?.studentIdNumber || null : null;
 
           const { token: qrToken, signature: qrSignature } = CryptoProvider.sign({
             ticketId,
             eventId: event.id,
             seatId: null,
+            holderName,
+            ticketType,
             timestamp: Date.now(),
           });
 
@@ -193,6 +226,9 @@ export class BookingService {
               qrSignature,
               shareToken,
               status: TicketStatus.ISSUED,
+              holderName,
+              ticketType,
+              studentId,
               userId,
               eventId: event.id,
               reservationId: reservation.id,

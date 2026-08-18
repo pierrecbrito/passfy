@@ -136,6 +136,9 @@ model Ticket {
   qrSignature        String
   shareToken         String       @unique
   status             TicketStatus @default(ISSUED)
+  holderName         String?
+  ticketType         String?      @default("INTEIRA")
+  studentId          String?
   userId             String
   user               User         @relation(fields: [userId], references: [id])
   eventId            String
