@@ -4,6 +4,7 @@ import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { SeatMap, SeatItem } from '../components/SeatMap';
 import { CheckoutModal } from '../components/CheckoutModal';
+import { SpotifyShowCard } from '../components/SpotifyShowCard';
 import { Badge } from '../components/ui/Badge';
 import {
   Calendar,
@@ -569,6 +570,19 @@ export const EventDetailsPage: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* Integration: Spotify Tour Setlist & Music Player */}
+            {(event.category === 'CONCERT' ||
+              event.title.toLowerCase().includes('show') ||
+              event.title.toLowerCase().includes('rock') ||
+              event.title.toLowerCase().includes('tour') ||
+              event.title.toLowerCase().includes('festival') ||
+              event.title.toLowerCase().includes('coldplay') ||
+              event.title.toLowerCase().includes('tomorrowland') ||
+              event.title.toLowerCase().includes('taylor') ||
+              event.title.toLowerCase().includes('billie')) && (
+              <SpotifyShowCard event={event} />
+            )}
           </div>
         </div>
       </div>
