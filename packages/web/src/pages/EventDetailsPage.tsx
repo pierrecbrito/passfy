@@ -25,6 +25,7 @@ import {
   UserPlus,
   ArrowRight,
   ShieldCheck,
+  Share2,
 } from 'lucide-react';
 
 export const EventDetailsPage: React.FC = () => {
@@ -150,7 +151,7 @@ export const EventDetailsPage: React.FC = () => {
         <p className="text-sm text-slate-500">{error || 'O evento que você procura não existe.'}</p>
         <button
           onClick={() => navigate('/home')}
-          className="px-4 py-2 rounded-lg bg-[#2b55f5] text-white text-sm font-bold shadow-xs hover:bg-[#1f44d6] transition"
+          className="px-4 py-2 rounded-xl bg-[#2b55f5] text-white text-sm font-bold shadow-xs hover:bg-[#1f44d6] transition"
         >
           Voltar para Eventos
         </button>
@@ -182,56 +183,71 @@ export const EventDetailsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Event Banner Hero */}
-      <div className="relative h-72 sm:h-96 w-full overflow-hidden bg-slate-900">
-        <img
-          src={
-            event.bannerUrl ||
-            'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1600&q=80'
-          }
-          alt={event.title}
-          className="w-full h-full object-cover opacity-75"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-between py-6 relative z-10">
+      {/* Main Container */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+        
+        {/* Navigation & Breadcrumb */}
+        <div className="flex items-center justify-between">
           <button
             onClick={() => navigate('/home')}
-            className="self-start flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/90 backdrop-blur-md text-slate-900 text-xs font-bold shadow-xs hover:bg-white transition"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition shadow-xs"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Voltar aos Eventos</span>
           </button>
-
-          <div className="space-y-2.5 max-w-3xl">
-            <div className="flex flex-wrap gap-2">
-              <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-[#2b55f5] text-white shadow-xs">
-                {event.category === 'MOVIE'
-                  ? 'Cinema'
-                  : event.category === 'CONCERT'
-                  ? 'Show / Concerto'
-                  : 'Teatro'}
-              </span>
-              <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-white/90 text-slate-900 backdrop-blur-md">
-                {isSeated ? 'Mapa de Assentos Marcados' : 'Pista Geral'}
-              </span>
-            </div>
-
-            <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight drop-shadow-sm">
-              {event.title}
-            </h1>
-          </div>
         </div>
-      </div>
 
-      {/* Main Content Details & Seat Selection */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Event Title Header Section */}
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-3 py-1 rounded-lg text-xs font-extrabold bg-[#2b55f5] text-white shadow-xs">
+              {event.category === 'MOVIE'
+                ? 'Cinema'
+                : event.category === 'CONCERT'
+                ? 'Show / Concerto'
+                : 'Teatro & Cultura'}
+            </span>
+
+            <span className="px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
+              {isSeated ? 'Mapa de Assentos Marcados' : 'Pista Geral'}
+            </span>
+
+            {isSoldOut ? (
+              <span className="px-3 py-1 rounded-lg text-xs font-bold bg-rose-50 border border-rose-200 text-rose-700">
+                Esgotado
+              </span>
+            ) : (
+              <span className="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-700">
+                {event.availableCapacity} ingressos disponíveis
+              </span>
+            )}
+          </div>
+
+          <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.15]">
+            {event.title}
+          </h1>
+        </div>
+
+        {/* Event Banner Image Card */}
+        <div className="relative h-72 sm:h-96 md:h-[420px] w-full rounded-3xl overflow-hidden bg-slate-900 border border-slate-200 shadow-sm">
+          <img
+            src={
+              event.bannerUrl ||
+              'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1600&q=80'
+            }
+            alt={event.title}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
+        </div>
+
+        {/* Content Grid: Details, SeatMap & Checkout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-2">
           {/* Left Column: Info & Seat Map */}
           <div className="lg:col-span-2 space-y-8">
             {/* Event Info Card */}
             <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
-              <h2 className="text-lg font-bold text-slate-900">Sobre o Evento</h2>
+              <h2 className="text-xl font-bold text-slate-900">Sobre o Evento</h2>
               <p className="text-sm text-slate-600 leading-relaxed">{event.description}</p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 text-sm">
