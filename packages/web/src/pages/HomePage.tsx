@@ -395,13 +395,38 @@ export const HomePage: React.FC = () => {
                     </div>
 
                     <div className="space-y-2 pt-3 border-t border-slate-100 text-xs text-slate-600 font-medium">
-                      <div className="flex items-center gap-2">
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const startDate = new Date(event.date);
+                          const endDate = new Date(startDate.getTime() + 3 * 60 * 60 * 1000);
+                          const formatUTC = (d: Date) => d.toISOString().replace(/-|:|\.\d\d\d/g, '');
+                          const params = new URLSearchParams({
+                            action: 'TEMPLATE',
+                            text: event.title,
+                            dates: `${formatUTC(startDate)}/${formatUTC(endDate)}`,
+                            details: `${event.description || ''}`,
+                            location: event.venue,
+                          });
+                          window.open(`https://calendar.google.com/calendar/render?${params.toString()}`, '_blank');
+                        }}
+                        className="flex items-center gap-2 hover:text-[#2b55f5] transition cursor-pointer w-fit"
+                        title="Adicionar à agenda Google"
+                      >
                         <Calendar className="w-3.5 h-3.5 text-[#2b55f5] shrink-0" />
-                        <span className="capitalize">{formattedDate}</span>
+                        <span className="capitalize hover:underline">{formattedDate}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.venue)}`, '_blank');
+                        }}
+                        className="flex items-center gap-2 hover:text-emerald-600 transition cursor-pointer w-fit"
+                        title="Ver no Google Maps"
+                      >
                         <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span className="truncate">{event.venue}</span>
+                        <span className="truncate hover:underline">{event.venue}</span>
                       </div>
                     </div>
                   </div>

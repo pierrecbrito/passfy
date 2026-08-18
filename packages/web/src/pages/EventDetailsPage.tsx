@@ -235,25 +235,69 @@ export const EventDetailsPage: React.FC = () => {
               <p className="text-sm text-slate-600 leading-relaxed">{event.description}</p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 text-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-[#2b55f5] shrink-0">
+                {/* Google Calendar Link */}
+                <a
+                  href={(() => {
+                    const startDate = new Date(event.date);
+                    const endDate = new Date(startDate.getTime() + 3 * 60 * 60 * 1000);
+                    const formatUTC = (d: Date) => d.toISOString().replace(/-|:|\.\d\d\d/g, '');
+                    const params = new URLSearchParams({
+                      action: 'TEMPLATE',
+                      text: event.title,
+                      dates: `${formatUTC(startDate)}/${formatUTC(endDate)}`,
+                      details: `${event.description || ''}\n\nIngresso e confirmação: ${window.location.href}`,
+                      location: event.venue,
+                    });
+                    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+                  })()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 -m-3 rounded-2xl hover:bg-blue-50/70 border border-transparent hover:border-blue-200 transition group cursor-pointer"
+                  title="Clique para adicionar este evento à sua agenda Google"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-[#2b55f5] shrink-0 group-hover:scale-105 group-hover:bg-[#2b55f5] group-hover:text-white transition-all shadow-xs">
                     <Calendar className="w-5 h-5" />
                   </div>
-                  <div>
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Data e Horário</p>
-                    <p className="text-slate-900 font-semibold capitalize">{formattedDate}</p>
+                  <div className="overflow-hidden">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">
+                        Data e Horário
+                      </p>
+                      <span className="text-[10px] font-bold text-[#2b55f5] bg-blue-50 px-1.5 py-0.2 rounded group-hover:underline">
+                        + Google Agenda ↗
+                      </span>
+                    </div>
+                    <p className="text-slate-900 font-bold text-sm capitalize group-hover:text-[#2b55f5] transition-colors truncate">
+                      {formattedDate}
+                    </p>
                   </div>
-                </div>
+                </a>
 
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0">
+                {/* Google Maps Link */}
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.venue)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 -m-3 rounded-2xl hover:bg-emerald-50/70 border border-transparent hover:border-emerald-200 transition group cursor-pointer"
+                  title="Clique para abrir a localização no Google Maps"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0 group-hover:scale-105 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-xs">
                     <MapPin className="w-5 h-5" />
                   </div>
-                  <div>
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Local</p>
-                    <p className="text-slate-900 font-semibold">{event.venue}</p>
+                  <div className="overflow-hidden">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">
+                        Local do Evento
+                      </p>
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded group-hover:underline">
+                        Ver no Maps ↗
+                      </span>
+                    </div>
+                    <p className="text-slate-900 font-bold text-sm group-hover:text-emerald-700 transition-colors truncate">
+                      {event.venue}
+                    </p>
                   </div>
-                </div>
+                </a>
               </div>
             </div>
 
