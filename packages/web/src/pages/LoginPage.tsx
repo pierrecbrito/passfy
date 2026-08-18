@@ -136,21 +136,14 @@ export const LoginPage: React.FC = () => {
       {/* Coluna Esquerda: Painel Azul Sóbrio com Fila Contínua de Ingressos */}
       <div className="lg:col-span-6 h-full relative rounded-[2rem] overflow-hidden min-h-[440px] flex flex-col justify-between p-8 sm:p-12 lg:p-14 select-none bg-gradient-to-br from-[#1738b5] via-[#12288a] to-[#0a144a]">
         
-        {/* Cabeçalho com espaçamento generoso do topo */}
-        <div className="relative z-10 space-y-3 pt-6 lg:pt-8">
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-semibold shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
-            <span>Passfy Ingressos</span>
-          </div>
-
-          <div className="space-y-1.5">
-            <p className="text-xs sm:text-sm font-medium text-blue-200 tracking-wide">
-              Experiência Inteligente de Ingressos
-            </p>
-            <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-extrabold text-white leading-[1.2] tracking-tight drop-shadow-sm max-w-lg">
-              Acelere suas vendas e garanta seu lugar nos melhores eventos
-            </h2>
-          </div>
+        {/* Cabeçalho com espaçamento generoso do topo e tipografia de alto impacto */}
+        <div className="relative z-10 space-y-3 pt-8 sm:pt-12 lg:pt-16">
+          <p className="text-xs sm:text-sm font-medium text-blue-200 tracking-wide">
+            Experiência Inteligente de Ingressos
+          </p>
+          <h2 className="text-3xl sm:text-4xl lg:text-[48px] xl:text-[52px] font-black text-white leading-[1.12] tracking-tight drop-shadow-sm max-w-xl">
+            Acelere suas vendas e garanta seu lugar nos melhores eventos
+          </h2>
         </div>
 
         {/* Fila Contínua de Ingressos Mais Brancos e Nítidos */}
