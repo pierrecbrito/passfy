@@ -4,45 +4,46 @@
 
 @layer base {
   body {
-    background-color: #090d16;
-    color: #f1f5f9;
+    background-color: #ffffff;
+    color: #0f172a;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
 .glass-panel {
-  background: rgba(15, 23, 42, 0.75);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .glass-card {
-  background: rgba(22, 31, 48, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card:hover {
-  background: rgba(30, 41, 59, 0.8);
-  border-color: rgba(99, 102, 241, 0.3);
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
 }
 
-/* Apple Wallet style ticket cutouts */
+/* Apple Wallet style ticket cutouts (Light modern style) */
 .ticket-container {
   position: relative;
-  background: #0f172a;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 1.25rem;
   overflow: hidden;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.06);
 }
 
 .ticket-divider {
   position: relative;
-  border-top: 2px dashed rgba(255, 255, 255, 0.15);
+  border-top: 2px dashed #cbd5e1;
   margin: 1.5rem 0;
 }
 
@@ -53,7 +54,7 @@
   top: -12px;
   width: 24px;
   height: 24px;
-  background-color: #090d16;
+  background-color: #f8fafc;
   border-radius: 50%;
 }
 
@@ -110,19 +111,19 @@
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #94a3b8;
 }

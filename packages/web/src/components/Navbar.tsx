@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/Button';
-import { Ticket, PlusCircle, QrCode, LogOut, Compass, Menu, X, Shield } from 'lucide-react';
+import { Ticket, PlusCircle, QrCode, LogOut, Compass, Menu, X } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -13,27 +13,27 @@ export const Navbar: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="sticky top-0 z-40 bg-surface-200/80 backdrop-blur-md border-b border-slate-800">
+    <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform">
-              <Ticket className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#2b55f5] to-[#12288a] flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
+              <Ticket className="w-5 h-5" />
             </div>
-            <span className="text-xl font-black tracking-tight text-white flex items-center">
-              Pass<span className="text-brand-400">fy</span>
+            <span className="text-xl font-black tracking-tight text-slate-900 flex items-center">
+              Pass<span className="text-[#2b55f5]">fy</span>
             </span>
           </Link>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-1.5">
             <Link
               to="/"
-              className={`px-3.5 py-2 rounded-lg text-sm font-medium transition ${
+              className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition ${
                 isActive('/')
-                  ? 'bg-slate-800 text-white'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                  ? 'bg-blue-50 text-[#2b55f5]'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
               <span className="flex items-center gap-1.5">
@@ -46,23 +46,23 @@ export const Navbar: React.FC = () => {
               <>
                 <Link
                   to="/organizer/create"
-                  className={`px-3.5 py-2 rounded-lg text-sm font-medium transition ${
+                  className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition ${
                     isActive('/organizer/create')
-                      ? 'bg-purple-600/20 text-purple-300 border border-purple-500/40'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   }`}
                 >
                   <span className="flex items-center gap-1.5">
-                    <PlusCircle className="w-4 h-4 text-purple-400" />
+                    <PlusCircle className="w-4 h-4 text-purple-600" />
                     Publicar Evento
                   </span>
                 </Link>
                 <Link
                   to="/organizer/dashboard"
-                  className={`px-3.5 py-2 rounded-lg text-sm font-medium transition ${
+                  className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition ${
                     isActive('/organizer/dashboard')
-                      ? 'bg-purple-600/20 text-purple-300 border border-purple-500/40'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   }`}
                 >
                   Painel do Organizador
@@ -73,14 +73,14 @@ export const Navbar: React.FC = () => {
             {user?.role === 'CUSTOMER' && (
               <Link
                 to="/my-tickets"
-                className={`px-3.5 py-2 rounded-lg text-sm font-medium transition ${
+                className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition ${
                   isActive('/my-tickets')
-                    ? 'bg-brand-600/20 text-brand-300 border border-brand-500/40'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                    ? 'bg-blue-50 text-[#2b55f5] border border-blue-200'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
                 <span className="flex items-center gap-1.5">
-                  <Ticket className="w-4 h-4 text-brand-400" />
+                  <Ticket className="w-4 h-4 text-[#2b55f5]" />
                   Meus Ingressos
                 </span>
               </Link>
@@ -89,14 +89,14 @@ export const Navbar: React.FC = () => {
             {user?.role === 'GATEKEEPER' && (
               <Link
                 to="/gatekeeper"
-                className={`px-3.5 py-2 rounded-lg text-sm font-medium transition ${
+                className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition ${
                   isActive('/gatekeeper')
-                    ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/40'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
                 <span className="flex items-center gap-1.5">
-                  <QrCode className="w-4 h-4 text-emerald-400" />
+                  <QrCode className="w-4 h-4 text-emerald-600" />
                   Portaria / Scanner
                 </span>
               </Link>
@@ -108,30 +108,34 @@ export const Navbar: React.FC = () => {
             {user ? (
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <p className="text-xs font-semibold text-white">{user.name}</p>
-                  <p className="text-[10px] text-slate-400 capitalize">{user.role.toLowerCase()}</p>
+                  <p className="text-xs font-bold text-slate-900">{user.name}</p>
+                  <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">{user.role}</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
                   onClick={() => {
                     logout();
                     navigate('/');
                   }}
-                  className="text-slate-400 hover:text-rose-400"
+                  className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition border border-transparent hover:border-rose-200"
                   title="Sair da conta"
                 >
                   <LogOut className="w-4 h-4" />
-                </Button>
+                </button>
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="px-3.5 py-2 rounded-lg text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition"
+                >
                   Entrar
-                </Button>
-                <Button variant="primary" size="sm" onClick={() => navigate('/register')}>
+                </button>
+                <button
+                  onClick={() => navigate('/register')}
+                  className="px-3.5 py-2 rounded-lg text-sm font-semibold bg-[#2b55f5] hover:bg-[#1f44d6] text-white shadow-xs transition"
+                >
                   Cadastre-se
-                </Button>
+                </button>
               </div>
             )}
           </div>
@@ -140,7 +144,7 @@ export const Navbar: React.FC = () => {
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-slate-400 hover:text-white"
+              className="p-2 text-slate-600 hover:text-slate-900"
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -150,11 +154,11 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-800 bg-surface-100 px-4 pt-2 pb-4 space-y-2">
+        <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-2 pb-4 space-y-2">
           <Link
             to="/"
             onClick={() => setIsMobileMenuOpen(false)}
-            className="block py-2 text-sm text-slate-300 hover:text-white"
+            className="block py-2 text-sm font-semibold text-slate-700 hover:text-[#2b55f5]"
           >
             Explorar Eventos
           </Link>
@@ -163,14 +167,14 @@ export const Navbar: React.FC = () => {
               <Link
                 to="/organizer/create"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="block py-2 text-sm text-purple-400 hover:text-purple-300"
+                className="block py-2 text-sm font-semibold text-purple-700 hover:text-purple-800"
               >
                 Publicar Evento
               </Link>
               <Link
                 to="/organizer/dashboard"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="block py-2 text-sm text-slate-300 hover:text-white"
+                className="block py-2 text-sm font-semibold text-slate-700 hover:text-[#2b55f5]"
               >
                 Painel do Organizador
               </Link>
@@ -180,7 +184,7 @@ export const Navbar: React.FC = () => {
             <Link
               to="/my-tickets"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block py-2 text-sm text-brand-400 hover:text-brand-300"
+              className="block py-2 text-sm font-semibold text-[#2b55f5] hover:text-[#1f44d6]"
             >
               Meus Ingressos
             </Link>
@@ -189,7 +193,7 @@ export const Navbar: React.FC = () => {
             <Link
               to="/gatekeeper"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block py-2 text-sm text-emerald-400 hover:text-emerald-300"
+              className="block py-2 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
             >
               Portaria / Scanner
             </Link>
@@ -201,7 +205,7 @@ export const Navbar: React.FC = () => {
                 setIsMobileMenuOpen(false);
                 navigate('/');
               }}
-              className="w-full text-left py-2 text-sm text-rose-400 font-medium"
+              className="w-full text-left py-2 text-sm text-rose-600 font-bold"
             >
               Sair da conta ({user.name})
             </button>

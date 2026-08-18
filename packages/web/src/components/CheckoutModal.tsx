@@ -10,10 +10,8 @@ import {
   QrCode,
   CheckCircle2,
   AlertCircle,
-  ShieldCheck,
   Sparkles,
   Ticket,
-  Lock,
   ArrowRight,
 } from 'lucide-react';
 
@@ -95,69 +93,67 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     >
       {successData ? (
         <div className="text-center py-6 space-y-6">
-          <div className="w-16 h-16 rounded-3xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mx-auto text-emerald-400 animate-in zoom-in-50">
+          <div className="w-16 h-16 rounded-3xl bg-emerald-50 border border-emerald-200 flex items-center justify-center mx-auto text-emerald-600 animate-in zoom-in-50 shadow-xs">
             <CheckCircle2 className="w-10 h-10" />
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-2xl font-extrabold text-white">
+            <h3 className="text-2xl font-black text-slate-900">
               Pagamento Aprovado com Sucesso!
             </h3>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto">
-              Seus {successData.tickets?.length} ingresso(s) foram emitidos com QR Code criptografado único e já estão disponíveis na sua carteira.
+            <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">
+              Seus {successData.tickets?.length} ingresso(s) foram emitidos com QR Code criptografado único e já estão disponíveis na sua carteira digital.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-surface-200/80 border border-slate-800 text-left text-xs space-y-2">
-            <div className="flex justify-between text-slate-400">
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left text-xs space-y-2.5">
+            <div className="flex justify-between text-slate-500 font-medium">
               <span>Evento:</span>
-              <strong className="text-white">{event.title}</strong>
+              <strong className="text-slate-900 font-bold">{event.title}</strong>
             </div>
-            <div className="flex justify-between text-slate-400">
+            <div className="flex justify-between text-slate-500 font-medium">
               <span>Total Pago:</span>
-              <strong className="text-emerald-400 font-bold">
+              <strong className="text-emerald-700 font-black text-sm">
                 R$ {Number(successData.totalAmount).toFixed(2)}
               </strong>
             </div>
-            <div className="flex justify-between text-slate-400">
+            <div className="flex justify-between text-slate-500 font-medium">
               <span>Método:</span>
-              <strong className="text-slate-200 uppercase">{paymentMethod}</strong>
+              <strong className="text-slate-800 font-bold uppercase">{paymentMethod}</strong>
             </div>
           </div>
 
           <div className="flex gap-3 pt-2">
-            <Button
-              variant="primary"
-              size="lg"
-              className="w-full"
+            <button
+              className="w-full py-3.5 px-4 rounded-xl text-sm font-bold bg-[#2b55f5] hover:bg-[#1f44d6] text-white shadow-xs transition flex items-center justify-center gap-2"
               onClick={handleFinish}
-              leftIcon={<Ticket className="w-5 h-5" />}
             >
-              Ver Meus Ingressos Digitais
-            </Button>
+              <Ticket className="w-5 h-5" />
+              <span>Ver Meus Ingressos Digitais</span>
+            </button>
           </div>
         </div>
       ) : (
         <div className="space-y-6">
           {/* Order Summary */}
-          <div className="p-4 rounded-2xl bg-surface-200/80 border border-slate-800 space-y-3">
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-sm font-bold text-white line-clamp-1">{event.title}</h4>
-                <p className="text-xs text-slate-400">{event.venue}</p>
+                <h4 className="text-sm font-bold text-slate-900 line-clamp-1">{event.title}</h4>
+                <p className="text-xs text-slate-500 font-medium">{event.venue}</p>
               </div>
-              <Badge variant="primary">
+              <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-[#2b55f5] border border-blue-200">
                 {totalTickets} {totalTickets === 1 ? 'ingresso' : 'ingressos'}
-              </Badge>
+              </span>
             </div>
 
             {isSeated && selectedSeats.length > 0 && (
-              <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-slate-800/80">
-                <span className="text-xs text-slate-400">Assentos:</span>
+              <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-slate-200">
+                <span className="text-xs text-slate-500 font-semibold">Assentos:</span>
                 {selectedSeats.map((s) => (
                   <span
                     key={s.id}
-                    className="px-2 py-0.5 rounded-md bg-brand-600/30 text-brand-300 font-bold text-[11px] border border-brand-500/30"
+                    className="px-2 py-0.5 rounded-md bg-white text-slate-800 font-bold text-[11px] border border-slate-300 shadow-xs"
                   >
                     {s.label}
                   </span>
@@ -165,9 +161,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
             )}
 
-            <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-sm">
-              <span className="text-slate-300 font-medium">Valor Total:</span>
-              <span className="text-xl font-black text-white">
+            <div className="flex items-center justify-between pt-2 border-t border-slate-200 text-sm">
+              <span className="text-slate-600 font-semibold">Valor Total:</span>
+              <span className="text-xl font-black text-slate-900">
                 R$ {totalAmount.toFixed(2)}
               </span>
             </div>
@@ -175,58 +171,58 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
           {/* Payment Method Selector */}
           <div className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-300">
+            <label className="block text-xs font-bold text-slate-700">
               Forma de Pagamento Simulado
             </label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setPaymentMethod('CREDIT_CARD')}
-                className={`p-3 rounded-2xl border flex items-center gap-3 transition ${
+                className={`p-3 rounded-2xl border flex items-center gap-3 transition shadow-xs ${
                   paymentMethod === 'CREDIT_CARD'
-                    ? 'bg-brand-600/20 border-brand-500 text-white shadow-glow'
-                    : 'bg-surface-200 border-slate-800 text-slate-400 hover:text-white'
+                    ? 'bg-blue-50 border-blue-400 text-slate-900 ring-2 ring-blue-100'
+                    : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                <CreditCard className="w-5 h-5 text-brand-400" />
+                <CreditCard className="w-5 h-5 text-[#2b55f5]" />
                 <div className="text-left text-xs font-bold">Cartão de Crédito</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => setPaymentMethod('PIX')}
-                className={`p-3 rounded-2xl border flex items-center gap-3 transition ${
+                className={`p-3 rounded-2xl border flex items-center gap-3 transition shadow-xs ${
                   paymentMethod === 'PIX'
-                    ? 'bg-emerald-600/20 border-emerald-500 text-white shadow-glow-emerald'
-                    : 'bg-surface-200 border-slate-800 text-slate-400 hover:text-white'
+                    ? 'bg-emerald-50 border-emerald-400 text-slate-900 ring-2 ring-emerald-100'
+                    : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                <QrCode className="w-5 h-5 text-emerald-400" />
+                <QrCode className="w-5 h-5 text-emerald-600" />
                 <div className="text-left text-xs font-bold">Pix Instantâneo</div>
               </button>
             </div>
           </div>
 
           {/* Simulation Playground Controls */}
-          <div className="p-4 rounded-2xl bg-indigo-950/30 border border-indigo-500/30 space-y-3">
+          <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-200 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span className="text-xs font-bold text-indigo-200">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span className="text-xs font-bold text-slate-900">
                   Simulador de Cenários (Avaliação)
                 </span>
               </div>
-              <span className="text-[10px] text-indigo-300">Alternar Resposta do Gateway</span>
+              <span className="text-[10px] text-blue-700 font-semibold">Alternar Resposta do Gateway</span>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setSimulateStatus('APPROVED')}
-                className={`py-2 px-3 rounded-xl text-xs font-semibold border transition ${
+                className={`py-2 px-3 rounded-xl text-xs font-bold border transition ${
                   simulateStatus === 'APPROVED'
-                    ? 'bg-emerald-600 text-white border-emerald-400 shadow-glow-emerald'
-                    : 'bg-surface-200 text-slate-400 border-slate-700 hover:bg-slate-700'
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
                 }`}
               >
                 ✅ Forçar Aprovação
@@ -235,10 +231,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               <button
                 type="button"
                 onClick={() => setSimulateStatus('DECLINED')}
-                className={`py-2 px-3 rounded-xl text-xs font-semibold border transition ${
+                className={`py-2 px-3 rounded-xl text-xs font-bold border transition ${
                   simulateStatus === 'DECLINED'
-                    ? 'bg-rose-600 text-white border-rose-400 shadow-glow-rose'
-                    : 'bg-surface-200 text-slate-400 border-slate-700 hover:bg-slate-700'
+                    ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
                 }`}
               >
                 ❌ Simular Recusa
@@ -247,13 +243,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
             {simulateStatus === 'DECLINED' && (
               <div className="pt-2 animate-in fade-in">
-                <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
                   Motivo da Recusa:
                 </label>
                 <select
                   value={declineReason}
                   onChange={(e) => setDeclineReason(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-surface-200 border border-slate-700 text-xs text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs font-medium"
                 >
                   <option value="INSUFFICIENT_FUNDS">Saldo ou Limite Insuficiente</option>
                   <option value="CARD_BLOCKED">Cartão Bloqueado pelo Banco</option>
@@ -265,28 +261,36 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           </div>
 
           {error && (
-            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center gap-2.5 text-xs text-rose-400">
-              <AlertCircle className="w-4 h-4 shrink-0" />
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 flex items-center gap-2.5 text-xs text-rose-700 font-medium">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
               <span>{error}</span>
             </div>
           )}
 
           <div className="flex items-center justify-between gap-3 pt-2">
-            <Button variant="secondary" onClick={onClose} disabled={isLoading}>
-              Cancelar
-            </Button>
-            <Button
-              variant={simulateStatus === 'APPROVED' ? 'success' : 'danger'}
-              size="lg"
-              className="flex-1"
-              isLoading={isLoading}
-              onClick={handleCheckout}
-              rightIcon={<ArrowRight className="w-4 h-4" />}
+            <button
+              onClick={onClose}
+              disabled={isLoading}
+              className="py-2.5 px-4 rounded-xl text-xs font-bold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition shadow-xs"
             >
-              {simulateStatus === 'APPROVED'
-                ? `Confirmar Pagamento • R$ ${totalAmount.toFixed(2)}`
-                : 'Processar Recusa Simulada'}
-            </Button>
+              Cancelar
+            </button>
+            <button
+              disabled={isLoading}
+              onClick={handleCheckout}
+              className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold text-white shadow-xs transition flex items-center justify-center gap-2 ${
+                simulateStatus === 'APPROVED'
+                  ? 'bg-[#2b55f5] hover:bg-[#1f44d6]'
+                  : 'bg-rose-600 hover:bg-rose-700'
+              }`}
+            >
+              <span>
+                {simulateStatus === 'APPROVED'
+                  ? `Confirmar Pagamento • R$ ${totalAmount.toFixed(2)}`
+                  : 'Processar Recusa Simulada'}
+              </span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}
