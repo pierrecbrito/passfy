@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { authRoutes } from './modules/auth/routes/authRoutes';
 import { catalogRoutes } from './modules/catalog/routes/catalogRoutes';
 import { eventRoutes } from './modules/events/routes/eventRoutes';
+import { bookingRoutes } from './modules/bookings/routes/bookingRoutes';
 import { errorHandler } from './core/middlewares/errorHandler';
 
 dotenv.config();
@@ -32,6 +33,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/catalog', catalogRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/checkout', bookingRoutes);
 
 // Global Error Handler
 app.use(errorHandler);
