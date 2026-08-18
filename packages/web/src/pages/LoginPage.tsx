@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import {
@@ -10,12 +10,11 @@ import {
   EyeOff,
   AlertCircle,
   Sparkles,
-  CheckCircle2,
   Ticket,
   Film,
-  Music,
   Shield,
   Layers,
+  ArrowLeft,
 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
@@ -23,7 +22,7 @@ export const LoginPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const initialMode = searchParams.get('mode') === 'register' ? 'REGISTER' : 'LOGIN';
 
-  const { login, register, switchRoleDemo } = useAuth();
+  const { login, register } = useAuth();
 
   const [mode, setMode] = useState<'LOGIN' | 'REGISTER'>(initialMode);
   const [name, setName] = useState('');
@@ -61,60 +60,65 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[90vh] flex items-center justify-center p-4 sm:p-6 lg:p-10">
-      {/* Outer Card Container */}
-      <div className="w-full max-w-5xl bg-surface-100/90 border border-slate-800/90 rounded-[2rem] shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 p-3 sm:p-4 gap-4 backdrop-blur-xl">
+    <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-[#090d16] selection:bg-brand-500 selection:text-white">
+      {/* Outer Floating Split Card */}
+      <div className="w-full max-w-5xl bg-[#0f172a] border border-slate-800 rounded-[2.25rem] shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 p-3 sm:p-4 gap-4 relative">
         
+        {/* Top Left Return to Store Button */}
+        <Link
+          to="/"
+          className="absolute top-6 left-6 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 text-white text-xs font-semibold transition"
+          title="Voltar para a página inicial"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Voltar ao Início</span>
+        </Link>
+
         {/* Left Column: Visual Fluid Aurora Banner */}
-        <div className="lg:col-span-6 relative rounded-[1.75rem] overflow-hidden min-h-[460px] lg:min-h-[620px] flex flex-col justify-between p-8 sm:p-10 select-none bg-gradient-to-br from-indigo-700 via-blue-600 to-indigo-950">
+        <div className="lg:col-span-6 relative rounded-[1.75rem] overflow-hidden min-h-[480px] lg:min-h-[640px] flex flex-col justify-between p-8 sm:p-10 select-none bg-gradient-to-br from-blue-700 via-indigo-600 to-indigo-950">
           
           {/* Animated Background Mesh & Light Blobs */}
-          <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-400/40 rounded-full blur-3xl pointer-events-none animate-pulse" />
-          <div className="absolute top-1/3 -right-24 w-80 h-80 bg-indigo-400/35 rounded-full blur-3xl pointer-events-none animate-pulse-slow" />
-          <div className="absolute -bottom-24 left-1/4 w-96 h-96 bg-cyan-400/30 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-t from-indigo-950/70 via-transparent to-black/20 pointer-events-none" />
+          <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-400/45 rounded-full blur-3xl pointer-events-none animate-pulse" />
+          <div className="absolute top-1/3 -right-20 w-80 h-80 bg-indigo-400/35 rounded-full blur-3xl pointer-events-none animate-pulse-slow" />
+          <div className="absolute -bottom-24 left-1/4 w-96 h-96 bg-cyan-400/35 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-indigo-950/75 via-transparent to-black/20 pointer-events-none" />
 
           {/* Top Brand Tagline */}
-          <div className="relative z-10 space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-semibold shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
-              <span>Passfy Experience</span>
-            </div>
+          <div className="relative z-10 space-y-4 pt-10 lg:pt-8">
+            <p className="text-xs sm:text-sm font-medium text-blue-200/90 tracking-wide">
+              You can easily
+            </p>
 
-            <div className="space-y-2">
-              <p className="text-xs sm:text-sm font-medium text-cyan-200 uppercase tracking-wider">
-                Tudo em um único lugar
-              </p>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight drop-shadow-md">
-                Speed up your experience with our Web App
-              </h2>
-              <p className="text-xs sm:text-sm text-blue-100/80 pt-2 leading-relaxed max-w-sm">
-                Reserve assentos em tempo real, emita ingressos protegidos com QR Code criptográfico e faça check-in instantâneo na portaria.
-              </p>
-            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-[1.15] tracking-tight drop-shadow-md">
+              Speed up your work with our Web App
+            </h2>
+
+            <p className="text-xs sm:text-sm text-blue-100/80 pt-2 leading-relaxed max-w-sm">
+              Explore eventos, reserve assentos numerados em tempo real e emita ingressos com QR Code criptográfico anti-fraude.
+            </p>
           </div>
 
           {/* Bottom Partners / Tech Stack Badges */}
           <div className="relative z-10 pt-8 border-t border-white/15">
             <p className="text-[11px] font-semibold text-blue-200/70 uppercase tracking-wider mb-3">
-              Tecnologias & Integrações
+              Our partners & stack
             </p>
             <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-white/90 text-xs font-semibold">
-              <div className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition">
+              <div className="flex items-center gap-1.5 opacity-85 hover:opacity-100 transition">
                 <Film className="w-4 h-4 text-cyan-300" />
-                <span>TMDb API</span>
+                <span>TMDb</span>
               </div>
-              <div className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition">
+              <div className="flex items-center gap-1.5 opacity-85 hover:opacity-100 transition">
                 <Shield className="w-4 h-4 text-emerald-300" />
                 <span>HMAC-SHA256</span>
               </div>
-              <div className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition">
+              <div className="flex items-center gap-1.5 opacity-85 hover:opacity-100 transition">
                 <Layers className="w-4 h-4 text-indigo-300" />
                 <span>PostgreSQL</span>
               </div>
-              <div className="flex items-center gap-1.5 opacity-80 hover:opacity-100 transition">
+              <div className="flex items-center gap-1.5 opacity-85 hover:opacity-100 transition">
                 <Ticket className="w-4 h-4 text-purple-300" />
-                <span>Apple Wallet Style</span>
+                <span>Passfy</span>
               </div>
             </div>
           </div>
@@ -130,7 +134,7 @@ export const LoginPage: React.FC = () => {
             <p className="text-xs sm:text-sm text-slate-400">
               {mode === 'LOGIN'
                 ? 'Please log in to your account to continue.'
-                : 'Fill in your details to start booking and managing events.'}
+                : 'Please fill in your account details to continue.'}
             </p>
           </div>
 
@@ -255,7 +259,7 @@ export const LoginPage: React.FC = () => {
               type="submit"
               variant="primary"
               size="lg"
-              className="w-full bg-indigo-600 hover:bg-indigo-700 border-indigo-500 text-white font-bold py-3.5 shadow-glow"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 border-indigo-500 text-white font-bold py-3.5 shadow-glow rounded-xl"
               isLoading={isLoading}
             >
               {mode === 'LOGIN' ? 'Login' : 'Sign Up'}
@@ -298,7 +302,7 @@ export const LoginPage: React.FC = () => {
           {/* Divider */}
           <div className="relative flex items-center justify-center">
             <div className="border-t border-slate-800 w-full" />
-            <span className="bg-surface-100 px-3 text-[11px] text-slate-500 uppercase font-bold tracking-wider">
+            <span className="bg-[#0f172a] px-3 text-[11px] text-slate-500 uppercase font-bold tracking-wider">
               Or
             </span>
             <div className="border-t border-slate-800 w-full" />

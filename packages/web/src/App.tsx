@@ -1,6 +1,6 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
 import { RoleSwitcher } from './components/RoleSwitcher';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -17,6 +17,20 @@ import { OrganizerDashboardPage } from './pages/OrganizerDashboardPage';
 import { GatekeeperPage } from './pages/GatekeeperPage';
 
 const AppLayout: React.FC = () => {
+  const location = useLocation();
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+
+  if (isAuthPage) {
+    return (
+      <main className="min-h-screen w-full bg-[#0b0f19]">
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Routes>
+      </main>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <RoleSwitcher />
@@ -25,8 +39,6 @@ const AppLayout: React.FC = () => {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
           <Route path="/event/:id" element={<EventDetailsPage />} />
           <Route path="/ticket/:shareToken" element={<PublicTicketPage />} />
 
