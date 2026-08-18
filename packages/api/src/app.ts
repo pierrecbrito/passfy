@@ -5,6 +5,8 @@ import { authRoutes } from './modules/auth/routes/authRoutes';
 import { catalogRoutes } from './modules/catalog/routes/catalogRoutes';
 import { eventRoutes } from './modules/events/routes/eventRoutes';
 import { bookingRoutes } from './modules/bookings/routes/bookingRoutes';
+import { ticketRoutes } from './modules/tickets/routes/ticketRoutes';
+import { checkinRoutes } from './modules/checkin/routes/checkinRoutes';
 import { errorHandler } from './core/middlewares/errorHandler';
 
 dotenv.config();
@@ -34,6 +36,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/catalog', catalogRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/checkout', bookingRoutes);
+app.use('/api/tickets', ticketRoutes);
+app.use('/api/checkin', checkinRoutes);
 
 // Global Error Handler
 app.use(errorHandler);
