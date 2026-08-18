@@ -356,7 +356,7 @@ export const EventDetailsPage: React.FC = () => {
           </div>
 
           {/* ── LADO DIREITO: Painel de Pagamento & Quantidade Fixo no Scroll ── */}
-          <div className="lg:col-span-5 xl:col-span-4 sticky top-6 self-start space-y-4">
+          <div className="lg:col-span-5 xl:col-span-4 sticky top-24 self-start space-y-4">
             <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 space-y-5 shadow-sm transition-all duration-300">
               
               {/* STATE 1: In-Place Authentication / Pre-Cadastro Form */}
