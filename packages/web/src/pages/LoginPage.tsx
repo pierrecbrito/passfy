@@ -131,9 +131,9 @@ export const LoginPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Right Column: Clean White Form Panel (Centered with max-w-[600px]) */}
+      {/* Right Column: Clean White Form Panel (Centered with max-w-[500px]) */}
       <div className="lg:col-span-6 h-full flex flex-col justify-center items-center px-4 sm:px-8 lg:px-12 py-6 bg-white overflow-y-auto">
-        <div className="w-full max-w-[600px] space-y-5 mx-auto">
+        <div className="w-full max-w-[500px] space-y-5 mx-auto">
           {/* Header */}
           <div className="space-y-1">
             <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
