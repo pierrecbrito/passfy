@@ -79,33 +79,33 @@ export const SpotifyShowCard: React.FC<SpotifyShowCardProps> = ({ event }) => {
 
       {/* Player Body */}
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center h-[280px] bg-slate-950/80 rounded-2xl border border-slate-800 gap-3">
-          <Loader2 className="w-8 h-8 text-[#1DB954] animate-spin" />
+        <div className="flex flex-col items-center justify-center h-[152px] bg-slate-950/80 rounded-2xl border border-slate-800 gap-3">
+          <Loader2 className="w-6 h-6 text-[#1DB954] animate-spin" />
           <p className="text-[11px] text-slate-400 font-semibold">
             Buscando playlist relacionada ao evento...
           </p>
         </div>
       ) : error || !playlist ? (
-        <div className="flex flex-col items-center justify-center h-[280px] bg-slate-950/80 rounded-2xl border border-slate-800 gap-3">
-          <Music className="w-8 h-8 text-slate-600" />
+        <div className="flex flex-col items-center justify-center h-[152px] bg-slate-950/80 rounded-2xl border border-slate-800 gap-3">
+          <Music className="w-6 h-6 text-slate-600" />
           <p className="text-[11px] text-slate-400 font-semibold text-center px-4">
             Não foi possível carregar a playlist.
           </p>
         </div>
       ) : (
         <>
-          {/* Official Spotify Embed — plays real audio previews */}
+          {/* Official Spotify Compact Embed (152px matches Spotify official compact player height with 0 wasted space) */}
           <div className="rounded-2xl overflow-hidden shadow-inner border border-slate-800 bg-slate-950">
             <iframe
               key={playlist.embedUrl}
               title={`Spotify Player — ${playlist.name}`}
               src={playlist.embedUrl}
               width="100%"
-              height="280"
+              height="152"
               frameBorder="0"
               allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
               loading="lazy"
-              style={{ borderRadius: '16px' }}
+              style={{ borderRadius: '16px', display: 'block' }}
             />
           </div>
 
