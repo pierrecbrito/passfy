@@ -4,7 +4,6 @@ import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { SeatMap, SeatItem } from '../components/SeatMap';
 import { CheckoutModal } from '../components/CheckoutModal';
-import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import {
   Calendar,
@@ -14,12 +13,23 @@ import {
   ArrowLeft,
   Plus,
   Minus,
+  User,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Sparkles,
+  CheckCircle2,
+  LogIn,
+  UserPlus,
+  ArrowRight,
+  ShieldCheck,
 } from 'lucide-react';
 
 export const EventDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, login, register } = useAuth();
 
   const [event, setEvent] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,6 +39,17 @@ export const EventDetailsPage: React.FC = () => {
   const [selectedSeats, setSelectedSeats] = useState<SeatItem[]>([]);
   const [quantity, setQuantity] = useState<number>(1);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+
+  // In-Place Auth / Pre-Registration State
+  const [isAuthCardActive, setIsAuthCardActive] = useState(false);
+  const [authMode, setAuthMode] = useState<'REGISTER' | 'LOGIN'>('REGISTER');
+  const [authName, setAuthName] = useState('');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('password123');
+  const [showPassword, setShowPassword] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [authSuccessToast, setAuthSuccessToast] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadEventDetails() {
@@ -65,10 +86,51 @@ export const EventDetailsPage: React.FC = () => {
 
   const handleProceedToCheckout = () => {
     if (!user) {
-      navigate('/login');
+      // In-place flip to Pre-Registration / Login form inside the card
+      setIsAuthCardActive(true);
       return;
     }
     setIsCheckoutModalOpen(true);
+  };
+
+  const handleInPlaceAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setIsAuthenticating(true);
+
+    try {
+      if (authMode === 'REGISTER') {
+        if (!authName.trim()) {
+          setAuthError('Por favor, informe seu nome completo.');
+          setIsAuthenticating(false);
+          return;
+        }
+        await register(authName.trim(), authEmail.trim(), authPassword, 'CUSTOMER');
+        setAuthSuccessToast('Pré-cadastro realizado com sucesso!');
+      } else {
+        await login(authEmail.trim(), authPassword);
+        setAuthSuccessToast('Login realizado com sucesso!');
+      }
+
+      setIsAuthCardActive(false);
+
+      // Auto-open checkout modal after quick in-place login/register
+      setTimeout(() => {
+        setAuthSuccessToast(null);
+        setIsCheckoutModalOpen(true);
+      }, 700);
+    } catch (err: any) {
+      setAuthError(err.response?.data?.message || 'Falha ao autenticar. Verifique os dados.');
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleQuickDemoFill = () => {
+    setAuthEmail('cliente1@passfy.com');
+    setAuthPassword('password123');
+    setAuthName('Pedro Comprador');
+    setAuthMode('LOGIN');
   };
 
   if (isLoading) {
@@ -86,10 +148,10 @@ export const EventDetailsPage: React.FC = () => {
         <h2 className="text-2xl font-bold text-slate-900">Evento não encontrado</h2>
         <p className="text-sm text-slate-500">{error || 'O evento que você procura não existe.'}</p>
         <button
-          onClick={() => navigate('/')}
-          className="px-4 py-2 rounded-lg bg-[#2b55f5] text-white text-sm font-bold"
+          onClick={() => navigate('/home')}
+          className="px-4 py-2 rounded-lg bg-[#2b55f5] text-white text-sm font-bold shadow-xs hover:bg-[#1f44d6] transition"
         >
-          Voltar para Início
+          Voltar para Eventos
         </button>
       </div>
     );
@@ -111,6 +173,14 @@ export const EventDetailsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white pb-32">
+      {/* Toast de Sucesso da Autenticação */}
+      {authSuccessToast && (
+        <div className="fixed top-20 right-6 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-lg flex items-center gap-2.5 animate-in fade-in slide-in-from-top-4">
+          <CheckCircle2 className="w-5 h-5 text-white" />
+          <span className="text-xs font-bold">{authSuccessToast}</span>
+        </div>
+      )}
+
       {/* Event Banner Hero */}
       <div className="relative h-72 sm:h-96 w-full overflow-hidden bg-slate-900">
         <img
@@ -125,8 +195,8 @@ export const EventDetailsPage: React.FC = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col justify-between py-6 relative z-10">
           <button
-            onClick={() => navigate('/')}
-            className="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/90 backdrop-blur-md text-slate-900 text-xs font-bold shadow-xs hover:bg-white transition"
+            onClick={() => navigate('/home')}
+            className="self-start flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/90 backdrop-blur-md text-slate-900 text-xs font-bold shadow-xs hover:bg-white transition"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Voltar aos Eventos</span>
@@ -248,68 +318,256 @@ export const EventDetailsPage: React.FC = () => {
             )}
           </div>
 
-          {/* Right Column: Order Summary Sticky Card */}
+          {/* Right Column: Dynamic Sticky Card (Summary OR In-Place Pre-Registration) */}
           <div className="space-y-6">
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 sticky top-24 space-y-6 shadow-sm">
-              <h3 className="text-base font-black text-slate-900 border-b border-slate-100 pb-3">
-                Resumo da Reserva
-              </h3>
-
-              <div className="space-y-3 text-xs">
-                <div className="flex justify-between text-slate-500 font-medium">
-                  <span>Preço Unitário:</span>
-                  <span className="text-slate-900 font-bold">
-                    R$ {Number(event.price).toFixed(2)}
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-slate-500 font-medium">
-                  <span>Ingressos:</span>
-                  <span className="text-slate-900 font-bold">{totalSelectedTickets}</span>
-                </div>
-
-                {isSeated && selectedSeats.length > 0 && (
-                  <div className="pt-2 border-t border-slate-100">
-                    <p className="text-slate-500 font-semibold mb-2">Poltronas Selecionadas:</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {selectedSeats.map((s) => (
-                        <span
-                          key={s.id}
-                          className="px-2.5 py-1 rounded-md bg-blue-50 text-[#2b55f5] border border-blue-200 text-[11px] font-bold"
-                        >
-                          {s.label}
-                        </span>
-                      ))}
+            <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 sticky top-24 space-y-5 shadow-sm transition-all duration-300">
+              {/* STATE 1: In-Place Authentication / Pre-Cadastro Form */}
+              {isAuthCardActive && !user ? (
+                <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-200 text-[#2b55f5] flex items-center justify-center">
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-black text-slate-900">
+                          {authMode === 'REGISTER' ? 'Pré-Cadastro Rápido' : 'Entrar na Conta'}
+                        </h3>
+                        <p className="text-[11px] text-slate-500 font-medium">
+                          Conclua em segundos para finalizar a compra
+                        </p>
+                      </div>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsAuthCardActive(false)}
+                      className="text-xs text-slate-400 hover:text-slate-700 font-semibold"
+                    >
+                      Voltar
+                    </button>
                   </div>
-                )}
-              </div>
 
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-600">Total:</span>
-                <span className="text-2xl font-black text-slate-900">
-                  R$ {subtotal.toFixed(2)}
-                </span>
-              </div>
+                  {/* Tabs: Criar Conta vs Entrar */}
+                  <div className="flex p-1 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode('REGISTER');
+                        setAuthError(null);
+                      }}
+                      className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-1.5 transition ${
+                        authMode === 'REGISTER'
+                          ? 'bg-white text-slate-900 shadow-xs'
+                          : 'text-slate-500 hover:text-slate-900'
+                      }`}
+                    >
+                      <UserPlus className="w-3.5 h-3.5 text-[#2b55f5]" />
+                      <span>Pré-Cadastro</span>
+                    </button>
 
-              <button
-                disabled={isSoldOut || totalSelectedTickets === 0}
-                onClick={handleProceedToCheckout}
-                className="w-full py-3.5 px-4 rounded-xl text-sm font-bold bg-[#2b55f5] hover:bg-[#1f44d6] disabled:bg-slate-200 disabled:text-slate-400 text-white shadow-xs transition active:scale-[0.99]"
-              >
-                {isSoldOut
-                  ? 'Evento Esgotado'
-                  : totalSelectedTickets === 0
-                  ? isSeated
-                    ? 'Selecione um Assento'
-                    : 'Selecione a Quantidade'
-                  : `Garantir Ingresso (${totalSelectedTickets})`}
-              </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode('LOGIN');
+                        setAuthError(null);
+                      }}
+                      className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-1.5 transition ${
+                        authMode === 'LOGIN'
+                          ? 'bg-white text-slate-900 shadow-xs'
+                          : 'text-slate-500 hover:text-slate-900'
+                      }`}
+                    >
+                      <LogIn className="w-3.5 h-3.5 text-[#2b55f5]" />
+                      <span>Já Tenho Conta</span>
+                    </button>
+                  </div>
 
-              <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500 font-medium">
-                <Shield className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Simulação 100% segura e instantânea</span>
-              </div>
+                  {authError && (
+                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+                      {authError}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleInPlaceAuthSubmit} className="space-y-3 pt-1">
+                    {authMode === 'REGISTER' && (
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Nome Completo
+                        </label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <input
+                            type="text"
+                            required
+                            value={authName}
+                            onChange={(e) => setAuthName(e.target.value)}
+                            placeholder="Seu nome completo"
+                            className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-xs font-medium text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#2b55f5] shadow-xs"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        E-mail
+                      </label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                          type="email"
+                          required
+                          value={authEmail}
+                          onChange={(e) => setAuthEmail(e.target.value)}
+                          placeholder="seu.email@exemplo.com"
+                          className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-xs font-medium text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#2b55f5] shadow-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Senha
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          required
+                          value={authPassword}
+                          onChange={(e) => setAuthPassword(e.target.value)}
+                          placeholder="Mínimo 6 caracteres"
+                          className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-slate-300 text-xs font-medium text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#2b55f5] shadow-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isAuthenticating}
+                      className="w-full py-3 px-4 rounded-xl text-xs font-bold bg-[#2b55f5] hover:bg-[#1f44d6] text-white shadow-xs transition flex items-center justify-center gap-2 active:scale-[0.99]"
+                    >
+                      <span>
+                        {isAuthenticating
+                          ? 'Processando...'
+                          : authMode === 'REGISTER'
+                          ? 'Finalizar Pré-Cadastro & Continuar'
+                          : 'Entrar & Continuar Compra'}
+                      </span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Preenchimento Rápido de Teste */}
+                    <div className="pt-2 text-center">
+                      <button
+                        type="button"
+                        onClick={handleQuickDemoFill}
+                        className="text-[11px] font-bold text-[#2b55f5] hover:underline"
+                      >
+                        ⚡ Usar conta demo (1-clique)
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              ) : (
+                /* STATE 2: Normal Order Summary Card */
+                <div className="space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 className="text-base font-black text-slate-900">
+                      Resumo da Reserva
+                    </h3>
+                    {user ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span className="truncate max-w-[110px]">{user.name.split(' ')[0]}</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-[11px] font-bold">
+                        Deslogado
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div className="flex justify-between text-slate-500 font-medium">
+                      <span>Preço Unitário:</span>
+                      <span className="text-slate-900 font-bold">
+                        R$ {Number(event.price).toFixed(2)}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between text-slate-500 font-medium">
+                      <span>Ingressos:</span>
+                      <span className="text-slate-900 font-bold">{totalSelectedTickets}</span>
+                    </div>
+
+                    {isSeated && selectedSeats.length > 0 && (
+                      <div className="pt-2 border-t border-slate-100">
+                        <p className="text-slate-500 font-semibold mb-2">Poltronas Selecionadas:</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {selectedSeats.map((s) => (
+                            <span
+                              key={s.id}
+                              className="px-2.5 py-1 rounded-md bg-blue-50 text-[#2b55f5] border border-blue-200 text-[11px] font-bold"
+                            >
+                              {s.label}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-sm font-semibold text-slate-600">Total:</span>
+                    <span className="text-2xl font-black text-slate-900">
+                      R$ {subtotal.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <button
+                    disabled={isSoldOut || totalSelectedTickets === 0}
+                    onClick={handleProceedToCheckout}
+                    className="w-full py-3.5 px-4 rounded-xl text-sm font-bold bg-[#2b55f5] hover:bg-[#1f44d6] disabled:bg-slate-200 disabled:text-slate-400 text-white shadow-xs transition active:scale-[0.99] flex items-center justify-center gap-2"
+                  >
+                    {isSoldOut ? (
+                      'Evento Esgotado'
+                    ) : totalSelectedTickets === 0 ? (
+                      isSeated ? (
+                        'Selecione um Assento'
+                      ) : (
+                        'Selecione a Quantidade'
+                      )
+                    ) : !user ? (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        <span>Garantir Ingresso ({totalSelectedTickets})</span>
+                      </>
+                    ) : (
+                      `Garantir Ingresso (${totalSelectedTickets})`
+                    )}
+                  </button>
+
+                  {!user && (
+                    <p className="text-[11px] text-center text-slate-500 font-medium -mt-2">
+                      Pré-cadastro rápido de 10 segundos sem sair da página
+                    </p>
+                  )}
+
+                  <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500 font-medium pt-2 border-t border-slate-100">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Reserva criptografada e instantânea</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
