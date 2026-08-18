@@ -121,6 +121,14 @@ export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [scrollY, setScrollY] = useState(0);
 
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const navbarHeight = 72; // fixed header height + breathing room
+    const top = el.getBoundingClientRect().top + window.scrollY - navbarHeight;
+    window.scrollTo({ top, behavior: 'smooth' });
+  };
+
   useEffect(() => {
     const onScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -241,9 +249,9 @@ export const LandingPage: React.FC = () => {
 
           {/* Nav Links */}
           <nav className="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-600">
-            <a href="#features" className="hover:text-slate-900 transition">Funcionalidades</a>
-            <a href="#how-it-works" className="hover:text-slate-900 transition">Como Funciona</a>
-            <a href="#categories" className="hover:text-slate-900 transition">Categorias</a>
+            <button onClick={() => scrollToSection('features')} className="hover:text-slate-900 transition">Funcionalidades</button>
+            <button onClick={() => scrollToSection('how-it-works')} className="hover:text-slate-900 transition">Como Funciona</button>
+            <button onClick={() => scrollToSection('categories')} className="hover:text-slate-900 transition">Categorias</button>
           </nav>
 
           {/* CTAs */}
