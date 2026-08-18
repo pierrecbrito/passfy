@@ -6,6 +6,7 @@ import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 
 // Pages
+import { LandingPage } from './pages/LandingPage';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -18,7 +19,10 @@ import { GatekeeperPage } from './pages/GatekeeperPage';
 
 const AppLayout: React.FC = () => {
   const location = useLocation();
+
+  // Pages with their own full-screen layout (no shared Navbar/Footer/RoleSwitcher)
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isLandingPage = location.pathname === '/';
 
   if (isAuthPage) {
     return (
@@ -31,14 +35,22 @@ const AppLayout: React.FC = () => {
     );
   }
 
+  if (isLandingPage) {
+    return (
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+      </Routes>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <RoleSwitcher />
       <Navbar />
       <main className="flex-1">
         <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<HomePage />} />
+          {/* App home — events catalog */}
+          <Route path="/home" element={<HomePage />} />
           <Route path="/event/:id" element={<EventDetailsPage />} />
           <Route path="/ticket/:shareToken" element={<PublicTicketPage />} />
 

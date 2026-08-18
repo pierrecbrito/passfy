@@ -29,9 +29,9 @@ export const Navbar: React.FC = () => {
           {/* Desktop Navigation Links */}
           <div className="hidden md:flex items-center gap-1.5">
             <Link
-              to="/"
+              to="/home"
               className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition ${
-                isActive('/')
+                isActive('/home')
                   ? 'bg-blue-50 text-[#2b55f5]'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}

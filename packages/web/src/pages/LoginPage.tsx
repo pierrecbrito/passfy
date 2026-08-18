@@ -125,7 +125,7 @@ export const LoginPage: React.FC = () => {
       } else {
         await register(name, email, password, role);
       }
-      navigate('/');
+      navigate('/home');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Falha ao autenticar.');
     } finally {
