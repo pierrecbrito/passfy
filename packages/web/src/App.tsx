@@ -22,7 +22,7 @@ const AppLayout: React.FC = () => {
 
   if (isAuthPage) {
     return (
-      <main className="min-h-screen w-full bg-[#0b0f19]">
+      <main className="min-h-screen h-screen w-full bg-[#eaedf2] flex items-center justify-center overflow-hidden">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
