@@ -1,10 +1,6 @@
-import React, { useState } from 'react';
-import {
-  ExternalLink,
-  Music,
-  Radio,
-  Sparkles,
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ExternalLink, Music, Radio, Loader2 } from 'lucide-react';
+import { api } from '../services/api';
 
 interface SpotifyShowCardProps {
   event: {
@@ -15,59 +11,49 @@ interface SpotifyShowCardProps {
   };
 }
 
+interface SpotifyPlaylist {
+  found: boolean;
+  embedUrl: string;
+  name: string;
+  description: string;
+  ownerName: string;
+  trackCount: number | null;
+  externalUrl: string;
+}
+
 export const SpotifyShowCard: React.FC<SpotifyShowCardProps> = ({ event }) => {
-  const titleLower = event.title.toLowerCase();
+  const [playlist, setPlaylist] = useState<SpotifyPlaylist | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  // Map events to official Spotify Embed URIs (Artists, Official Albums or Curated Tour Playlists)
-  let spotifyEmbedUri = 'https://open.spotify.com/embed/playlist/37i9dQZF1DX1rVvRgNX2YR'; // Rock Classics default
-  let artistOrShowName = 'Rock Classics & Festivais';
-  let categoryLabel = 'Playlist Oficial do Festival';
-  let directSpotifyUrl = 'https://open.spotify.com/playlist/37i9dQZF1DX1rVvRgNX2YR';
+  useEffect(() => {
+    let cancelled = false;
 
-  if (titleLower.includes('coldplay')) {
-    spotifyEmbedUri = 'https://open.spotify.com/embed/artist/4gzpq5Yv4eYTN5I6iwW3N5?utm_source=generator&theme=0';
-    artistOrShowName = 'Coldplay — Music of the Spheres Tour';
-    categoryLabel = 'Setlist Oficial do Artista';
-    directSpotifyUrl = 'https://open.spotify.com/artist/4gzpq5Yv4eYTN5I6iwW3N5';
-  } else if (titleLower.includes('rock in rio') || titleLower.includes('rock world') || titleLower.includes('rock')) {
-    spotifyEmbedUri = 'https://open.spotify.com/embed/playlist/37i9dQZF1DX1rVvRgNX2YR?utm_source=generator&theme=0';
-    artistOrShowName = 'Rock World Classics & Anthems';
-    categoryLabel = 'Setlist Curada do Festival';
-    directSpotifyUrl = 'https://open.spotify.com/playlist/37i9dQZF1DX1rVvRgNX2YR';
-  } else if (titleLower.includes('taylor') || titleLower.includes('swift')) {
-    spotifyEmbedUri = 'https://open.spotify.com/embed/artist/06HL4z0CvFAxyc27GXpf02?utm_source=generator&theme=0';
-    artistOrShowName = 'Taylor Swift — The Eras Tour';
-    categoryLabel = 'Discografia Oficial no Spotify';
-    directSpotifyUrl = 'https://open.spotify.com/artist/06HL4z0CvFAxyc27GXpf02';
-  } else if (titleLower.includes('tomorrowland') || titleLower.includes('alok') || titleLower.includes('vintage')) {
-    spotifyEmbedUri = 'https://open.spotify.com/embed/playlist/37i9dQZF1DX6J5JvtNmNww?utm_source=generator&theme=0';
-    artistOrShowName = 'Tomorrowland Mainstage Hits';
-    categoryLabel = 'Setlist Oficial EDM & Eletrônica';
-    directSpotifyUrl = 'https://open.spotify.com/playlist/37i9dQZF1DX6J5JvtNmNww';
-  } else if (titleLower.includes('billie') || titleLower.includes('eilish')) {
-    spotifyEmbedUri = 'https://open.spotify.com/embed/artist/6qqNVTkY8uBg9cP3Jd7DAH?utm_source=generator&theme=0';
-    artistOrShowName = 'Billie Eilish — HIT ME HARD AND SOFT';
-    categoryLabel = 'Álbum e Músicas da Turnê';
-    directSpotifyUrl = 'https://open.spotify.com/artist/6qqNVTkY8uBg9cP3Jd7DAH';
-  } else if (titleLower.includes('duna') || titleLower.includes('dune')) {
-    spotifyEmbedUri = 'https://open.spotify.com/embed/album/3BZw3N1h57i68uH8S9Pz8k?utm_source=generator&theme=0';
-    artistOrShowName = 'Hans Zimmer — Dune: Part Two (OST)';
-    categoryLabel = 'Trilha Sonora Original Oficial';
-    directSpotifyUrl = 'https://open.spotify.com/album/3BZw3N1h57i68uH8S9Pz8k';
-  } else {
-    // Generic top hits playlist
-    spotifyEmbedUri = `https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator&theme=0`;
-    artistOrShowName = event.title.split('—')[0].split('-')[0].trim();
-    categoryLabel = 'Top Músicas da Turnê';
-    directSpotifyUrl = `https://open.spotify.com/search/${encodeURIComponent(event.title)}`;
-  }
+    const fetchPlaylist = async () => {
+      setIsLoading(true);
+      setError(false);
+      try {
+        const res = await api.get('/catalog/spotify', {
+          params: { q: event.title },
+        });
+        if (!cancelled) setPlaylist(res.data);
+      } catch {
+        if (!cancelled) setError(true);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    fetchPlaylist();
+    return () => { cancelled = true; };
+  }, [event.title]);
 
   return (
     <div className="bg-slate-900 text-white rounded-3xl p-5 sm:p-6 space-y-4 shadow-md border border-slate-800 transition-all relative overflow-hidden">
-      {/* Subtle Glow */}
+      {/* Glow */}
       <div className="absolute -top-20 -right-20 w-44 h-44 bg-[#1DB954]/15 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Header: Official Spotify Branding */}
+      {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-800/80 pb-3.5 relative z-10">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-full bg-[#1DB954] text-slate-950 flex items-center justify-center shadow-xs shrink-0">
@@ -80,7 +66,7 @@ export const SpotifyShowCard: React.FC<SpotifyShowCardProps> = ({ event }) => {
               Player Oficial Spotify
             </span>
             <h4 className="text-sm font-black text-white truncate max-w-[200px]">
-              {categoryLabel}
+              {isLoading ? 'Buscando playlist...' : (playlist?.name ?? 'Setlist do Evento')}
             </h4>
           </div>
         </div>
@@ -91,37 +77,62 @@ export const SpotifyShowCard: React.FC<SpotifyShowCardProps> = ({ event }) => {
         </span>
       </div>
 
-      {/* Official Spotify Embed Player Widget */}
-      <div className="rounded-2xl overflow-hidden shadow-inner border border-slate-800 bg-slate-950">
-        <iframe
-          title={`Spotify Player - ${artistOrShowName}`}
-          src={spotifyEmbedUri}
-          width="100%"
-          height="280"
-          frameBorder="0"
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy"
-          className="w-full rounded-2xl"
-          style={{ borderRadius: '16px' }}
-        />
-      </div>
+      {/* Player Body */}
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center h-[280px] bg-slate-950/80 rounded-2xl border border-slate-800 gap-3">
+          <Loader2 className="w-8 h-8 text-[#1DB954] animate-spin" />
+          <p className="text-[11px] text-slate-400 font-semibold">
+            Buscando playlist relacionada ao evento...
+          </p>
+        </div>
+      ) : error || !playlist ? (
+        <div className="flex flex-col items-center justify-center h-[280px] bg-slate-950/80 rounded-2xl border border-slate-800 gap-3">
+          <Music className="w-8 h-8 text-slate-600" />
+          <p className="text-[11px] text-slate-400 font-semibold text-center px-4">
+            Não foi possível carregar a playlist.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Official Spotify Embed — plays real audio previews */}
+          <div className="rounded-2xl overflow-hidden shadow-inner border border-slate-800 bg-slate-950">
+            <iframe
+              key={playlist.embedUrl}
+              title={`Spotify Player — ${playlist.name}`}
+              src={playlist.embedUrl}
+              width="100%"
+              height="280"
+              frameBorder="0"
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="lazy"
+              style={{ borderRadius: '16px' }}
+            />
+          </div>
 
-      {/* Direct Spotify Deep Link */}
-      <div className="pt-1 flex items-center justify-between gap-3 text-xs">
-        <span className="text-[11px] text-slate-400 font-medium">
-          Músicas sincronizadas com a turnê
-        </span>
+          {/* Metadata & deep link */}
+          <div className="flex items-center justify-between gap-3 text-xs pt-1">
+            <div className="text-[11px] text-slate-400 font-medium leading-relaxed truncate">
+              <span className="font-bold text-slate-300">{playlist.name}</span>
+              {playlist.ownerName && (
+                <span className="text-slate-500"> · por {playlist.ownerName}</span>
+              )}
+              {playlist.trackCount != null && (
+                <span className="text-slate-500"> · {playlist.trackCount} faixas</span>
+              )}
+            </div>
 
-        <a
-          href={directSpotifyUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 font-bold text-[#1DB954] hover:underline"
-        >
-          <span>Abrir no App</span>
-          <ExternalLink className="w-3.5 h-3.5" />
-        </a>
-      </div>
+            <a
+              href={playlist.externalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 font-bold text-[#1DB954] hover:underline shrink-0"
+            >
+              <span>Abrir no App</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+        </>
+      )}
     </div>
   );
 };
