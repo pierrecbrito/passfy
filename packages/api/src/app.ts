@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { authRoutes } from './modules/auth/routes/authRoutes';
 import { errorHandler } from './core/middlewares/errorHandler';
 
 dotenv.config();
@@ -25,9 +26,10 @@ app.get('/health', (_req, res) => {
   });
 });
 
-// Global error handler must be registered after routes
-export function registerErrorHandler() {
-  app.use(errorHandler);
-}
+// App Routes
+app.use('/api/auth', authRoutes);
+
+// Global Error Handler
+app.use(errorHandler);
 
 export { app };
