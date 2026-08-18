@@ -493,9 +493,9 @@ export const LoginPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Toast Notification Flutuante */}
+      {/* Toast Notification Flutuante no Canto Inferior Direito */}
       {toastMessage && (
-        <div className="fixed top-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-900/95 backdrop-blur-md text-white text-sm shadow-2xl border border-slate-700 animate-in fade-in slide-in-from-top-4 duration-200">
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-900/95 backdrop-blur-md text-white text-sm shadow-2xl border border-slate-700 animate-in fade-in slide-in-from-bottom-4 duration-200">
           <div className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
           <span className="font-medium text-slate-100">{toastMessage}</span>
           <button
