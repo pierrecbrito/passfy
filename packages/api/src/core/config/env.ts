@@ -16,6 +16,8 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   TMDB_API_KEY: z.string().optional().default(''),
   TMDB_BASE_URL: z.string().default('https://api.themoviedb.org/3'),
+  TICKETMASTER_API_KEY: z.string().optional().default(''),
+  TICKETMASTER_BASE_URL: z.string().default('https://app.ticketmaster.com/discovery/v2'),
 });
 
 const _env = envSchema.safeParse(process.env);

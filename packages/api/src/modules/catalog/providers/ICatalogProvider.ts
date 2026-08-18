@@ -5,8 +5,11 @@ export interface CatalogItem {
   posterUrl: string | null;
   backdropUrl: string | null;
   releaseDate: string;
-  category: 'MOVIE' | 'CONCERT';
+  category: 'MOVIE' | 'CONCERT' | 'THEATER' | 'OTHER';
   source: 'TMDB' | 'TICKETMASTER' | 'MANUAL';
+  venue?: string;
+  city?: string;
+  url?: string;
 }
 
 export interface ICatalogProvider {
