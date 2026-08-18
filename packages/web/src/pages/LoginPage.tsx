@@ -95,6 +95,7 @@ export const LoginPage: React.FC = () => {
 
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Estado da Fila de Ingressos Subindo Continuamente
   const [activeQueueIndex, setActiveQueueIndex] = useState(0);
@@ -105,6 +106,13 @@ export const LoginPage: React.FC = () => {
     }, 2800);
     return () => clearInterval(timer);
   }, []);
+
+  const handleGoogleLogin = () => {
+    setToastMessage('A autenticação com Google ainda não foi implementada.');
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3500);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -385,11 +393,11 @@ export const LoginPage: React.FC = () => {
             </button>
           </form>
 
-          {/* Botão Social Google */}
+          {/* Botão Social Google com Toast Informativo */}
           <button
             type="button"
-            onClick={() => handleQuickFill('cliente1@passfy.com')}
-            className="w-full mt-3 flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-sm font-semibold text-slate-700 transition shadow-xs"
+            onClick={handleGoogleLogin}
+            className="w-full mt-3 flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-sm font-semibold text-slate-700 transition shadow-xs active:scale-[0.99]"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
               <path
@@ -484,6 +492,21 @@ export const LoginPage: React.FC = () => {
 
         </div>
       </div>
+
+      {/* Toast Notification Flutuante */}
+      {toastMessage && (
+        <div className="fixed top-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-900/95 backdrop-blur-md text-white text-sm shadow-2xl border border-slate-700 animate-in fade-in slide-in-from-top-4 duration-200">
+          <div className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+          <span className="font-medium text-slate-100">{toastMessage}</span>
+          <button
+            type="button"
+            onClick={() => setToastMessage(null)}
+            className="ml-2 text-slate-400 hover:text-white text-xs font-bold transition p-1"
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   );
 };
