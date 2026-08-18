@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Eye,
   EyeOff,
   AlertCircle,
-  ArrowLeft,
   Ticket,
   Film,
   Sparkles,
@@ -31,7 +30,7 @@ const TICKET_QUEUE: AnimatedTicketItem[] = [
     id: 1,
     code: 'PAS-DEMO1',
     status: 'Entrada Liberada',
-    statusColor: 'text-emerald-300 bg-emerald-400/20 border-emerald-300/30',
+    statusColor: 'text-emerald-700 bg-emerald-100 border-emerald-300',
     title: 'Duna: Parte 2 — IMAX VIP',
     subtitle: 'Poltrona B-04 • Sala 01 VIP',
     icon: 'film',
@@ -41,7 +40,7 @@ const TICKET_QUEUE: AnimatedTicketItem[] = [
     id: 2,
     code: 'PAS-ROCK26',
     status: 'Confirmado',
-    statusColor: 'text-cyan-200 bg-cyan-400/20 border-cyan-300/30',
+    statusColor: 'text-blue-700 bg-blue-100 border-blue-300',
     title: 'Rock World Festival 2026',
     subtitle: 'Pista Premium • Portão 03',
     icon: 'zap',
@@ -51,7 +50,7 @@ const TICKET_QUEUE: AnimatedTicketItem[] = [
     id: 3,
     code: 'PAS-COLD88',
     status: 'VIP Pass',
-    statusColor: 'text-purple-200 bg-purple-400/20 border-purple-300/30',
+    statusColor: 'text-purple-700 bg-purple-100 border-purple-300',
     title: 'Coldplay: Music of the Spheres',
     subtitle: 'Setor Leste VIP • Fila C-12',
     icon: 'music',
@@ -61,7 +60,7 @@ const TICKET_QUEUE: AnimatedTicketItem[] = [
     id: 4,
     code: 'PAS-ALN09',
     status: 'Pré-Estreia',
-    statusColor: 'text-amber-200 bg-amber-400/20 border-amber-300/30',
+    statusColor: 'text-amber-700 bg-amber-100 border-amber-300',
     title: 'Alien: Romulus — Dolby Atmos 3D',
     subtitle: 'Poltrona F-08 • Sala 04',
     icon: 'film',
@@ -71,7 +70,7 @@ const TICKET_QUEUE: AnimatedTicketItem[] = [
     id: 5,
     code: 'PAS-TML26',
     status: 'Acesso Total',
-    statusColor: 'text-pink-200 bg-pink-400/20 border-pink-300/30',
+    statusColor: 'text-pink-700 bg-pink-100 border-pink-300',
     title: 'Tomorrowland Brasil — Mainstage',
     subtitle: 'Camarote Exclusivo • Entrada VIP',
     icon: 'ticket',
@@ -133,64 +132,49 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="h-screen min-h-screen w-full bg-white grid grid-cols-1 lg:grid-cols-12 p-3 sm:p-4 gap-4 sm:gap-6 shadow-none border-none relative overflow-hidden select-none selection:bg-indigo-600 selection:text-white">
-      {/* Botão Superior para Retorno à Loja */}
-      <Link
-        to="/"
-        className="absolute top-6 left-6 z-40 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs font-semibold transition shadow-sm"
-        title="Voltar para o catálogo de eventos"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" />
-        <span>Voltar ao Início</span>
-      </Link>
-
-      {/* Coluna Esquerda: Painel Visual Azul com Fila Infinita de Ingressos Subindo */}
-      <div className="lg:col-span-6 h-full relative rounded-[2rem] overflow-hidden min-h-[440px] flex flex-col justify-between p-8 sm:p-10 lg:p-12 select-none bg-gradient-to-br from-[#204bee] via-[#2f5af6] to-[#0f2182]">
+      
+      {/* Coluna Esquerda: Painel Azul Sóbrio, Elegante e com Fila de Ingressos Brancos */}
+      <div className="lg:col-span-6 h-full relative rounded-[2rem] overflow-hidden min-h-[440px] flex flex-col justify-between p-8 sm:p-12 lg:p-14 select-none bg-gradient-to-br from-[#1738b5] via-[#12288a] to-[#0a144a]">
         
-        {/* Luzes de fundo com blur fluido */}
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-300/40 rounded-full blur-3xl pointer-events-none animate-pulse" />
-        <div className="absolute top-1/2 -right-20 w-80 h-80 bg-indigo-300/35 rounded-full blur-3xl pointer-events-none animate-pulse-slow" />
-        <div className="absolute -bottom-24 left-1/4 w-96 h-96 bg-cyan-300/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a165c]/85 via-transparent to-black/10 pointer-events-none" />
-
-        {/* Cabeçalho da Marca & Frase de Impacto */}
-        <div className="relative z-10 space-y-2.5 pt-10 lg:pt-4">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/25 text-white text-xs font-semibold shadow-sm">
+        {/* Cabeçalho com espaçamento generoso do topo */}
+        <div className="relative z-10 space-y-3 pt-6 lg:pt-8">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-semibold shadow-sm">
             <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
             <span>Passfy Tickets</span>
           </div>
 
-          <div className="space-y-1">
-            <p className="text-xs sm:text-sm font-medium text-blue-100/90 tracking-wide">
+          <div className="space-y-1.5">
+            <p className="text-xs sm:text-sm font-medium text-blue-200 tracking-wide">
               Experiência Inteligente de Ingressos
             </p>
-            <h2 className="text-2xl sm:text-3xl lg:text-[36px] font-extrabold text-white leading-[1.18] tracking-tight drop-shadow-sm max-w-lg">
+            <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-extrabold text-white leading-[1.2] tracking-tight drop-shadow-sm max-w-lg">
               Acelere suas vendas e garanta seu lugar nos melhores eventos
             </h2>
           </div>
         </div>
 
-        {/* Fila Contínua de Ingressos (Looping Staggered Animation) */}
+        {/* Fila Contínua de Ingressos Mais Brancos e Nítidos */}
         <div className="relative z-10 my-auto py-2 w-full max-w-md mx-auto">
           <div className="h-[250px] sm:h-[260px] relative flex items-center justify-center">
             {TICKET_QUEUE.map((ticket, index) => {
               // Cálculo de deslocamento na fila circular
               const offset = (index - activeQueueIndex + TICKET_QUEUE.length) % TICKET_QUEUE.length;
 
-              // Configurações visuais de cada estágio na fila
+              // Configurações de opacidade e estilo conforme posição na fila
               let styleClasses = 'opacity-0 scale-75 translate-y-36 pointer-events-none z-0';
 
               if (offset === 0) {
-                // Cartão Ativo na Frente (Totalmente nítido)
-                styleClasses = 'opacity-100 scale-100 translate-y-0 z-30 bg-white/[0.22] backdrop-blur-xl border-white/35 text-white shadow-2xl';
+                // Cartão 1: Frente da fila (Branco Total, Sombra e Destaque)
+                styleClasses = 'opacity-100 scale-100 translate-y-0 z-30 bg-white/95 text-slate-900 shadow-2xl border-white/80 backdrop-blur-md';
               } else if (offset === 1) {
-                // Cartão 2 na Fila (Atrás do primeiro, semi-transparente)
-                styleClasses = 'opacity-60 scale-[0.93] translate-y-10 z-20 bg-white/[0.13] backdrop-blur-md border-white/20 text-white/90 shadow-lg';
+                // Cartão 2: Meio da fila (Branco translúcido, bem legível)
+                styleClasses = 'opacity-75 scale-[0.93] translate-y-10 z-20 bg-white/70 text-slate-800 shadow-xl border-white/50 backdrop-blur-md';
               } else if (offset === 2) {
-                // Cartão 3 na Fila (Mais atrás, bem mais transparente)
-                styleClasses = 'opacity-25 scale-[0.86] translate-y-20 z-10 bg-white/[0.06] backdrop-blur-sm border-white/10 text-white/70 shadow-sm';
+                // Cartão 3: Fundo da fila (Branco semi-translúcido)
+                styleClasses = 'opacity-45 scale-[0.86] translate-y-20 z-10 bg-white/45 text-slate-700 shadow-md border-white/30 backdrop-blur-sm';
               } else if (offset === TICKET_QUEUE.length - 1) {
-                // Cartão Saindo da Fila (Subindo e sumindo com Fade-out)
-                styleClasses = 'opacity-0 scale-[1.05] -translate-y-14 z-40 bg-white/[0.25] text-white pointer-events-none';
+                // Cartão saindo: Subindo e sumindo
+                styleClasses = 'opacity-0 scale-[1.04] -translate-y-14 z-40 bg-white/95 text-slate-900 pointer-events-none';
               }
 
               return (
@@ -204,30 +188,30 @@ export const LoginPage: React.FC = () => {
                         <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold ${ticket.statusColor}`}>
                           {ticket.status}
                         </span>
-                        <span className="text-[10px] font-bold text-cyan-200">
+                        <span className="text-[11px] font-extrabold text-blue-700">
                           {ticket.price}
                         </span>
                       </div>
-                      <h4 className="text-sm sm:text-base font-extrabold text-white pt-1">
+                      <h4 className="text-sm sm:text-base font-extrabold text-slate-900 pt-1">
                         {ticket.title}
                       </h4>
-                      <p className="text-xs text-blue-100/80">
+                      <p className="text-xs text-slate-600 font-medium">
                         {ticket.subtitle}
                       </p>
                     </div>
 
-                    <div className="p-2 rounded-xl bg-white/20 border border-white/30 backdrop-blur-md shadow-sm shrink-0">
-                      <QrCode className="w-6 h-6 text-white" />
+                    <div className="p-2 rounded-xl bg-slate-100 border border-slate-200 shadow-sm shrink-0">
+                      <QrCode className="w-6 h-6 text-slate-900" />
                     </div>
                   </div>
 
                   {/* Linha Divisória de Cupom */}
-                  <div className="border-t border-dashed border-white/25 my-2" />
+                  <div className="border-t border-dashed border-slate-300 my-2" />
 
-                  <div className="flex items-center justify-between text-[11px] text-white/90">
-                    <span className="font-mono tracking-wider font-bold">{ticket.code}</span>
-                    <span className="flex items-center gap-1 text-emerald-300 font-semibold text-[10px]">
-                      <ShieldCheck className="w-3.5 h-3.5" />
+                  <div className="flex items-center justify-between text-[11px] text-slate-700 font-semibold">
+                    <span className="font-mono tracking-wider font-bold text-slate-900">{ticket.code}</span>
+                    <span className="flex items-center gap-1 text-emerald-700 font-bold text-[10px]">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                       Assinatura HMAC-SHA256
                     </span>
                   </div>
@@ -441,13 +425,13 @@ export const LoginPage: React.FC = () => {
             )}
           </div>
 
-          {/* Divisor */}
-          <div className="relative flex items-center justify-center">
-            <div className="border-t border-slate-200 w-full" />
-            <span className="bg-white px-3 text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
+          {/* Divisor com alinhamento perfeito sem quebra */}
+          <div className="flex items-center gap-3 my-4 w-full">
+            <div className="h-[1px] bg-slate-200 flex-1" />
+            <span className="text-xs text-slate-400 font-medium whitespace-nowrap px-1">
               Ou acesse com
             </span>
-            <div className="border-t border-slate-200 w-full" />
+            <div className="h-[1px] bg-slate-200 flex-1" />
           </div>
 
           {/* Logins Sociais */}
@@ -458,7 +442,7 @@ export const LoginPage: React.FC = () => {
               className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 transition shadow-none"
               title="Entrar como Cliente 1"
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path
                   fill="#EA4335"
                   d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.3 9 5 12 5z"
@@ -476,7 +460,7 @@ export const LoginPage: React.FC = () => {
                   d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.3-6.4-5.2L1.9 16.5C3.7 20.2 7.5 23.5 12 23.5z"
                 />
               </svg>
-              <span>Continuar com Google</span>
+              <span className="whitespace-nowrap">Continuar com Google</span>
             </button>
 
             <button
@@ -485,10 +469,10 @@ export const LoginPage: React.FC = () => {
               className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 transition shadow-none"
               title="Entrar como Organizador"
             >
-              <svg className="w-4 h-4 fill-current text-slate-900" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 fill-current text-slate-900 shrink-0" viewBox="0 0 24 24">
                 <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.86c.66-.82 1.11-1.96.99-3.1-.97.04-2.14.65-2.83 1.45-.6.69-1.13 1.83-.99 2.94 1.08.08 2.18-.47 2.83-1.29z" />
               </svg>
-              <span>Continuar com Apple</span>
+              <span className="whitespace-nowrap">Continuar com Apple</span>
             </button>
           </div>
 
