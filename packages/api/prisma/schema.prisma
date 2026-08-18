@@ -13,6 +13,18 @@ enum Role {
   GATEKEEPER
 }
 
+enum EventCategory {
+  MOVIE
+  CONCERT
+  THEATER
+  OTHER
+}
+
+enum EventType {
+  SEATED
+  GENERAL_ADMISSION
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -22,5 +34,46 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  organizedEvents Event[]
+
   @@map("users")
+}
+
+model Event {
+  id             String        @id @default(uuid())
+  title          String
+  description    String        @db.Text
+  category       EventCategory @default(MOVIE)
+  type           EventType     @default(SEATED)
+  bannerUrl      String?
+  venue          String
+  date           DateTime
+  price          Decimal       @db.Decimal(10, 2)
+  capacity       Int
+  externalId     String?
+  externalSource String?
+  organizerId    String
+  organizer      User          @relation(fields: [organizerId], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  seats Seat[]
+
+  @@map("events")
+}
+
+model Seat {
+  id          String   @id @default(uuid())
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  row         String
+  number      Int
+  label       String
+  isAvailable Boolean  @default(true)
+  version     Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([eventId, row, number])
+  @@map("seats")
 }
