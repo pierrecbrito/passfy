@@ -5,7 +5,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { SeatMap, SeatItem } from '../components/SeatMap';
 import { CheckoutModal } from '../components/CheckoutModal';
 import { SpotifyShowCard } from '../components/SpotifyShowCard';
-import { Badge } from '../components/ui/Badge';
 import {
   Calendar,
   MapPin,
@@ -25,7 +24,6 @@ import {
   UserPlus,
   ArrowRight,
   ShieldCheck,
-  Share2,
 } from 'lucide-react';
 
 export const EventDetailsPage: React.FC = () => {
@@ -164,6 +162,17 @@ export const EventDetailsPage: React.FC = () => {
   const subtotal = Number(event.price) * totalSelectedTickets;
   const isSoldOut = event.availableCapacity <= 0;
 
+  const isMusicEvent =
+    event.category === 'CONCERT' ||
+    event.title.toLowerCase().includes('show') ||
+    event.title.toLowerCase().includes('rock') ||
+    event.title.toLowerCase().includes('tour') ||
+    event.title.toLowerCase().includes('festival') ||
+    event.title.toLowerCase().includes('coldplay') ||
+    event.title.toLowerCase().includes('tomorrowland') ||
+    event.title.toLowerCase().includes('taylor') ||
+    event.title.toLowerCase().includes('billie');
+
   const formattedDate = new Date(event.date).toLocaleDateString('pt-BR', {
     weekday: 'long',
     day: '2-digit',
@@ -184,68 +193,68 @@ export const EventDetailsPage: React.FC = () => {
       )}
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
-        
-        {/* Navigation & Breadcrumb */}
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => navigate('/home')}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition shadow-xs"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Voltar aos Eventos</span>
-          </button>
-        </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* ── LADO ESQUERDO: Conteúdo, Banner, Detalhes, Assentos & Spotify ── */}
+          <div className="lg:col-span-7 xl:col-span-8 space-y-8">
+            
+            {/* Voltar aos Eventos */}
+            <div>
+              <button
+                onClick={() => navigate('/home')}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition shadow-xs"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Voltar aos Eventos</span>
+              </button>
+            </div>
 
-        {/* Main Event Title Header Section */}
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="px-3 py-1 rounded-lg text-xs font-extrabold bg-[#2b55f5] text-white shadow-xs">
-              {event.category === 'MOVIE'
-                ? 'Cinema'
-                : event.category === 'CONCERT'
-                ? 'Show / Concerto'
-                : 'Teatro & Cultura'}
-            </span>
+            {/* Cabeçalho do Evento: Título & Badges */}
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-3 py-1 rounded-lg text-xs font-extrabold bg-[#2b55f5] text-white shadow-xs">
+                  {event.category === 'MOVIE'
+                    ? 'Cinema'
+                    : event.category === 'CONCERT'
+                    ? 'Show / Concerto'
+                    : 'Teatro & Cultura'}
+                </span>
 
-            <span className="px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
-              {isSeated ? 'Mapa de Assentos Marcados' : 'Pista Geral'}
-            </span>
+                <span className="px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
+                  {isSeated ? 'Mapa de Assentos Marcados' : 'Pista Geral'}
+                </span>
 
-            {isSoldOut ? (
-              <span className="px-3 py-1 rounded-lg text-xs font-bold bg-rose-50 border border-rose-200 text-rose-700">
-                Esgotado
-              </span>
-            ) : (
-              <span className="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-700">
-                {event.availableCapacity} ingressos disponíveis
-              </span>
-            )}
-          </div>
+                {isSoldOut ? (
+                  <span className="px-3 py-1 rounded-lg text-xs font-bold bg-rose-50 border border-rose-200 text-rose-700">
+                    Esgotado
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-700">
+                    {event.availableCapacity} ingressos disponíveis
+                  </span>
+                )}
+              </div>
 
-          <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.15]">
-            {event.title}
-          </h1>
-        </div>
+              <h1 className="text-3xl sm:text-4xl xl:text-5xl font-black text-slate-900 tracking-tight leading-[1.15]">
+                {event.title}
+              </h1>
+            </div>
 
-        {/* Event Banner Image Card */}
-        <div className="relative h-72 sm:h-96 md:h-[420px] w-full rounded-3xl overflow-hidden bg-slate-900 border border-slate-200 shadow-sm">
-          <img
-            src={
-              event.bannerUrl ||
-              'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1600&q=80'
-            }
-            alt={event.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
-        </div>
+            {/* Banner / Foto Grande do Evento */}
+            <div className="relative h-72 sm:h-96 xl:h-[420px] w-full rounded-3xl overflow-hidden bg-slate-900 border border-slate-200 shadow-sm">
+              <img
+                src={
+                  event.bannerUrl ||
+                  'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1600&q=80'
+                }
+                alt={event.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
+            </div>
 
-        {/* Content Grid: Details, SeatMap & Checkout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-2">
-          {/* Left Column: Info & Seat Map */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Event Info Card */}
+            {/* Card de Detalhes: Sobre o Evento, Data & Local */}
             <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
               <h2 className="text-xl font-bold text-slate-900">Sobre o Evento</h2>
               <p className="text-sm text-slate-600 leading-relaxed">{event.description}</p>
@@ -317,10 +326,10 @@ export const EventDetailsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Selection Area: Seat Map or General Admission Stepper */}
-            {isSeated ? (
-              <div>
-                <div className="flex items-center justify-between mb-4">
+            {/* Mapa de Assentos Interativo (quando for evento com assento marcado) */}
+            {isSeated && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
                   <h2 className="text-xl font-black text-slate-900 tracking-tight">
                     Selecione suas Poltronas
                   </h2>
@@ -336,52 +345,20 @@ export const EventDetailsPage: React.FC = () => {
                   maxSelection={6}
                 />
               </div>
-            ) : (
-              <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
-                <h2 className="text-xl font-black text-slate-900 tracking-tight">
-                  Quantidade de Ingressos de Pista
-                </h2>
-                <p className="text-sm text-slate-500">
-                  Ingressos oficiais com acesso à área de pista geral do evento.
-                </p>
+            )}
 
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-2">
-                    <button
-                      type="button"
-                      disabled={quantity <= 1}
-                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      className="w-10 h-10 rounded-xl bg-white hover:bg-slate-100 disabled:opacity-40 text-slate-900 border border-slate-300 flex items-center justify-center transition shadow-xs"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <span className="w-10 text-center font-extrabold text-lg text-slate-900">
-                      {quantity}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={quantity >= 10 || quantity >= event.availableCapacity}
-                      onClick={() => setQuantity((q) => q + 1)}
-                      className="w-10 h-10 rounded-xl bg-white hover:bg-slate-100 disabled:opacity-40 text-slate-900 border border-slate-300 flex items-center justify-center transition shadow-xs"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-slate-500 font-semibold">Preço unitário</p>
-                    <p className="text-lg font-black text-slate-900">
-                      R$ {Number(event.price).toFixed(2)}
-                    </p>
-                  </div>
-                </div>
+            {/* Card do Spotify: Player e Setlist Oficial no Lado Esquerdo */}
+            {isMusicEvent && (
+              <div className="space-y-3">
+                <SpotifyShowCard event={event} />
               </div>
             )}
           </div>
 
-          {/* Right Column: Order Summary & Checkout Card */}
-          <div className="space-y-6">
+          {/* ── LADO DIREITO: Painel de Pagamento & Quantidade Fixo no Scroll ── */}
+          <div className="lg:col-span-5 xl:col-span-4 sticky top-6 self-start space-y-4">
             <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 space-y-5 shadow-sm transition-all duration-300">
+              
               {/* STATE 1: In-Place Authentication / Pre-Cadastro Form */}
               {isAuthCardActive && !user ? (
                 <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
@@ -539,7 +516,7 @@ export const EventDetailsPage: React.FC = () => {
                   </form>
                 </div>
               ) : (
-                /* STATE 2: Normal Order Summary Card */
+                /* STATE 2: Normal Order Summary Card with Integrated Quantity */
                 <div className="space-y-5 animate-in fade-in zoom-in-95 duration-200">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h3 className="text-base font-black text-slate-900">
@@ -553,43 +530,93 @@ export const EventDetailsPage: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="space-y-3 text-xs">
-                    <div className="flex justify-between text-slate-500 font-medium">
-                      <span>Preço Unitário:</span>
-                      <span className="text-slate-900 font-bold">
-                        R$ {Number(event.price).toFixed(2)}
-                      </span>
-                    </div>
-
-                    <div className="flex justify-between text-slate-500 font-medium">
-                      <span>Ingressos:</span>
-                      <span className="text-slate-900 font-bold">{totalSelectedTickets}</span>
-                    </div>
-
-                    {isSeated && selectedSeats.length > 0 && (
-                      <div className="pt-2 border-t border-slate-100">
-                        <p className="text-slate-500 font-semibold mb-2">Poltronas Selecionadas:</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {selectedSeats.map((s) => (
-                            <span
-                              key={s.id}
-                              className="px-2.5 py-1 rounded-md bg-blue-50 text-[#2b55f5] border border-blue-200 text-[11px] font-bold"
-                            >
-                              {s.label}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                  {/* Preço Unitário */}
+                  <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                    <span>Preço Unitário:</span>
+                    <span className="text-slate-900 font-bold text-sm">
+                      R$ {Number(event.price).toFixed(2)}
+                    </span>
                   </div>
 
-                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                  {/* CONTROLE DE QUANTIDADE DE INGRESSOS INTEGRADO AO CARD (Quando for Pista Geral) */}
+                  {!isSeated && (
+                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-700">Quantidade de Ingressos</span>
+                        <span className="text-[11px] font-semibold text-slate-500">
+                          {event.availableCapacity} disponíveis
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-3 pt-1">
+                        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-1 shadow-xs">
+                          <button
+                            type="button"
+                            disabled={quantity <= 1}
+                            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                            className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 disabled:opacity-30 text-slate-800 flex items-center justify-center transition"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+                          <span className="w-8 text-center font-black text-sm text-slate-900">
+                            {quantity}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={quantity >= 10 || quantity >= event.availableCapacity}
+                            onClick={() => setQuantity((q) => q + 1)}
+                            className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 disabled:opacity-30 text-slate-800 flex items-center justify-center transition"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        <span className="text-xs font-bold text-slate-900">
+                          {quantity} {quantity === 1 ? 'ingresso' : 'ingressos'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Lista de Poltronas Selecionadas (Quando for Assentos Marcados) */}
+                  {isSeated && (
+                    <div className="space-y-2 pt-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-500 font-medium">Ingressos Selecionados:</span>
+                        <span className="text-slate-900 font-bold">{selectedSeats.length}</span>
+                      </div>
+
+                      {selectedSeats.length > 0 ? (
+                        <div className="p-3 rounded-2xl bg-blue-50/60 border border-blue-200/80 space-y-1.5">
+                          <p className="text-[11px] text-[#2b55f5] font-bold">Poltronas Escolhidas:</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {selectedSeats.map((s) => (
+                              <span
+                                key={s.id}
+                                className="px-2.5 py-1 rounded-lg bg-white text-[#2b55f5] border border-blue-200 text-xs font-black shadow-xs"
+                              >
+                                {s.label}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 p-2.5 rounded-xl font-medium">
+                          Escolha suas poltronas no mapa de assentos ao lado.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Totalizador */}
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
                     <span className="text-sm font-semibold text-slate-600">Total:</span>
                     <span className="text-2xl font-black text-slate-900">
                       R$ {subtotal.toFixed(2)}
                     </span>
                   </div>
 
+                  {/* Botão de Compra */}
                   <button
                     disabled={isSoldOut || totalSelectedTickets === 0}
                     onClick={handleProceedToCheckout}
@@ -626,19 +653,6 @@ export const EventDetailsPage: React.FC = () => {
                 </div>
               )}
             </div>
-
-            {/* Integration: Spotify Tour Setlist & Music Player */}
-            {(event.category === 'CONCERT' ||
-              event.title.toLowerCase().includes('show') ||
-              event.title.toLowerCase().includes('rock') ||
-              event.title.toLowerCase().includes('tour') ||
-              event.title.toLowerCase().includes('festival') ||
-              event.title.toLowerCase().includes('coldplay') ||
-              event.title.toLowerCase().includes('tomorrowland') ||
-              event.title.toLowerCase().includes('taylor') ||
-              event.title.toLowerCase().includes('billie')) && (
-              <SpotifyShowCard event={event} />
-            )}
           </div>
         </div>
       </div>
