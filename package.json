@@ -1,0 +1,29 @@
+{
+  "name": "passfy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Passfy - Plataforma de Gestão, Venda e Validação de Ingressos e Eventos",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "dev:api": "npm run dev --workspace=@passfy/api",
+    "dev:web": "npm run dev --workspace=@passfy/web",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces"
+  },
+  "keywords": [
+    "tickets",
+    "events",
+    "monolith",
+    "nodejs",
+    "react",
+    "typescript",
+    "prisma",
+    "postgresql"
+  ],
+  "author": "Pierre Brito",
+  "license": "MIT"
+}
