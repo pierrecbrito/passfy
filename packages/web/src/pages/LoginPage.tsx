@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -11,9 +11,73 @@ import {
   Sparkles,
   QrCode,
   ShieldCheck,
-  CheckCircle2,
   Zap,
+  Music,
 } from 'lucide-react';
+
+interface AnimatedTicketItem {
+  id: number;
+  code: string;
+  status: string;
+  statusColor: string;
+  title: string;
+  subtitle: string;
+  icon: 'film' | 'music' | 'zap' | 'ticket';
+  price: string;
+}
+
+const TICKET_QUEUE: AnimatedTicketItem[] = [
+  {
+    id: 1,
+    code: 'PAS-DEMO1',
+    status: 'Entrada Liberada',
+    statusColor: 'text-emerald-300 bg-emerald-400/20 border-emerald-300/30',
+    title: 'Duna: Parte 2 — IMAX VIP',
+    subtitle: 'Poltrona B-04 • Sala 01 VIP',
+    icon: 'film',
+    price: 'R$ 45,00',
+  },
+  {
+    id: 2,
+    code: 'PAS-ROCK26',
+    status: 'Confirmado',
+    statusColor: 'text-cyan-200 bg-cyan-400/20 border-cyan-300/30',
+    title: 'Rock World Festival 2026',
+    subtitle: 'Pista Premium • Portão 03',
+    icon: 'zap',
+    price: 'R$ 220,00',
+  },
+  {
+    id: 3,
+    code: 'PAS-COLD88',
+    status: 'VIP Pass',
+    statusColor: 'text-purple-200 bg-purple-400/20 border-purple-300/30',
+    title: 'Coldplay: Music of the Spheres',
+    subtitle: 'Setor Leste VIP • Fila C-12',
+    icon: 'music',
+    price: 'R$ 380,00',
+  },
+  {
+    id: 4,
+    code: 'PAS-ALN09',
+    status: 'Pré-Estreia',
+    statusColor: 'text-amber-200 bg-amber-400/20 border-amber-300/30',
+    title: 'Alien: Romulus — Dolby Atmos 3D',
+    subtitle: 'Poltrona F-08 • Sala 04',
+    icon: 'film',
+    price: 'R$ 52,00',
+  },
+  {
+    id: 5,
+    code: 'PAS-TML26',
+    status: 'Acesso Total',
+    statusColor: 'text-pink-200 bg-pink-400/20 border-pink-300/30',
+    title: 'Tomorrowland Brasil — Mainstage',
+    subtitle: 'Camarote Exclusivo • Entrada VIP',
+    icon: 'ticket',
+    price: 'R$ 750,00',
+  },
+];
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -32,6 +96,16 @@ export const LoginPage: React.FC = () => {
 
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Estado da Fila de Ingressos Subindo Continuamente
+  const [activeQueueIndex, setActiveQueueIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveQueueIndex((prev) => (prev + 1) % TICKET_QUEUE.length);
+    }, 2800);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,24 +136,24 @@ export const LoginPage: React.FC = () => {
       {/* Botão Superior para Retorno à Loja */}
       <Link
         to="/"
-        className="absolute top-6 left-6 z-30 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs font-semibold transition shadow-sm"
+        className="absolute top-6 left-6 z-40 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/20 text-white text-xs font-semibold transition shadow-sm"
         title="Voltar para o catálogo de eventos"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
         <span>Voltar ao Início</span>
       </Link>
 
-      {/* Coluna Esquerda: Painel Visual Azul com Animação da Fila de Ingressos */}
+      {/* Coluna Esquerda: Painel Visual Azul com Fila Infinita de Ingressos Subindo */}
       <div className="lg:col-span-6 h-full relative rounded-[2rem] overflow-hidden min-h-[440px] flex flex-col justify-between p-8 sm:p-10 lg:p-12 select-none bg-gradient-to-br from-[#204bee] via-[#2f5af6] to-[#0f2182]">
         
         {/* Luzes de fundo com blur fluido */}
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-300/40 rounded-full blur-3xl pointer-events-none animate-pulse" />
         <div className="absolute top-1/2 -right-20 w-80 h-80 bg-indigo-300/35 rounded-full blur-3xl pointer-events-none animate-pulse-slow" />
         <div className="absolute -bottom-24 left-1/4 w-96 h-96 bg-cyan-300/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a165c]/80 via-transparent to-black/10 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a165c]/85 via-transparent to-black/10 pointer-events-none" />
 
         {/* Cabeçalho da Marca & Frase de Impacto */}
-        <div className="relative z-10 space-y-3 pt-10 lg:pt-4">
+        <div className="relative z-10 space-y-2.5 pt-10 lg:pt-4">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/25 text-white text-xs font-semibold shadow-sm">
             <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
             <span>Passfy Tickets</span>
@@ -95,89 +169,77 @@ export const LoginPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Fila / Stack Animada de Ingressos Translúcidos (Fade Up Escalonado) */}
-        <div className="relative z-10 my-4 sm:my-6 flex flex-col items-center justify-center">
-          <div className="w-full max-w-md relative space-y-[-24px]">
-            
-            {/* Card 3 (Último da Fila - Mais transparente e recuado) */}
-            <div className="animate-ticket-3 w-full rounded-2xl p-3.5 bg-white/[0.07] backdrop-blur-sm border border-white/10 text-white/70 shadow-lg transform transition scale-[0.90] origin-bottom">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center text-white/60">
-                    <Ticket className="w-3.5 h-3.5" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold text-white/80">Coldplay — Music of the Spheres</p>
-                    <p className="text-[9px] text-white/50">Setor Leste VIP • Fila C-12 • R$ 380,00</p>
-                  </div>
-                </div>
-                <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/10 text-white/60 font-semibold">
-                  #PAS-8921
-                </span>
-              </div>
-            </div>
+        {/* Fila Contínua de Ingressos (Looping Staggered Animation) */}
+        <div className="relative z-10 my-auto py-2 w-full max-w-md mx-auto">
+          <div className="h-[250px] sm:h-[260px] relative flex items-center justify-center">
+            {TICKET_QUEUE.map((ticket, index) => {
+              // Cálculo de deslocamento na fila circular
+              const offset = (index - activeQueueIndex + TICKET_QUEUE.length) % TICKET_QUEUE.length;
 
-            {/* Card 2 (Meio da Fila - Semi-transparente) */}
-            <div className="animate-ticket-2 w-full rounded-2xl p-4 bg-white/[0.14] backdrop-blur-md border border-white/20 text-white/90 shadow-xl transform transition scale-[0.95] origin-bottom">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center text-cyan-200">
-                    <Zap className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white">Rock World Festival 2026</p>
-                    <p className="text-[10px] text-blue-100/70">Pista Premium • Portão 03 • R$ 220,00</p>
-                  </div>
-                </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-400/20 text-cyan-200 border border-cyan-300/30 font-semibold">
-                  🟢 Confirmado
-                </span>
-              </div>
-            </div>
+              // Configurações visuais de cada estágio na fila
+              let styleClasses = 'opacity-0 scale-75 translate-y-36 pointer-events-none z-0';
 
-            {/* Card 1 (Frente da Fila - Mais Nítido, Destaque com QR e Código de Barras) */}
-            <div className="animate-ticket-1 w-full rounded-2xl p-4 sm:p-5 bg-white/[0.22] backdrop-blur-xl border border-white/35 text-white shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-400/20 rounded-full blur-2xl pointer-events-none" />
+              if (offset === 0) {
+                // Cartão Ativo na Frente (Totalmente nítido)
+                styleClasses = 'opacity-100 scale-100 translate-y-0 z-30 bg-white/[0.22] backdrop-blur-xl border-white/35 text-white shadow-2xl';
+              } else if (offset === 1) {
+                // Cartão 2 na Fila (Atrás do primeiro, semi-transparente)
+                styleClasses = 'opacity-60 scale-[0.93] translate-y-10 z-20 bg-white/[0.13] backdrop-blur-md border-white/20 text-white/90 shadow-lg';
+              } else if (offset === 2) {
+                // Cartão 3 na Fila (Mais atrás, bem mais transparente)
+                styleClasses = 'opacity-25 scale-[0.86] translate-y-20 z-10 bg-white/[0.06] backdrop-blur-sm border-white/10 text-white/70 shadow-sm';
+              } else if (offset === TICKET_QUEUE.length - 1) {
+                // Cartão Saindo da Fila (Subindo e sumindo com Fade-out)
+                styleClasses = 'opacity-0 scale-[1.05] -translate-y-14 z-40 bg-white/[0.25] text-white pointer-events-none';
+              }
 
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">
-                      Entrada Liberada
+              return (
+                <div
+                  key={ticket.id}
+                  className={`absolute w-full rounded-2xl p-4 sm:p-5 border transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${styleClasses}`}
+                >
+                  <div className="flex items-start justify-between mb-2.5">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold ${ticket.statusColor}`}>
+                          {ticket.status}
+                        </span>
+                        <span className="text-[10px] font-bold text-cyan-200">
+                          {ticket.price}
+                        </span>
+                      </div>
+                      <h4 className="text-sm sm:text-base font-extrabold text-white pt-1">
+                        {ticket.title}
+                      </h4>
+                      <p className="text-xs text-blue-100/80">
+                        {ticket.subtitle}
+                      </p>
+                    </div>
+
+                    <div className="p-2 rounded-xl bg-white/20 border border-white/30 backdrop-blur-md shadow-sm shrink-0">
+                      <QrCode className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+
+                  {/* Linha Divisória de Cupom */}
+                  <div className="border-t border-dashed border-white/25 my-2" />
+
+                  <div className="flex items-center justify-between text-[11px] text-white/90">
+                    <span className="font-mono tracking-wider font-bold">{ticket.code}</span>
+                    <span className="flex items-center gap-1 text-emerald-300 font-semibold text-[10px]">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      Assinatura HMAC-SHA256
                     </span>
                   </div>
-                  <h4 className="text-sm sm:text-base font-extrabold text-white">
-                    Duna: Parte 2 — Sessão IMAX VIP
-                  </h4>
-                  <p className="text-xs text-blue-100/80 mt-0.5">
-                    Poltrona B-04 • Sala 01 • R$ 45,00
-                  </p>
                 </div>
-
-                <div className="p-2 rounded-xl bg-white/20 border border-white/30 backdrop-blur-md shadow-sm shrink-0">
-                  <QrCode className="w-7 h-7 text-white" />
-                </div>
-              </div>
-
-              {/* Linha Divisória de Cupom */}
-              <div className="border-t border-dashed border-white/25 my-2.5" />
-
-              <div className="flex items-center justify-between text-[11px] text-white/90">
-                <span className="font-mono tracking-wider font-bold">PAS-DEMO1</span>
-                <span className="flex items-center gap-1 text-emerald-300 font-semibold text-[10px]">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  Assinatura HMAC-SHA256
-                </span>
-              </div>
-            </div>
-
+              );
+            })}
           </div>
         </div>
 
-        {/* Rodapé de Parceiros com TicketMaster Discovery e Logos Reais */}
+        {/* Rodapé de Parceiros com TicketMaster Discovery */}
         <div className="relative z-10 pt-4 border-t border-white/15">
-          <p className="text-[10px] font-bold text-blue-200/80 uppercase tracking-wider mb-3">
+          <p className="text-[10px] font-bold text-blue-200/80 uppercase tracking-wider mb-2.5">
             Parceiros & Integrações Oficiais
           </p>
           <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-white/90 text-xs font-bold">
