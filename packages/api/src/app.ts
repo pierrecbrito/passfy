@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { errorHandler } from './core/middlewares/errorHandler';
 
 dotenv.config();
 
@@ -23,5 +24,10 @@ app.get('/health', (_req, res) => {
     service: 'passfy-api',
   });
 });
+
+// Global error handler must be registered after routes
+export function registerErrorHandler() {
+  app.use(errorHandler);
+}
 
 export { app };
