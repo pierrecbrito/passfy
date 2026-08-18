@@ -487,7 +487,7 @@ export const LandingPage: React.FC = () => {
             return (
               <div
                 key={ev.id || i}
-                onClick={() => navigate(`/events/${ev.id}`)}
+                onClick={() => navigate(`/event/${ev.id}`)}
                 className="group relative shrink-0 w-72 bg-white rounded-3xl border border-slate-200 overflow-hidden cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
               >
                 {/* Banner */}

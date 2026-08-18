@@ -52,6 +52,7 @@ const AppLayout: React.FC = () => {
           {/* App home — events catalog */}
           <Route path="/home" element={<HomePage />} />
           <Route path="/event/:id" element={<EventDetailsPage />} />
+          <Route path="/events/:id" element={<EventDetailsPage />} />
           <Route path="/ticket/:shareToken" element={<PublicTicketPage />} />
 
           {/* Customer Routes */}
