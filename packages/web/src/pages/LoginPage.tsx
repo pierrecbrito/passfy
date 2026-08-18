@@ -139,23 +139,23 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="h-screen min-h-screen w-full bg-white grid grid-cols-1 lg:grid-cols-12 p-3 sm:p-4 gap-4 sm:gap-6 shadow-none border-none relative overflow-hidden select-none selection:bg-[#2b55f5] selection:text-white">
+    <div className="min-h-screen w-full bg-white flex flex-col lg:grid lg:grid-cols-12 p-3 sm:p-4 gap-4 sm:gap-6 shadow-none border-none relative overflow-y-auto lg:overflow-hidden select-none selection:bg-[#2b55f5] selection:text-white">
       
-      {/* Coluna Esquerda: Painel Azul Sóbrio com Fila Contínua de Ingressos */}
-      <div className="lg:col-span-6 h-full relative rounded-[2rem] overflow-hidden min-h-[440px] flex flex-col justify-between p-8 sm:p-12 lg:p-14 select-none bg-gradient-to-br from-[#1738b5] via-[#12288a] to-[#0a144a]">
+      {/* Coluna Esquerda: Painel Azul Sóbrio */}
+      <div className="lg:col-span-6 h-auto lg:h-full relative rounded-2xl sm:rounded-[2rem] overflow-hidden flex flex-col justify-between p-6 sm:p-10 lg:p-14 select-none bg-gradient-to-br from-[#1738b5] via-[#12288a] to-[#0a144a]">
         
-        {/* Cabeçalho com espaçamento generoso do topo e tipografia equilibrada */}
-        <div className="relative z-10 space-y-3 pt-8 sm:pt-10 lg:pt-12">
+        {/* Cabeçalho com apenas texto no mobile */}
+        <div className="relative z-10 space-y-2 sm:space-y-3 pt-2 sm:pt-6 lg:pt-12">
           <p className="text-xs sm:text-sm font-medium text-blue-200 tracking-wide">
             Experiência Inteligente de Ingressos
           </p>
-          <h2 className="text-2xl sm:text-3xl lg:text-[40px] xl:text-[42px] font-black text-white leading-[1.25] tracking-tight drop-shadow-sm max-w-xl">
+          <h2 className="text-xl sm:text-3xl lg:text-[40px] xl:text-[42px] font-black text-white leading-[1.25] tracking-tight drop-shadow-sm max-w-xl">
             Acelere suas vendas e garanta seu lugar nos melhores eventos
           </h2>
         </div>
 
-        {/* Fila Contínua de Ingressos Mais Brancos e Nítidos */}
-        <div className="relative z-10 my-auto py-2 w-full max-w-md mx-auto">
+        {/* Fila Contínua de Ingressos (Aparece apenas no Desktop) */}
+        <div className="hidden lg:block relative z-10 my-auto py-2 w-full max-w-md mx-auto">
           <div className="h-[250px] sm:h-[260px] relative flex items-center justify-center">
             {TICKET_QUEUE.map((ticket, index) => {
               const offset = (index - activeQueueIndex + TICKET_QUEUE.length) % TICKET_QUEUE.length;
@@ -214,8 +214,8 @@ export const LoginPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Rodapé de Parceiros */}
-        <div className="relative z-10 pt-4 border-t border-white/15">
+        {/* Rodapé de Parceiros (Aparece apenas no Desktop) */}
+        <div className="hidden lg:block relative z-10 pt-4 border-t border-white/15">
           <p className="text-[10px] font-bold text-blue-200/80 uppercase tracking-wider mb-2.5">
             Parceiros & Integrações Oficiais
           </p>
@@ -245,8 +245,8 @@ export const LoginPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Coluna Direita: Formulário em Português com Tom Azul e Espaçamento Harmonioso */}
-      <div className="lg:col-span-6 h-full flex flex-col justify-center items-center px-4 sm:px-8 lg:px-12 py-8 bg-white overflow-y-auto">
+      {/* Coluna Direita: Formulário posicionado naturalmente abaixo no mobile */}
+      <div className="lg:col-span-6 h-auto lg:h-full flex flex-col justify-center items-center px-4 sm:px-8 lg:px-12 py-6 sm:py-8 bg-white overflow-y-auto">
         <div className="w-full max-w-[420px] mx-auto">
           
           {/* Badge / Brand Logo */}
