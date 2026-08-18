@@ -25,6 +25,19 @@ enum EventType {
   GENERAL_ADMISSION
 }
 
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+}
+
+enum TicketStatus {
+  ISSUED
+  USED
+  CANCELLED
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -34,7 +47,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  organizedEvents Event[]
+  organizedEvents   Event[]
+  reservations      Reservation[]
+  tickets           Ticket[]
+  validatedTickets  Ticket[]      @relation("GatekeeperTickets")
 
   @@map("users")
 }
@@ -57,7 +73,9 @@ model Event {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
-  seats Seat[]
+  seats        Seat[]
+  reservations Reservation[]
+  tickets      Ticket[]
 
   @@map("events")
 }
@@ -74,6 +92,63 @@ model Seat {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  reservationItems ReservationItem[]
+  tickets          Ticket[]
+
   @@unique([eventId, row, number])
   @@map("seats")
+}
+
+model Reservation {
+  id          String            @id @default(uuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id])
+  eventId     String
+  event       Event             @relation(fields: [eventId], references: [id])
+  status      ReservationStatus @default(PENDING)
+  totalAmount Decimal           @db.Decimal(10, 2)
+  expiresAt   DateTime
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  items   ReservationItem[]
+  tickets Ticket[]
+
+  @@map("reservations")
+}
+
+model ReservationItem {
+  id            String      @id @default(uuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  seatId        String?
+  seat          Seat?       @relation(fields: [seatId], references: [id])
+  price         Decimal     @db.Decimal(10, 2)
+  createdAt     DateTime    @default(now())
+
+  @@map("reservation_items")
+}
+
+model Ticket {
+  id                 String       @id @default(uuid())
+  ticketCode         String       @unique
+  qrToken            String       @db.Text
+  qrSignature        String
+  shareToken         String       @unique
+  status             TicketStatus @default(ISSUED)
+  userId             String
+  user               User         @relation(fields: [userId], references: [id])
+  eventId            String
+  event              Event        @relation(fields: [eventId], references: [id])
+  seatId             String?
+  seat               Seat?        @relation(fields: [seatId], references: [id])
+  reservationId      String?
+  reservation        Reservation? @relation(fields: [reservationId], references: [id])
+  usedAt             DateTime?
+  usedByGatekeeperId String?
+  usedByGatekeeper   User?        @relation("GatekeeperTickets", fields: [usedByGatekeeperId], references: [id])
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  @@map("tickets")
 }
