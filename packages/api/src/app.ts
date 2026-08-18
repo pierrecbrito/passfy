@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { authRoutes } from './modules/auth/routes/authRoutes';
+import { catalogRoutes } from './modules/catalog/routes/catalogRoutes';
 import { errorHandler } from './core/middlewares/errorHandler';
 
 dotenv.config();
@@ -28,6 +29,7 @@ app.get('/health', (_req, res) => {
 
 // App Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/catalog', catalogRoutes);
 
 // Global Error Handler
 app.use(errorHandler);
