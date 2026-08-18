@@ -144,12 +144,12 @@ export const LoginPage: React.FC = () => {
       {/* Coluna Esquerda: Painel Azul Sóbrio com Fila Contínua de Ingressos */}
       <div className="lg:col-span-6 h-full relative rounded-[2rem] overflow-hidden min-h-[440px] flex flex-col justify-between p-8 sm:p-12 lg:p-14 select-none bg-gradient-to-br from-[#1738b5] via-[#12288a] to-[#0a144a]">
         
-        {/* Cabeçalho com espaçamento generoso do topo e tipografia de alto impacto */}
-        <div className="relative z-10 space-y-4 pt-8 sm:pt-12 lg:pt-16">
+        {/* Cabeçalho com espaçamento generoso do topo e tipografia equilibrada */}
+        <div className="relative z-10 space-y-3 pt-8 sm:pt-10 lg:pt-12">
           <p className="text-xs sm:text-sm font-medium text-blue-200 tracking-wide">
             Experiência Inteligente de Ingressos
           </p>
-          <h2 className="text-3xl sm:text-4xl lg:text-[48px] xl:text-[52px] font-black text-white leading-[1.38] lg:leading-[1.35] tracking-tight drop-shadow-sm max-w-xl">
+          <h2 className="text-2xl sm:text-3xl lg:text-[40px] xl:text-[42px] font-black text-white leading-[1.25] tracking-tight drop-shadow-sm max-w-xl">
             Acelere suas vendas e garanta seu lugar nos melhores eventos
           </h2>
         </div>
