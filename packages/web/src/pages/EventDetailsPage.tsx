@@ -379,9 +379,9 @@ export const EventDetailsPage: React.FC = () => {
             )}
           </div>
 
-          {/* Right Column: Dynamic Sticky Card (Summary OR In-Place Pre-Registration) */}
+          {/* Right Column: Order Summary & Checkout Card */}
           <div className="space-y-6">
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 sticky top-24 space-y-5 shadow-sm transition-all duration-300">
+            <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 space-y-5 shadow-sm transition-all duration-300">
               {/* STATE 1: In-Place Authentication / Pre-Cadastro Form */}
               {isAuthCardActive && !user ? (
                 <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
