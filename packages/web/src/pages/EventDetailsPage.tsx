@@ -529,14 +529,10 @@ export const EventDetailsPage: React.FC = () => {
                     <h3 className="text-base font-black text-slate-900">
                       Resumo da Reserva
                     </h3>
-                    {user ? (
+                    {user && (
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
                         <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                         <span className="truncate max-w-[110px]">{user.name.split(' ')[0]}</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-[11px] font-bold">
-                        Deslogado
                       </span>
                     )}
                   </div>
