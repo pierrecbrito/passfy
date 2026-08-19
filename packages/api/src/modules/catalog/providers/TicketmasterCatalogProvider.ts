@@ -179,13 +179,32 @@ export class TicketmasterCatalogProvider implements ICatalogProvider {
           apikey: apiKey,
           classificationName: 'music',
           sort: 'relevance,desc',
-          size: 20,
+          size: 50,
           locale: '*',
         },
       });
 
-      const events = response.data._embedded?.events || [];
-      return events.map((item: any) => this.mapEventToCatalogItem(item));
+      const events: any[] = response.data._embedded?.events || [];
+
+      // Deduplicate recurring residencies / multi-day shows with identical titles
+      const seenTitles = new Set<string>();
+      const uniqueEvents: any[] = [];
+
+      for (const item of events) {
+        const normalizedTitle = (item.name || '')
+          .split('-')[0]
+          .split('|')[0]
+          .trim()
+          .toLowerCase();
+
+        if (!seenTitles.has(normalizedTitle)) {
+          seenTitles.add(normalizedTitle);
+          uniqueEvents.push(item);
+        }
+      }
+
+      const results = uniqueEvents.slice(0, 20).map((item: any) => this.mapEventToCatalogItem(item));
+      return results.length > 0 ? results : events.slice(0, 20).map((item: any) => this.mapEventToCatalogItem(item));
     } catch (error: any) {
       console.warn('Ticketmaster Discovery API trending failed:', error?.message || error);
       return FALLBACK_TICKETMASTER_EVENTS;
