@@ -104,12 +104,18 @@ const FALLBACK_TICKETMASTER_EVENTS: CatalogItem[] = [
 
 export class TicketmasterCatalogProvider implements ICatalogProvider {
   private readonly client = axios.create({
-    baseURL: env.TICKETMASTER_BASE_URL,
-    timeout: 5000,
+    baseURL: process.env.TICKETMASTER_BASE_URL || env.TICKETMASTER_BASE_URL || 'https://app.ticketmaster.com/discovery/v2',
+    timeout: 10000,
   });
 
+  private getApiKey(): string {
+    return process.env.TICKETMASTER_API_KEY || env.TICKETMASTER_API_KEY || '';
+  }
+
   async search(query: string): Promise<CatalogItem[]> {
-    if (!env.TICKETMASTER_API_KEY) {
+    const apiKey = this.getApiKey();
+
+    if (!apiKey) {
       const lower = query.toLowerCase();
       return FALLBACK_TICKETMASTER_EVENTS.filter(
         (e) =>
@@ -120,19 +126,36 @@ export class TicketmasterCatalogProvider implements ICatalogProvider {
     }
 
     try {
-      const response = await this.client.get('/events.json', {
+      let response = await this.client.get('/events.json', {
         params: {
-          apikey: env.TICKETMASTER_API_KEY,
+          apikey: apiKey,
           keyword: query,
           size: 20,
           locale: '*',
         },
       });
 
-      const events = response.data._embedded?.events || [];
+      let events = response.data._embedded?.events || [];
+
+      // If no events found and query contains accents, retry with normalized query
+      if (events.length === 0) {
+        const normalized = query.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (normalized !== query) {
+          response = await this.client.get('/events.json', {
+            params: {
+              apikey: apiKey,
+              keyword: normalized,
+              size: 20,
+              locale: '*',
+            },
+          });
+          events = response.data._embedded?.events || [];
+        }
+      }
+
       return events.map((item: any) => this.mapEventToCatalogItem(item));
-    } catch (error) {
-      console.warn('Ticketmaster Discovery API call failed or key expired, falling back to curated dataset.');
+    } catch (error: any) {
+      console.warn('Ticketmaster Discovery API call failed:', error?.message || error);
       const lower = query.toLowerCase();
       return FALLBACK_TICKETMASTER_EVENTS.filter(
         (e) =>
@@ -144,14 +167,16 @@ export class TicketmasterCatalogProvider implements ICatalogProvider {
   }
 
   async getTrending(): Promise<CatalogItem[]> {
-    if (!env.TICKETMASTER_API_KEY) {
+    const apiKey = this.getApiKey();
+
+    if (!apiKey) {
       return FALLBACK_TICKETMASTER_EVENTS;
     }
 
     try {
       const response = await this.client.get('/events.json', {
         params: {
-          apikey: env.TICKETMASTER_API_KEY,
+          apikey: apiKey,
           classificationName: 'music',
           sort: 'relevance,desc',
           size: 20,
@@ -161,21 +186,23 @@ export class TicketmasterCatalogProvider implements ICatalogProvider {
 
       const events = response.data._embedded?.events || [];
       return events.map((item: any) => this.mapEventToCatalogItem(item));
-    } catch (error) {
-      console.warn('Ticketmaster Discovery API trending failed, falling back to curated dataset.');
+    } catch (error: any) {
+      console.warn('Ticketmaster Discovery API trending failed:', error?.message || error);
       return FALLBACK_TICKETMASTER_EVENTS;
     }
   }
 
   async getById(id: string): Promise<CatalogItem | null> {
-    if (!env.TICKETMASTER_API_KEY) {
+    const apiKey = this.getApiKey();
+
+    if (!apiKey) {
       return FALLBACK_TICKETMASTER_EVENTS.find((e) => e.id === id) || null;
     }
 
     try {
       const response = await this.client.get(`/events/${id}.json`, {
         params: {
-          apikey: env.TICKETMASTER_API_KEY,
+          apikey: apiKey,
         },
       });
 
