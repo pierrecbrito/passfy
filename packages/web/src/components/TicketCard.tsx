@@ -5,8 +5,11 @@ import {
   Share2,
   Check,
   Ticket,
+  FileDown,
   Printer,
+  Loader2,
 } from 'lucide-react';
+import { generateTicketPdf } from '../utils/generateTicketPdf';
 
 interface TicketCardProps {
   ticket: any;
@@ -15,6 +18,7 @@ interface TicketCardProps {
 
 export const TicketCard: React.FC<TicketCardProps> = ({ ticket, isPublicView = false }) => {
   const [copied, setCopied] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const event = ticket.event;
   const isUsed = ticket.status === 'USED';
@@ -30,8 +34,17 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, isPublicView = f
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleDownloadPdf = () => {
+    setIsGeneratingPdf(true);
+    try {
+      generateTicketPdf(ticket);
+    } catch (err) {
+      console.error('Failed to generate PDF:', err);
+      // Fallback to window.print if anything unexpected occurs
+      window.print();
+    } finally {
+      setTimeout(() => setIsGeneratingPdf(false), 800);
+    }
   };
 
   const formattedDate = new Date(event.date).toLocaleDateString('pt-BR', {
@@ -162,30 +175,39 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, isPublicView = f
           {!isPublicView && (
             <button
               onClick={handleCopyLink}
-              className="flex-1 py-2.5 px-3 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-xs flex items-center justify-center gap-1.5"
+              className="py-2.5 px-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-xs flex items-center justify-center gap-1.5"
+              title="Copiar link público do ingresso"
             >
               {copied ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Link Copiado!</span>
+                  <span>Copiado!</span>
                 </>
               ) : (
                 <>
                   <Share2 className="w-3.5 h-3.5 text-[#2b55f5]" />
-                  <span>Compartilhar Link</span>
+                  <span>Compartilhar</span>
                 </>
               )}
             </button>
           )}
 
           <button
-            onClick={handlePrint}
-            className={`py-2.5 px-3 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-xs flex items-center justify-center gap-1.5 ${
-              isPublicView ? 'w-full' : ''
-            }`}
+            onClick={handleDownloadPdf}
+            disabled={isGeneratingPdf}
+            className="flex-1 py-2.5 px-4 rounded-xl bg-[#2b55f5] hover:bg-[#1f44d6] text-white text-xs font-bold transition shadow-xs flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-75"
           >
-            <Printer className="w-3.5 h-3.5 text-slate-600" />
-            <span>Imprimir</span>
+            {isGeneratingPdf ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Gerando PDF...</span>
+              </>
+            ) : (
+              <>
+                <FileDown className="w-4 h-4" />
+                <span>Baixar Ingresso (PDF)</span>
+              </>
+            )}
           </button>
         </div>
       </div>
