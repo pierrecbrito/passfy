@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Modal } from '../components/ui/Modal';
@@ -13,6 +13,12 @@ import {
   PlusCircle,
   Ticket,
   Film,
+  Loader2,
+  X,
+  Globe2,
+  Music,
+  CheckCircle2,
+  ChevronDown,
 } from 'lucide-react';
 
 interface CatalogItem {
@@ -51,7 +57,68 @@ export const OrganizerCreatePage: React.FC = () => {
   const [rowsCount, setRowsCount] = useState(8);
   const [seatsPerRow, setSeatsPerRow] = useState(10);
 
-  // Catalog Modal State
+  // Inline Ticketmaster Live Autocomplete State for Title Input
+  const titleDropdownRef = useRef<HTMLDivElement>(null);
+  const [titleSuggestions, setTitleSuggestions] = useState<CatalogItem[]>([]);
+  const [isSearchingTitle, setIsSearchingTitle] = useState(false);
+  const [showTitleDropdown, setShowTitleDropdown] = useState(false);
+  const [isManuallyOverridden, setIsManuallyOverridden] = useState(false);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (titleDropdownRef.current && !titleDropdownRef.current.contains(event.target as Node)) {
+        setShowTitleDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Live query Ticketmaster as user types in the title input field
+  useEffect(() => {
+    const trimmed = title.trim();
+
+    if (trimmed.length < 2 || isManuallyOverridden) {
+      setTitleSuggestions([]);
+      setShowTitleDropdown(false);
+      setIsSearchingTitle(false);
+      return;
+    }
+
+    let isMounted = true;
+    setIsSearchingTitle(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        const response = await api.get('/catalog/search', {
+          params: {
+            query: trimmed,
+            source: 'TICKETMASTER',
+          },
+        });
+
+        if (isMounted) {
+          const items: CatalogItem[] = response.data.items || [];
+          setTitleSuggestions(items);
+          setShowTitleDropdown(items.length > 0);
+        }
+      } catch (err) {
+        console.warn('Live title search error:', err);
+      } finally {
+        if (isMounted) {
+          setIsSearchingTitle(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [title, isManuallyOverridden]);
+
+  // Catalog Modal State (Manual button)
   const [isCatalogModalOpen, setIsCatalogModalOpen] = useState(false);
   const [catalogSource, setCatalogSource] = useState<'TICKETMASTER' | 'TMDB' | 'ALL'>('TICKETMASTER');
   const [catalogQuery, setCatalogQuery] = useState('');
@@ -62,7 +129,7 @@ export const OrganizerCreatePage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Search catalog
+  // Search catalog modal effect
   useEffect(() => {
     if (!isCatalogModalOpen) return;
 
@@ -89,6 +156,8 @@ export const OrganizerCreatePage: React.FC = () => {
 
   const handleSelectCatalogItem = (item: CatalogItem) => {
     setTitle(item.title);
+    setShowTitleDropdown(false);
+    setIsManuallyOverridden(true);
     setDescription(item.description);
     setBannerUrl(item.backdropUrl || item.posterUrl || '');
     setExternalId(item.id);
@@ -198,18 +267,160 @@ export const OrganizerCreatePage: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Título do Evento *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Ex: Coldplay — Music of the Spheres World Tour"
-                  className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#2b55f5] shadow-xs"
-                />
+              {/* Title Input with Live Ticketmaster Suggestions */}
+              <div className="relative" ref={titleDropdownRef}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Título do Evento *
+                  </label>
+                  {externalSource === 'TICKETMASTER' && (
+                    <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      <span>Vinculado ao Ticketmaster</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExternalId(null);
+                          setExternalSource(null);
+                          setIsManuallyOverridden(true);
+                        }}
+                        className="ml-1 text-slate-400 hover:text-slate-700 font-bold"
+                        title="Desvincular e editar manualmente"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    value={title}
+                    onChange={(e) => {
+                      setTitle(e.target.value);
+                      setIsManuallyOverridden(false);
+                      if (e.target.value.trim().length >= 2) {
+                        setShowTitleDropdown(true);
+                      }
+                    }}
+                    onFocus={() => {
+                      if (titleSuggestions.length > 0 && !isManuallyOverridden) {
+                        setShowTitleDropdown(true);
+                      }
+                    }}
+                    placeholder="Digite o título ou nome da turnê (ex: Chitãozinho, Coldplay, Rock in Rio...)"
+                    className="w-full pl-4 pr-10 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#2b55f5] shadow-xs"
+                  />
+
+                  {isSearchingTitle ? (
+                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[#2b55f5]">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    </div>
+                  ) : title ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTitle('');
+                        setTitleSuggestions([]);
+                        setShowTitleDropdown(false);
+                      }}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  ) : null}
+                </div>
+
+                {/* Suggestions Dropdown Popover */}
+                {showTitleDropdown && titleSuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 z-40 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                    <div className="p-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                        <Sparkles className="w-3.5 h-3.5 text-cyan-600" />
+                        <span>Sugestões Disponíveis no Ticketmaster ({titleSuggestions.length}):</span>
+                      </div>
+                      <span className="text-[10px] text-slate-500">Selecione para preencher tudo</span>
+                    </div>
+
+                    <div className="max-h-72 overflow-y-auto divide-y divide-slate-100">
+                      {titleSuggestions.map((item) => (
+                        <div
+                          key={item.id}
+                          onClick={() => handleSelectCatalogItem(item)}
+                          className="p-3 flex items-center gap-3.5 hover:bg-blue-50/70 transition cursor-pointer group"
+                        >
+                          <img
+                            src={
+                              item.posterUrl ||
+                              item.backdropUrl ||
+                              'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&w=150&q=80'
+                            }
+                            alt={item.title}
+                            className="w-12 h-14 object-cover rounded-lg shrink-0 border border-slate-200 shadow-xs"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-800 border border-cyan-200 uppercase">
+                                Ticketmaster
+                              </span>
+                              {item.category && (
+                                <span className="text-[10px] text-slate-500 font-medium">
+                                  {item.category === 'CONCERT' ? '🎵 Show' : '🎬 Filme'}
+                                </span>
+                              )}
+                            </div>
+                            <h4 className="text-sm font-bold text-slate-900 group-hover:text-[#2b55f5] transition truncate">
+                              {item.title}
+                            </h4>
+                            <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-0.5 font-medium">
+                              {item.venue && (
+                                <span className="flex items-center gap-1 truncate text-slate-600">
+                                  <MapPin className="w-3 h-3 text-emerald-600 shrink-0" />
+                                  <span className="truncate">{item.venue}</span>
+                                </span>
+                              )}
+                              {item.releaseDate && (
+                                <span className="flex items-center gap-1 shrink-0">
+                                  <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+                                  <span>{item.releaseDate}</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="px-3 py-1.5 rounded-lg bg-white group-hover:bg-[#2b55f5] text-slate-700 group-hover:text-white border border-slate-300 group-hover:border-[#2b55f5] text-xs font-bold transition shadow-xs shrink-0"
+                          >
+                            Selecionar
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Manual override action bar */}
+                    <div className="p-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowTitleDropdown(false);
+                          setIsManuallyOverridden(true);
+                        }}
+                        className="text-slate-600 hover:text-slate-900 font-medium hover:underline flex items-center gap-1"
+                      >
+                        <span>✍️ Continuar com "{title}" manualmente</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowTitleDropdown(false)}
+                        className="text-slate-400 hover:text-slate-600 font-semibold"
+                      >
+                        Fechar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
