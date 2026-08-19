@@ -16,6 +16,8 @@ import {
   GraduationCap,
   FileBadge,
   Info,
+  Calendar,
+  ExternalLink,
 } from 'lucide-react';
 
 interface CheckoutModalProps {
@@ -148,6 +150,24 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           spread: 80,
           origin: { y: 0.6 },
         });
+
+        // Construct Google Calendar Scheduling Link & Open in a New Tab
+        try {
+          const startDate = new Date(event.date);
+          const endDate = new Date(startDate.getTime() + 3 * 60 * 60 * 1000);
+          const formatUTC = (d: Date) => d.toISOString().replace(/-|:|\.\d\d\d/g, '');
+          const calendarParams = new URLSearchParams({
+            action: 'TEMPLATE',
+            text: `Ingresso Passfy: ${event.title}`,
+            dates: `${formatUTC(startDate)}/${formatUTC(endDate)}`,
+            details: `Seu ingresso para o evento "${event.title}" está confirmado!\nLocal: ${event.venue}\n\nAcesse sua carteira digital Passfy para visualizar o QR Code criptografado.`,
+            location: event.venue,
+          });
+          const googleCalendarUrl = `https://calendar.google.com/calendar/render?${calendarParams.toString()}`;
+          window.open(googleCalendarUrl, '_blank');
+        } catch (calErr) {
+          console.warn('Could not auto-open Google Calendar:', calErr);
+        }
       }
     } catch (err: any) {
       setError(
@@ -157,6 +177,22 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleOpenGoogleCalendar = () => {
+    if (!event) return;
+    const startDate = new Date(event.date);
+    const endDate = new Date(startDate.getTime() + 3 * 60 * 60 * 1000);
+    const formatUTC = (d: Date) => d.toISOString().replace(/-|:|\.\d\d\d/g, '');
+    const calendarParams = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: `Ingresso Passfy: ${event.title}`,
+      dates: `${formatUTC(startDate)}/${formatUTC(endDate)}`,
+      details: `Seu ingresso para o evento "${event.title}" está confirmado!\nLocal: ${event.venue}\n\nAcesse sua carteira digital Passfy para visualizar o QR Code criptografado.`,
+      location: event.venue,
+    });
+    const googleCalendarUrl = `https://calendar.google.com/calendar/render?${calendarParams.toString()}`;
+    window.open(googleCalendarUrl, '_blank');
   };
 
   const handleFinish = () => {
@@ -203,9 +239,30 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
+          {/* Google Calendar Notification Banner */}
+          <div className="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-between gap-3 text-left">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shrink-0 shadow-xs">
+                <Calendar className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-900">Agendado no Google Agenda</p>
+                <p className="text-[11px] text-slate-500 font-medium">Uma nova aba foi aberta para você salvar o evento</p>
+              </div>
+            </div>
             <button
-              className="w-full py-3.5 px-4 rounded-xl text-sm font-bold bg-[#2b55f5] hover:bg-[#1f44d6] text-white shadow-xs transition flex items-center justify-center gap-2"
+              type="button"
+              onClick={handleOpenGoogleCalendar}
+              className="px-3 py-1.5 rounded-lg bg-white border border-blue-300 text-[#2b55f5] text-xs font-bold hover:bg-blue-50 transition shrink-0 shadow-xs flex items-center gap-1"
+            >
+              <span>Reabrir</span>
+              <ExternalLink className="w-3 h-3" />
+            </button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <button
+              className="flex-1 py-3.5 px-4 rounded-xl text-sm font-bold bg-[#2b55f5] hover:bg-[#1f44d6] text-white shadow-xs transition flex items-center justify-center gap-2 active:scale-[0.98]"
               onClick={handleFinish}
             >
               <Ticket className="w-5 h-5" />
