@@ -14,8 +14,6 @@ const envSchema = z.object({
   JWT_SECRET: z.string().default('super_secret_passfy_jwt_key_development_only_change_in_production'),
   QR_SECRET_KEY: z.string().default('passfy_cryptographic_qr_signing_key_hmac_sha256_secret'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
-  TMDB_API_KEY: z.string().optional().default(''),
-  TMDB_BASE_URL: z.string().default('https://api.themoviedb.org/3'),
   TICKETMASTER_API_KEY: z.string().optional().default(''),
   TICKETMASTER_BASE_URL: z.string().default('https://app.ticketmaster.com/discovery/v2'),
 });

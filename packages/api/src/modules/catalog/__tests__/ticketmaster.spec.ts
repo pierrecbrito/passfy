@@ -33,13 +33,11 @@ describe('Ticketmaster Discovery Catalog Provider', () => {
     expect(item?.venue).toContain('Cidade do Rock');
   });
 
-  it('should support searching across multi-source catalogs via CatalogService', async () => {
-    const allResults = await catalogService.search('', 'ALL');
+  it('should support searching across catalog via CatalogService', async () => {
+    const allResults = await catalogService.search('');
     expect(allResults.length).toBeGreaterThan(0);
 
     const hasTicketmaster = allResults.some((i) => i.source === 'TICKETMASTER');
-    const hasTmdb = allResults.some((i) => i.source === 'TMDB');
     expect(hasTicketmaster).toBe(true);
-    expect(hasTmdb).toBe(true);
   });
 });

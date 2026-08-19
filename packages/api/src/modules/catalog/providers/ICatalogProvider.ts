@@ -6,7 +6,7 @@ export interface CatalogItem {
   backdropUrl: string | null;
   releaseDate: string;
   category: 'MOVIE' | 'CONCERT' | 'THEATER' | 'OTHER';
-  source: 'TMDB' | 'TICKETMASTER' | 'MANUAL';
+  source: 'TICKETMASTER' | 'MANUAL';
   venue?: string;
   city?: string;
   url?: string;

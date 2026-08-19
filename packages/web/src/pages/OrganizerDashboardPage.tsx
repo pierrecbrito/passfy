@@ -111,7 +111,7 @@ export const OrganizerDashboardPage: React.FC = () => {
               <Calendar className="w-12 h-12 text-slate-400 mx-auto mb-3" />
               <p className="font-bold text-slate-900">Nenhum evento publicado ainda.</p>
               <p className="text-xs text-slate-500 mt-1">
-                Comece importando um show do Ticketmaster ou filme do TMDb!
+                Comece publicando seu primeiro evento com suporte à Ticketmaster!
               </p>
               <button
                 className="mt-4 px-4 py-2 rounded-lg bg-[#2b55f5] text-white text-xs font-bold shadow-xs"

@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { Modal } from '../components/ui/Modal';
 import {
-  Search,
   Calendar,
   DollarSign,
   MapPin,
@@ -12,13 +10,9 @@ import {
   AlertCircle,
   PlusCircle,
   Ticket,
-  Film,
   Loader2,
   X,
-  Globe2,
-  Music,
   CheckCircle2,
-  ChevronDown,
 } from 'lucide-react';
 
 interface CatalogItem {
@@ -29,7 +23,7 @@ interface CatalogItem {
   backdropUrl: string | null;
   releaseDate: string;
   category: 'MOVIE' | 'CONCERT' | 'THEATER' | 'OTHER';
-  source: 'TICKETMASTER' | 'TMDB' | 'MANUAL';
+  source: 'TICKETMASTER' | 'MANUAL';
   venue?: string;
   city?: string;
 }
@@ -63,6 +57,10 @@ export const OrganizerCreatePage: React.FC = () => {
   const [isSearchingTitle, setIsSearchingTitle] = useState(false);
   const [showTitleDropdown, setShowTitleDropdown] = useState(false);
   const [isManuallyOverridden, setIsManuallyOverridden] = useState(false);
+
+  // Submitting State
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -118,42 +116,6 @@ export const OrganizerCreatePage: React.FC = () => {
     };
   }, [title, isManuallyOverridden]);
 
-  // Catalog Modal State (Manual button)
-  const [isCatalogModalOpen, setIsCatalogModalOpen] = useState(false);
-  const [catalogSource, setCatalogSource] = useState<'TICKETMASTER' | 'TMDB' | 'ALL'>('TICKETMASTER');
-  const [catalogQuery, setCatalogQuery] = useState('');
-  const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([]);
-  const [isCatalogLoading, setIsCatalogLoading] = useState(false);
-
-  // Submitting State
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Search catalog modal effect
-  useEffect(() => {
-    if (!isCatalogModalOpen) return;
-
-    async function fetchCatalog() {
-      setIsCatalogLoading(true);
-      try {
-        const response = await api.get('/catalog/search', {
-          params: {
-            query: catalogQuery.trim() || undefined,
-            source: catalogSource,
-          },
-        });
-        setCatalogItems(response.data.items || []);
-      } catch (err) {
-        console.error('Failed to search catalog:', err);
-      } finally {
-        setIsCatalogLoading(false);
-      }
-    }
-
-    const timer = setTimeout(fetchCatalog, 250);
-    return () => clearTimeout(timer);
-  }, [catalogQuery, catalogSource, isCatalogModalOpen]);
-
   const handleSelectCatalogItem = (item: CatalogItem) => {
     setTitle(item.title);
     setShowTitleDropdown(false);
@@ -162,7 +124,7 @@ export const OrganizerCreatePage: React.FC = () => {
     setBannerUrl(item.backdropUrl || item.posterUrl || '');
     setExternalId(item.id);
     setExternalSource(item.source);
-    setCategory(item.category || (item.source === 'TICKETMASTER' ? 'CONCERT' : 'MOVIE'));
+    setCategory(item.category || 'CONCERT');
 
     if (item.venue) {
       setVenue(item.venue);
@@ -179,15 +141,8 @@ export const OrganizerCreatePage: React.FC = () => {
       }
     }
 
-    if (item.source === 'TICKETMASTER') {
-      setType('GENERAL_ADMISSION');
-      setPrice('220.00');
-    } else {
-      setType('SEATED');
-      setPrice('45.00');
-    }
-
-    setIsCatalogModalOpen(false);
+    setType('GENERAL_ADMISSION');
+    setPrice('220.00');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -226,22 +181,11 @@ export const OrganizerCreatePage: React.FC = () => {
     <div className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Header */}
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Publicar Novo Evento</h1>
-            <p className="text-sm text-slate-500 font-medium mt-0.5">
-              Importe dados ao vivo via <strong className="text-cyan-700">Ticketmaster Discovery</strong> / <strong className="text-indigo-700">TMDb</strong> ou preencha manualmente
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setIsCatalogModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#2b55f5] hover:bg-[#1f44d6] text-white text-xs font-bold shadow-xs transition"
-          >
-            <Sparkles className="w-4 h-4 text-cyan-200 animate-pulse" />
-            <span>Importar do Catálogo Oficial</span>
-          </button>
+        <div className="mb-8">
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Publicar Novo Evento</h1>
+          <p className="text-sm text-slate-500 font-medium mt-1">
+            Digite o nome da turnê no título para autocompletar via <strong className="text-[#2b55f5]">Ticketmaster Discovery</strong> ou preencha todos os campos manualmente.
+          </p>
         </div>
 
         {error && (
@@ -259,9 +203,9 @@ export const OrganizerCreatePage: React.FC = () => {
                 <Ticket className="w-5 h-5 text-[#2b55f5]" />
                 <span>Informações do Evento</span>
               </h2>
-              {externalSource && (
+              {externalSource === 'TICKETMASTER' && (
                 <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-[#2b55f5] border border-blue-200">
-                  Origem: {externalSource === 'TICKETMASTER' ? 'Ticketmaster Discovery' : 'TMDb Filmes'}
+                  Origem: Ticketmaster Discovery
                 </span>
               )}
             </div>
@@ -708,150 +652,6 @@ export const OrganizerCreatePage: React.FC = () => {
             </button>
           </div>
         </form>
-
-        {/* Ticketmaster & TMDb Multi-Source Catalog Modal */}
-        <Modal
-          isOpen={isCatalogModalOpen}
-          onClose={() => setIsCatalogModalOpen(false)}
-          title="Catálogo Oficial de Eventos & Atrações"
-          maxWidth="2xl"
-        >
-          <div className="space-y-4">
-            {/* Source Tabs */}
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-              <button
-                type="button"
-                onClick={() => setCatalogSource('TICKETMASTER')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-                  catalogSource === 'TICKETMASTER'
-                    ? 'bg-cyan-50 text-cyan-800 border border-cyan-300 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-300'
-                }`}
-              >
-                <Ticket className="w-3.5 h-3.5 text-cyan-600" />
-                <span>Ticketmaster Discovery</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setCatalogSource('TMDB')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-                  catalogSource === 'TMDB'
-                    ? 'bg-indigo-50 text-indigo-800 border border-indigo-300 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-300'
-                }`}
-              >
-                <Film className="w-3.5 h-3.5 text-indigo-600" />
-                <span>TMDb Filmes</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setCatalogSource('ALL')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-                  catalogSource === 'ALL'
-                    ? 'bg-blue-50 text-[#2b55f5] border border-blue-300 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-300'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-[#2b55f5]" />
-                <span>Todos</span>
-              </button>
-            </div>
-
-            <div className="relative">
-              <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                value={catalogQuery}
-                onChange={(e) => setCatalogQuery(e.target.value)}
-                placeholder={
-                  catalogSource === 'TICKETMASTER'
-                    ? 'Buscar shows, turnês ou festivais no Ticketmaster (ex: Coldplay, Taylor Swift, Rock in Rio)...'
-                    : 'Buscar filmes no TMDb (ex: Duna, Deadpool, Divertida Mente)...'
-                }
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#2b55f5] shadow-xs"
-              />
-            </div>
-
-            <div className="max-h-96 overflow-y-auto space-y-3 pr-1">
-              {isCatalogLoading ? (
-                <div className="py-12 text-center text-xs text-slate-500 font-medium flex items-center justify-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#2b55f5] animate-ping" />
-                  Carregando eventos via {catalogSource === 'TICKETMASTER' ? 'Ticketmaster Discovery API v2' : 'TMDb'}...
-                </div>
-              ) : catalogItems.length === 0 ? (
-                <div className="py-12 text-center text-xs text-slate-500">
-                  Nenhum evento encontrado para "{catalogQuery}".
-                </div>
-              ) : (
-                catalogItems.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => handleSelectCatalogItem(item)}
-                    className="flex items-center gap-4 p-3 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 hover:border-blue-400 transition cursor-pointer group shadow-xs"
-                  >
-                    <img
-                      src={
-                        item.posterUrl ||
-                        item.backdropUrl ||
-                        'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&w=200&q=80'
-                      }
-                      alt={item.title}
-                      className="w-16 h-20 object-cover rounded-xl shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span
-                          className={`text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
-                            item.source === 'TICKETMASTER'
-                              ? 'bg-cyan-50 text-cyan-800 border border-cyan-200'
-                              : 'bg-indigo-50 text-indigo-800 border border-indigo-200'
-                          }`}
-                        >
-                          {item.source === 'TICKETMASTER' ? 'Ticketmaster' : 'TMDb'}
-                        </span>
-                        {item.category && (
-                          <span className="text-[10px] text-slate-500 font-medium">
-                            {item.category === 'CONCERT' ? '🎵 Show / Concerto' : '🎬 Filme'}
-                          </span>
-                        )}
-                      </div>
-
-                      <h4 className="text-sm font-bold text-slate-900 group-hover:text-[#2b55f5] transition truncate">
-                        {item.title}
-                      </h4>
-                      <p className="text-xs text-slate-500 line-clamp-2 mt-0.5 leading-relaxed">
-                        {item.description}
-                      </p>
-                      
-                      <div className="flex items-center gap-3 text-[10px] text-slate-500 mt-1.5 font-medium">
-                        {item.venue && (
-                          <span className="flex items-center gap-1 text-slate-600 truncate">
-                            <MapPin className="w-3 h-3 text-emerald-600 shrink-0" />
-                            {item.venue}
-                          </span>
-                        )}
-                        {item.releaseDate && (
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
-                            {item.releaseDate}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-xs"
-                    >
-                      Importar
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </Modal>
       </div>
     </div>
   );

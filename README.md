@@ -1,7 +1,6 @@
 # 🎟️ Passfy — Plataforma de Eventos, Ingressos & Validação Criptográfica
 
-> Projeto desenvolvido para o **Desafio Elite Dev da Verzel**.  
-> Uma plataforma full-stack completa de gestão, venda concorrente e validação de ingressos em tempo real com QR Code anti-fraude, construída com arquitetura de **Monólito Modular**, integração oficial à **Ticketmaster Discovery API v2 & TMDb**, e foco rigoroso em engenharia de software e intencionalidade de design.
+> Uma plataforma full-stack de gestão, venda concorrente e validação de ingressos em tempo real com QR Code anti-fraude, construída com arquitetura de **Monólito Modular**, integração oficial à **Ticketmaster Discovery API v2 (com Auto-Suggest em tempo real)**, **Spotify Web API**, geração de **Ingressos em PDF de Alta Definição**, agendamento no **Google Agenda**, e foco rigoroso em engenharia de software e intencionalidade de design.
 
 ---
 
@@ -24,31 +23,43 @@
 
 O **Passfy** soluciona o ciclo de vida completo de eventos e ingressos através de experiências integradas (**Pública / Landing Page**, **Organizador**, **Cliente** e **Portaria**):
 
-* 🚀 **Landing Page Minimalista & Animada (`/`)**:
-  * Apresentação da solução com **hero animado**, floating tickets em movimento contínuo e micro-interações de alta fidelidade.
+* 🚀 **Landing Page Corporativa & Dinâmica (`/`)**:
+  * Apresentação da solução com **hero split**, fotografia em alta definição, badges flutuantes de estatísticas ao vivo e carrossel navegável de eventos.
+  * **Faixa Marquee contínua de parceiros oficiais**: Ticketmaster, Spotify, Google Maps, Google Calendar, Apple Wallet, Visa, Mastercard, Pix.
+  * **Seção escura de métricas** com contadores e selos de segurança.
   * **Navegação com rolagem suave inteligente** (*smooth scroll* com cálculo dinâmico de offset do cabeçalho fixo).
-  * Seções de estatísticas de alta disponibilidade, catálogo de funcionalidades, passo a passo, carteira digital estilo Apple Wallet, demonstração visual da portaria e depoimentos.
-* 🎪 **Painel do Organizador & Catálogo Multi-Provedor**:
-  * **Integração Oficial com a Ticketmaster Discovery API v2**: busca global de atrações, shows e festivais em tempo real com preenchimento automático de títulos, locais, datas e banners em alta definição.
-  * **Integração com TMDb API**: busca e importação instantânea de filmes e pré-estreias de cinema.
-  * Criação de eventos com **grade interativa de assentos numerados** (cinema/teatro com fileiras A–F) ou **pista geral por quantidade**.
-  * Métricas em tempo real de ocupação, ingressos vendidos e receita bruta.
-* 👤 **Experiência do Cliente & Pré-Cadastro In-Place**:
-  * Catálogo de eventos (`/home`) com busca em tempo real e filtros de categoria (Shows, Cinema, Teatro).
+* 🎪 **Painel do Organizador com Autocomplete em Tempo Real da Ticketmaster**:
+  * **Busca Conectada em Tempo Real via Ticketmaster Discovery API v2 & Auto-Suggest (`/suggest.json`)**: conforme o organizador digita o título do evento (ex: `Chitão`, `Cold`, `Jot`, `Rock`), um dropdown inteligente apresenta os eventos oficiais disponíveis no catálogo mundial.
+  * Ao selecionar uma sugestão, preenche instantaneamente título oficial, descrição, foto de capa em alta resolução (16:9), arena/local, categoria e data da apresentação.
+  * Liberdade total para **continuar com preenchimento manual** quando desejado.
+  * Criação de eventos com **grade interativa de assentos numerados** (cinema/teatro com fileiras A–L) ou **pista geral com capacidade configurável**.
+  * Métricas em tempo real de ocupação, ingressos vendidos e receita bruta no Dashboard.
+* 🎵 **Player Integrado Spotify Web API na Página do Evento**:
+  * Em eventos musicais, carrega dinamicamente o widget oficial do **Spotify** com as faixas mais tocadas e setlists do artista para aquecimento do público antes da compra.
+* 👤 **Experiência do Cliente & Checkout Simulado**:
+  * Catálogo de eventos com busca em tempo real e filtros de categoria (Shows, Festivais, Teatro).
   * **Mapa de Assentos Interativo** em tempo real com prevenção instantânea de concorrência (*double booking*).
-  * **Fluxo Dinâmico de Pré-Cadastro na Página do Evento**: se o usuário estiver deslogado ao selecionar assentos, o card de resumo se transforma (*in-place flip*) no formulário de pré-cadastro/login rápido, autentica em segundos e abre imediatamente o checkout sem recarregar a página ou perder o contexto.
-  * **Checkout Simulado Completo** (Pix ou Cartão) com alternador interativo para simular **Aprovação Imediata** ou **Recusa Proposital** (Saldo Insuficiente, Cartão Bloqueado, etc.).
-  * Carteira de **Meus Ingressos Digitais** no formato *Apple Wallet Pass*, com cortes tracejados, QR Code em alta definição e botão de **compartilhamento público por link seguro**.
-* 📷 **Portaria & Validação de Entrada**:
-  * **Leitor de Câmera em Tempo Real** via navegador para leitura contínua de QR Codes.
+  * **Fluxo Dinâmico de Pré-Cadastro na Página do Evento**: se o usuário estiver deslogado ao selecionar assentos, o card de resumo se transforma (*in-place flip*) no formulário de autenticação rápida, sem perder os assentos selecionados.
+  * **Simulação Completa de Gateway de Pagamento** (Pix ou Cartão) com alternador interativo para simular **Aprovação Imediata** ou **Recusa Proposital** (Saldo Insuficiente, Cartão Bloqueado, etc.).
+  * 📅 **Agendamento Automático no Google Agenda**: após a confirmação da compra, abre automaticamente uma nova aba com o evento pré-configurado no Google Calendar (título, data, horário e localização), com botão de reabertura persistente.
+* 📄 **Voucher em PDF de Alta Definição & Carteira Digital**:
+  * Emissão de **Ingresso Oficial em PDF A4** via `jsPDF`, pronto para download e impressão, contendo:
+    * Cabeçalho institucional elegante do Passfy com data de emissão.
+    * Grade detalhada de informações (Comprador nominal, CPF/Documento, Evento, Local, Assento, Setor e Valor).
+    * Selo para identificação de **Meia-Entrada / Estudante**.
+    * **QR Code criptográfico em alta resolução**.
+    * Selo de segurança **HMAC-SHA256** com hash de autenticidade e linha pontilhada picotada de corte.
+  * Carteira digital no formato *Apple Wallet Pass*, com link público compartilhável e visualização segura.
+* 📷 **Portaria & Validação Criptográfica**:
+  * **Leitor de Câmera em Tempo Real** via navegador (`html5-qrcode`) para leitura contínua de QR Codes.
   * **Digitação Manual de Código** como fallback imediato (ex: `PAS-DEMO1`).
-  * Validação criptográfica com retorno visual e alertas sonoros sintéticos (Web Audio API) nos **4 estados obrigatórios**:
-    * 🟢 **Válido**: Entrada liberada e marcação atômica de uso.
-    * 🟡 **Já Utilizado**: Informa data/hora e quem realizou a validação anterior.
-    * 🔵 **Evento Errado**: Ingresso autêntico, mas emitido para outra sessão.
+  * Validação com retorno visual e alertas sonoros sintéticos (Web Audio API) nos **4 estados obrigatórios**:
+    * 🟢 **Válido**: Entrada liberada e marcação atômica de uso no banco.
+    * 🟡 **Já Utilizado**: Informa data/hora exata e quem realizou a validação anterior.
+    * 🔵 **Evento Errado**: Ingresso autêntico, mas emitido para outra sessão/evento.
     * 🔴 **Inválido / Forjado**: Assinatura criptográfica violada ou código inexistente.
 * ⚡ **Barra de Demonstração (Role Switcher)**:
-  * Permite ao avaliador alternar instantaneamente entre Organizador, Cliente 1, Cliente 2 e Portaria com **1 clique**, sem atrito de login/logout manual.
+  * Permite alternar instantaneamente entre Organizador, Cliente 1, Cliente 2 e Portaria com **1 clique**, sem atrito de login/logout manual.
 
 ---
 
@@ -65,10 +76,10 @@ passfy/
 │   │       ├── core/                 # Config (Zod), AppError, Prisma, HMAC Security
 │   │       └── modules/
 │   │           ├── auth/             # Autenticação JWT e Guards de RBAC
-│   │           ├── catalog/          # Adapter Pattern (Ticketmaster v2 + TMDb)
+│   │           ├── catalog/          # Adapter Pattern (Ticketmaster v2 Discovery & Suggest)
 │   │           ├── events/           # Gestão de eventos e geração de assentos
 │   │           ├── bookings/         # Concorrência e Checkout Simulado
-│   │           ├── tickets/          # Emissão de ingressos e link compartilhável
+│   │           ├── tickets/          # Emissão de ingressos, PDF e link compartilhável
 │   │           └── checkin/          # Validação da Portaria e Máquina de Estados
 │   │
 │   └── web/                          # Frontend React 18 + Vite + Tailwind CSS
@@ -76,7 +87,8 @@ passfy/
 │           ├── components/           # SeatMap, TicketCard, RoleSwitcher, CheckoutModal, UI
 │           ├── contexts/             # AuthContext e Sessão
 │           ├── pages/                # LandingPage, HomePage, EventDetails, Organizer, Gatekeeper
-│           └── services/             # Axios API Client com interceptors
+│           ├── services/             # Axios API Client com interceptors
+│           └── utils/                # Geração de PDF (jsPDF), datas e calendários
 │
 ├── docker-compose.yml                # PostgreSQL 16 local
 └── .github/workflows/ci.yml          # CI Pipeline (Build + Tests)
@@ -88,29 +100,27 @@ passfy/
 
 ### 2. QR Code Anti-Fraude com Assinatura HMAC-SHA256
 * **Desafio**: Impedir que um usuário forje um QR Code alterando IDs ou gerando códigos aleatórios.
-* **Solução**: O payload do QR Code não contém apenas dados abertos. Ele é gerado como um token assinado criptograficamente com uma chave secreta no servidor: `base64(payload).HMAC_SHA256_Signature`. A portaria verifica a integridade da assinatura antes de consultar o banco.
+* **Solução**: O payload do QR Code é assinado criptograficamente com uma chave secreta no servidor: `base64(payload).HMAC_SHA256_Signature`. A portaria verifica a integridade da assinatura antes de consultar o banco.
 
-### 3. Multi-Provider Catalog Adapter (Ticketmaster Discovery API v2 & TMDb)
-* A interface `ICatalogProvider` define o contrato unificado de busca e detalhes.
-* A implementação `TicketmasterCatalogProvider` consome o endpoint `https://app.ticketmaster.com/discovery/v2/events.json` com paginação, filtros e dataset de fallback offline resiliente para avaliação contínua.
-* A implementação `TmdbCatalogProvider` comunica-se com a API do TMDb para eventos de cinema.
+### 3. Integração Ticketmaster Discovery API v2 & Auto-Suggest
+* Implementação resiliente via `TicketmasterCatalogProvider` com suporte a buscas por keyword, auto-suggest em tempo real (`/suggest.json`), fallback para normalização de acentuação (*ex: Chitãozinho -> Chitaozinho*) e dataset de fallback offline resiliente para testes sem internet.
 
 ---
 
 ## 🎨 Design System & Experiência de Usuário
 
-* **Linguagem Visual**: Inspirada no padrão *Untitled UI* com estética clara, minimalista e premium.
+* **Linguagem Visual**: Inspirada no padrão *Untitled UI* com estética clara, minimalista e corporativa.
 * **Paleta de Cores**: Fundo branco puro (`#ffffff`), superfícies em tons neutros (`slate-50`/`slate-100`), bordas nítidas (`border-slate-200`) e cor primária oficial em **Azul Elétrico Royal** (`#2b55f5`, hover `#1f44d6`).
-* **Tipografia**: *Plus Jakarta Sans* e *Inter* com hierarquia de peso e espaçamento de linha balanceado.
-* **Micro-animações**: Intersecção observada para animações de entrada (*fade up*, *slide in*), floating ticket stack na tela de login e hero, e feedback tátil/sonoro na portaria.
+* **Tipografia**: *Plus Jakarta Sans* e *Inter* com hierarquia tipográfica equilibrada.
+* **Micro-animações**: Marquee infinito de parceiros, animações de entrada com Tailwind, e feedback tátil/sonoro na portaria.
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
 * **Backend**: Node.js 22, Express, TypeScript, Prisma ORM, PostgreSQL 16, Zod, JWT (`jsonwebtoken`), Bcryptjs, QRCode, Crypto nativo (HMAC-SHA256), Vitest.
-* **Frontend**: React 18, Vite, TypeScript, Tailwind CSS, Lucide Icons, Canvas-Confetti, Html5-QRCode, Axios.
-* **APIs Externas**: Ticketmaster Discovery API v2, The Movie Database (TMDb) API.
+* **Frontend**: React 18, Vite, TypeScript, Tailwind CSS, Lucide Icons, Canvas-Confetti, Html5-QRCode, jsPDF, Axios.
+* **APIs Externas**: Ticketmaster Discovery API v2, Spotify Web API, Google Calendar API format, Google Maps Embed.
 * **Infraestrutura**: Docker Compose, GitHub Actions, Vercel (Frontend), Render/Neon (Backend & Database).
 
 ---
@@ -163,8 +173,8 @@ Todas as contas abaixo são criadas automaticamente pelo script de seed com a se
 
 | Perfil | Nome | E-mail | Senha | Acesso / Funcionalidade |
 | :--- | :--- | :--- | :--- | :--- |
-| 🎪 **Organizador** | Carlos Organizador | `organizador@passfy.com` | `password123` | Criação de eventos com Ticketmaster/TMDb e Painel |
-| 👤 **Cliente 1** | Ana Silva | `cliente1@passfy.com` | `password123` | Compra de ingressos e visualização |
+| 🎪 **Organizador** | Carlos Organizador | `organizador@passfy.com` | `password123` | Criação de eventos com Ticketmaster e Painel |
+| 👤 **Cliente 1** | Ana Silva | `cliente1@passfy.com` | `password123` | Compra de ingressos, PDF e Google Calendar |
 | 👤 **Cliente 2** | Bruno Costa | `cliente2@passfy.com` | `password123` | Teste de concorrência e compra |
 | 📷 **Portaria** | Lucas Portaria | `portaria@passfy.com` | `password123` | Leitor de câmera e validação de ingressos |
 
@@ -174,24 +184,28 @@ Todas as contas abaixo são criadas automaticamente pelo script de seed com a se
 
 ## 🧪 Guia de Teste Ponta a Ponta
 
-Para validar o fluxo completo conforme solicitado no edital:
+Para validar o fluxo completo do Passfy:
 
 1. **Explorar a Landing Page**:
-   * Acesse `http://localhost:5173/` e navegue pelas seções animadas usando os links suaves no cabeçalho (*Funcionalidades*, *Como Funciona*, *Categorias*).
-2. **Explorar Eventos**:
-   * Clique em **"Explorar eventos"** para acessar o catálogo (`/home`) com shows da Ticketmaster e sessões de cinema.
-3. **Publicar Novo Evento com Ticketmaster / TMDb**:
+   * Acesse `http://localhost:5173/` e navegue pelas seções animadas usando os links suaves no cabeçalho (*Eventos*, *Organizadores*, *Compradores*, *Portaria*).
+2. **Explorar Eventos & Player do Spotify**:
+   * Clique em qualquer evento do carrossel ou em **"Explorar eventos"** (`/home`).
+   * Na página de detalhes do evento, experimente o **player dinâmico do Spotify** integrado com as faixas mais tocadas do artista.
+3. **Publicar Novo Evento com Autocomplete Ticketmaster**:
    * Alterne para o perfil **Organizador** no topo.
-   * Acesse **"Criar Evento"** -> **"Importar do Catálogo"**.
-   * Escolha a aba **Ticketmaster** (ex: *Rock in Rio*, *Coldplay*, *Taylor Swift*) ou **TMDb**, selecione e veja o formulário auto-preenchido com posters reais e mapa de assentos configurável.
+   * Acesse **"Criar Evento"** (`/organizer/create`).
+   * No campo **Título do Evento**, comece a digitar o nome de um artista (ex: `Chitãozinho`, `Coldplay`, `Jot`, `Taylor Swift`).
+   * Selecione uma sugestão do dropdown e veja o formulário auto-preenchido com título, descrição, banner cinematográfico em alta definição, arena e data oficial.
 4. **Fluxo de Pré-Cadastro & Reserva de Assento**:
    * Deslogue ou abra um evento em aba anônima.
    * Selecione poltronas no mapa interativo e clique em **"Garantir Ingresso"**.
    * Observe o card lateral transformar-se no **formulário de pré-cadastro em tempo real**; conclua o cadastro sem sair da página e veja o modal de checkout abrir automaticamente.
-5. **Checkout & Pagamento Simulado**:
+5. **Checkout, Pagamento Simulado & Google Agenda**:
    * Experimente testar **"Simular Recusa"** (ex: Saldo Insuficiente) e depois confirme com **"Forçar Aprovação"** via Pix ou Cartão.
-6. **Ingressos Digitais & Compartilhamento**:
-   * Acesse **"Meus Ingressos"** e veja o pass emitido no formato *Apple Wallet* com QR Code criptografado.
+   * Observe a **abertura automática da aba do Google Agenda** com o evento pronto para agendamento!
+6. **Voucher em PDF de Alta Definição & Compartilhamento**:
+   * Acesse **"Meus Ingressos"** e clique em **"Baixar Ingresso (PDF)"**.
+   * Veja o PDF A4 gerado com QR Code nítido, selo HMAC-SHA256 e linha picotada.
    * Clique em **"Compartilhar Link"** e abra em uma janela anônima para comprovar a visualização pública.
 7. **Validação na Portaria**:
    * Alterne para o perfil **Portaria** e acesse a tela do scanner.
@@ -213,13 +227,11 @@ npm run test --workspace=@passfy/api
 ### Cobertura de Testes Chave:
 * `concurrency.spec.ts`: Simula requisições simultâneas disputando a mesma poltrona e valida que apenas uma tem sucesso e a outra recebe `409 Conflict`.
 * `checkin.spec.ts`: Valida os 4 estados da portaria (Válido, Já Usado, Evento Errado, Assinatura Forjada/Inválida).
-* `ticketmaster.spec.ts`: Valida o provider da Ticketmaster Discovery API v2, mapeamento de campos e resiliência com fallback offline.
+* `ticketmaster.spec.ts`: Valida o provider da Ticketmaster Discovery API v2, auto-suggest, mapeamento de campos e resiliência com fallback offline.
 
 ---
 
 ## 🤖 Declaração sobre o Uso de IA
-
-*Atendendo à solicitação explícita do edital do Desafio Elite Dev:*
 
 O desenvolvimento deste projeto utilizou Inteligência Artificial como uma ferramenta aceleradora de produtividade e pair programming. A condução do projeto, no entanto, foi orientada por critérios humanos rigorosos de engenharia de software para **evitar o "AI slop" (interfaces e códigos genéricos sem critério)**:
 
@@ -230,7 +242,8 @@ O desenvolvimento deste projeto utilizou Inteligência Artificial como uma ferra
    * Escolha da arquitetura de **Monólito Modular** com TypeScript estrito, alinhando a solução aos requisitos da vaga e facilitando a concorrência atômica.
    * Implementação do **bloqueio atômico de assentos (Pessimistic Lock)** no banco relacional para solucionar de forma determinística o problema de *race conditions*.
    * Desenho do mecanismo de **assinatura criptográfica HMAC-SHA256** no payload do QR Code para garantir anti-fraude real.
-   * Integração de múltiplos provedores de catálogo (**Ticketmaster Discovery v2** e **TMDb**) com Adapter Pattern e fallback offline.
+   * Integração em tempo real com **Ticketmaster Discovery API v2 & Auto-Suggest** e **Spotify Web API**.
+   * Criação do gerador nativo de **PDFs de Alta Definição** para vouchers de ingresso com jsPDF e integração com **Google Agenda**.
    * Criação do componente **Role Switcher** na UI para eliminar o atrito do avaliador durante o percurso dos fluxos.
    * Modelagem intencional da interface no padrão *Untitled UI*, com paleta clara, tipografia moderna (*Plus Jakarta Sans*), micro-interações e feedback auditivo via Web Audio API.
 
