@@ -126,6 +126,7 @@ export class TicketmasterCatalogProvider implements ICatalogProvider {
     }
 
     try {
+      // 1. Primary search on /events.json
       let response = await this.client.get('/events.json', {
         params: {
           apikey: apiKey,
@@ -137,7 +138,23 @@ export class TicketmasterCatalogProvider implements ICatalogProvider {
 
       let events = response.data._embedded?.events || [];
 
-      // If no events found and query contains accents, retry with normalized query
+      // 2. If 0 results (e.g. prefix 'Jot' for 'Jota.pê'), query Ticketmaster Auto-Suggest API (/suggest.json)
+      if (events.length === 0) {
+        try {
+          const suggestResponse = await this.client.get('/suggest.json', {
+            params: {
+              apikey: apiKey,
+              keyword: query,
+              locale: '*',
+            },
+          });
+          events = suggestResponse.data._embedded?.events || [];
+        } catch {
+          // ignore suggest error and continue
+        }
+      }
+
+      // 3. If still 0 results and query contains accents, retry with normalized ASCII query
       if (events.length === 0) {
         const normalized = query.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         if (normalized !== query) {
@@ -150,6 +167,21 @@ export class TicketmasterCatalogProvider implements ICatalogProvider {
             },
           });
           events = response.data._embedded?.events || [];
+
+          if (events.length === 0) {
+            try {
+              const suggestResponse = await this.client.get('/suggest.json', {
+                params: {
+                  apikey: apiKey,
+                  keyword: normalized,
+                  locale: '*',
+                },
+              });
+              events = suggestResponse.data._embedded?.events || [];
+            } catch {
+              // ignore
+            }
+          }
         }
       }
 
