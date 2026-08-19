@@ -256,10 +256,39 @@ export const OrganizerCreatePage: React.FC = () => {
               </div>
 
               {bannerUrl && (
-                <div className="pt-2">
-                  <p className="text-xs text-slate-500 font-semibold mb-2">Pré-visualização do Banner:</p>
-                  <div className="relative h-44 rounded-xl overflow-hidden border border-slate-200 max-w-lg shadow-xs">
-                    <img src={bannerUrl} alt="Preview" className="w-full h-full object-cover" />
+                <div className="pt-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-slate-600 font-bold flex items-center gap-1.5">
+                      <span>📸 Pré-visualização da Capa / Banner:</span>
+                      <span className="text-[11px] text-slate-400 font-normal">(Visão dos Compradores)</span>
+                    </p>
+                    <span className="text-[11px] text-slate-400 font-medium">Proporção 16:9 Panorâmica</span>
+                  </div>
+
+                  <div className="relative w-full h-64 sm:h-80 lg:h-96 rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-950 group">
+                    <img
+                      src={bannerUrl}
+                      alt="Prévia da Capa do Evento"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80';
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none" />
+
+                    <div className="absolute bottom-4 left-4 right-4 text-white pointer-events-none flex items-end justify-between">
+                      <div>
+                        <span className="inline-block px-2.5 py-1 rounded-lg bg-white/20 backdrop-blur-md text-[11px] font-bold text-white mb-2">
+                          {category === 'MOVIE' ? '🎬 Cinema' : category === 'CONCERT' ? '🎵 Show' : '🎭 Teatro'}
+                        </span>
+                        <h4 className="text-lg sm:text-2xl font-black drop-shadow-md line-clamp-1">
+                          {title || 'Título do seu Evento'}
+                        </h4>
+                        <p className="text-xs text-slate-200 drop-shadow-sm mt-0.5 line-clamp-1">
+                          {venue || 'Local do Evento'}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
