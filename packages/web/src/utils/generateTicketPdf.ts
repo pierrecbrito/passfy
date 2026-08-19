@@ -51,7 +51,7 @@ export function generateTicketPdf(ticket: TicketData): void {
   const cardX = margin;
   const cardY = 16;
   const cardWidth = contentWidth;
-  const cardHeight = 250;
+  const cardHeight = 236;
 
   // Card Shadow & Card Body
   doc.setFillColor(255, 255, 255);
@@ -59,8 +59,8 @@ export function generateTicketPdf(ticket: TicketData): void {
   doc.setLineWidth(0.6);
   doc.roundedRect(cardX, cardY, cardWidth, cardHeight, 6, 6, 'FD');
 
-  // ── CARD HEADER (Gradient/Solid Brand Navy) ──
-  const headerHeight = 34;
+  // ── CARD HEADER (Compact & Elegant Brand Navy) ──
+  const headerHeight = 20; // Reduced height to eliminate empty space
   doc.setFillColor(15, 23, 42); // slate-900
   doc.roundedRect(cardX, cardY, cardWidth, headerHeight, 6, 6, 'F');
   // Cover bottom round corners of header
@@ -68,51 +68,33 @@ export function generateTicketPdf(ticket: TicketData): void {
 
   // Brand Logo Icon & Text
   doc.setFillColor(43, 85, 245);
-  doc.roundedRect(cardX + 8, cardY + 7, 10, 10, 2.5, 2.5, 'F');
+  doc.roundedRect(cardX + 8, cardY + 5, 10, 10, 2.5, 2.5, 'F');
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(255, 255, 255);
-  doc.text('P', cardX + 11.5, cardY + 14);
+  doc.text('P', cardX + 11.5, cardY + 12);
 
-  doc.setFontSize(16);
+  doc.setFontSize(15);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(255, 255, 255);
-  doc.text('Passfy', cardX + 22, cardY + 14.5);
+  doc.text('Passfy', cardX + 21, cardY + 11.5);
 
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(148, 163, 184); // slate-400
-  doc.text('Ingresso Digital Criptografado Oficial', cardX + 22, cardY + 20);
-
-  // Status Badge on Right
-  const isUsed = ticket.status === 'USED';
-  if (isUsed) {
-    doc.setFillColor(245, 158, 11); // amber-500
-    doc.roundedRect(cardX + cardWidth - 45, cardY + 9, 37, 7, 2, 2, 'F');
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(255, 255, 255);
-    doc.text('JÁ UTILIZADO', cardX + cardWidth - 26.5, cardY + 14, { align: 'center' });
-  } else {
-    doc.setFillColor(5, 150, 105); // emerald-600
-    doc.roundedRect(cardX + cardWidth - 38, cardY + 9, 30, 7, 2, 2, 'F');
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(255, 255, 255);
-    doc.text('INGRESSO VÁLIDO', cardX + cardWidth - 23, cardY + 14, { align: 'center' });
-  }
+  doc.text('Ingresso Digital Criptografado Oficial', cardX + 21, cardY + 16.5);
 
   // ── EVENT TITLE SECTION ──
-  const titleY = cardY + headerHeight + 10;
+  const titleY = cardY + headerHeight + 8;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
+  doc.setFontSize(17);
   doc.setTextColor(15, 23, 42); // slate-900
 
   // Split title if too long
   const titleLines = doc.splitTextToSize(ticket.event.title, cardWidth - 16);
   doc.text(titleLines, cardX + 8, titleY);
 
-  const titleBlockHeight = titleLines.length * 7;
+  const titleBlockHeight = titleLines.length * 6.5;
 
   // Category Tag
   const categoryName =
@@ -124,15 +106,15 @@ export function generateTicketPdf(ticket: TicketData): void {
       ? 'Teatro & Espetáculo'
       : 'Evento Cultural';
 
-  const categoryY = titleY + titleBlockHeight - 1;
-  doc.setFontSize(9);
+  const categoryY = titleY + titleBlockHeight;
+  doc.setFontSize(8.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(43, 85, 245);
   doc.text(categoryName.toUpperCase(), cardX + 8, categoryY);
 
   // ── EVENT DETAILS GRID (LIGHT GREY BOX) ──
-  const gridY = categoryY + 5;
-  const gridHeight = 44;
+  const gridY = categoryY + 4;
+  const gridHeight = 42;
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
   doc.setLineWidth(0.4);
@@ -158,41 +140,41 @@ export function generateTicketPdf(ticket: TicketData): void {
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(100, 116, 139); // slate-500
-  doc.text('DATA & HORÁRIO', col1X, gridY + 8);
-  doc.setFontSize(10);
+  doc.text('DATA & HORÁRIO', col1X, gridY + 7.5);
+  doc.setFontSize(9.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 23, 42);
-  doc.text(`${formattedDate} às ${formattedTime}h`, col1X, gridY + 13.5);
+  doc.text(`${formattedDate} às ${formattedTime}h`, col1X, gridY + 13);
 
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(100, 116, 139);
-  doc.text('SETOR / POLTRONA', col2X, gridY + 8);
-  doc.setFontSize(11);
+  doc.text('SETOR / POLTRONA', col2X, gridY + 7.5);
+  doc.setFontSize(10.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(43, 85, 245);
-  doc.text(ticket.seat?.label ? `Poltrona ${ticket.seat.label}` : 'Pista Geral / Livre', col2X, gridY + 13.5);
+  doc.text(ticket.seat?.label ? `Poltrona ${ticket.seat.label}` : 'Pista Geral / Livre', col2X, gridY + 13);
 
   // Divider inside grid
   doc.setDrawColor(226, 232, 240);
-  doc.line(col1X, gridY + 19, cardX + cardWidth - 14, gridY + 19);
+  doc.line(col1X, gridY + 18, cardX + cardWidth - 14, gridY + 18);
 
   // Row 2: Venue & Price
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(100, 116, 139);
-  doc.text('LOCAL DO EVENTO', col1X, gridY + 26);
-  doc.setFontSize(9.5);
+  doc.text('LOCAL DO EVENTO', col1X, gridY + 25);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 23, 42);
   const venueLines = doc.splitTextToSize(ticket.event.venue, (cardWidth / 2) - 16);
-  doc.text(venueLines, col1X, gridY + 31);
+  doc.text(venueLines, col1X, gridY + 30);
 
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(100, 116, 139);
-  doc.text('VALOR DO INGRESSO', col2X, gridY + 26);
-  doc.setFontSize(11);
+  doc.text('VALOR DO INGRESSO', col2X, gridY + 25);
+  doc.setFontSize(10.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 23, 42);
   const isStudent = ticket.ticketType === 'MEIA_ESTUDANTE';
@@ -200,12 +182,12 @@ export function generateTicketPdf(ticket: TicketData): void {
   doc.text(
     finalPrice === 0 ? 'Gratuito' : `R$ ${finalPrice.toFixed(2)} (${isStudent ? 'Meia' : 'Inteira'})`,
     col2X,
-    gridY + 31
+    gridY + 30
   );
 
   // ── HOLDER & NOMINAL IDENTIFICATION BOX ──
   const holderY = gridY + gridHeight + 4;
-  const holderHeight = 22;
+  const holderHeight = 21;
   doc.setFillColor(241, 245, 249);
   doc.roundedRect(cardX + 8, holderY, cardWidth - 16, holderHeight, 3, 3, 'F');
 
@@ -213,35 +195,35 @@ export function generateTicketPdf(ticket: TicketData): void {
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(100, 116, 139);
-  doc.text('TITULAR DO INGRESSO', col1X, holderY + 7);
-  doc.setFontSize(10);
+  doc.text('TITULAR DO INGRESSO', col1X, holderY + 6.5);
+  doc.setFontSize(9.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 23, 42);
-  doc.text(holderName, col1X, holderY + 14);
+  doc.text(holderName, col1X, holderY + 13.5);
 
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(100, 116, 139);
-  doc.text('MODALIDADE', col2X, holderY + 7);
+  doc.text('MODALIDADE', col2X, holderY + 6.5);
 
-  doc.setFontSize(9.5);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
   if (isStudent) {
     doc.setTextColor(124, 58, 237); // violet-600
-    doc.text('Meia Estudante', col2X, holderY + 13);
+    doc.text('Meia Estudante', col2X, holderY + 12.5);
     if (ticket.studentId) {
-      doc.setFontSize(7.5);
+      doc.setFontSize(7);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(100, 116, 139);
-      doc.text(`Doc: ${ticket.studentId}`, col2X, holderY + 18);
+      doc.text(`Doc: ${ticket.studentId}`, col2X, holderY + 17);
     }
   } else {
     doc.setTextColor(43, 85, 245);
-    doc.text('Inteira Regular', col2X, holderY + 13);
+    doc.text('Inteira Regular', col2X, holderY + 12.5);
   }
 
   // ── PERFORATED LINE CUTOUT ──
-  const cutY = holderY + holderHeight + 8;
+  const cutY = holderY + holderHeight + 7;
   doc.setDrawColor(203, 213, 225); // slate-300
   doc.setLineDashPattern([2.5, 2], 0);
   doc.setLineWidth(0.5);
@@ -257,8 +239,8 @@ export function generateTicketPdf(ticket: TicketData): void {
   doc.circle(cardX + cardWidth, cutY, 4, 'S');
 
   // ── QR CODE & VALIDATION SECTION ──
-  const qrSectionY = cutY + 6;
-  const qrSize = 48; // 48mm x 48mm
+  const qrSectionY = cutY + 5;
+  const qrSize = 46; // 46mm x 46mm
   const qrX = cardX + (cardWidth / 2) - (qrSize / 2);
 
   // QR Code Frame
@@ -273,36 +255,44 @@ export function generateTicketPdf(ticket: TicketData): void {
     } catch {
       doc.setFontSize(8);
       doc.setTextColor(100, 116, 139);
-      doc.text('QR Code Disponível no App', qrX + qrSize / 2, qrSectionY + 25, { align: 'center' });
+      doc.text('QR Code Disponível no App', qrX + qrSize / 2, qrSectionY + 23, { align: 'center' });
     }
   }
 
   // Ticket Alpha Code
-  const codeY = qrSectionY + qrSize + 14;
-  doc.setFontSize(8);
+  const codeY = qrSectionY + qrSize + 13;
+  doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(100, 116, 139);
   doc.text('CÓDIGO DE ENTRADA / PORTARIA', cardX + cardWidth / 2, codeY, { align: 'center' });
 
-  doc.setFontSize(16);
+  doc.setFontSize(15);
   doc.setFont('courier', 'bold');
   doc.setTextColor(15, 23, 42);
   doc.text(ticket.ticketCode, cardX + cardWidth / 2, codeY + 6, { align: 'center' });
 
-  // Security Token HMAC Badge
+  // ── SECURITY TOKEN HMAC BADGE (Properly sized & padded) ──
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  const badgeText = 'Criptografia HMAC-SHA256 • Validação Única';
+  const textWidth = doc.getTextWidth(badgeText);
+  const badgeBoxWidth = textWidth + 14;
+  const badgeBoxX = cardX + (cardWidth / 2) - (badgeBoxWidth / 2);
+  const badgeBoxY = codeY + 9;
+
   doc.setFillColor(236, 253, 245); // emerald-50
   doc.setDrawColor(167, 243, 208); // emerald-200
-  doc.roundedRect(cardX + (cardWidth / 2) - 48, codeY + 9, 96, 6.5, 3, 3, 'FD');
-  doc.setFontSize(7.5);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(5, 150, 105);
-  doc.text('✓ Criptografia HMAC-SHA256 • Validação Única', cardX + cardWidth / 2, codeY + 13.5, {
+  doc.setLineWidth(0.4);
+  doc.roundedRect(badgeBoxX, badgeBoxY, badgeBoxWidth, 7, 3.5, 3.5, 'FD');
+
+  doc.setTextColor(5, 150, 105); // emerald-700
+  doc.text(badgeText, cardX + cardWidth / 2, badgeBoxY + 4.8, {
     align: 'center',
   });
 
   // ── INSTRUCTIONS & SECURITY FOOTER ──
   const footerY = cardY + cardHeight + 6;
-  doc.setFontSize(7.5);
+  doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100, 116, 139);
   const instructions = [
@@ -314,11 +304,11 @@ export function generateTicketPdf(ticket: TicketData): void {
   let lineOffset = 0;
   instructions.forEach((inst) => {
     doc.text(inst, margin + 4, footerY + lineOffset);
-    lineOffset += 4.5;
+    lineOffset += 4;
   });
 
   // Emitted date & Doc ID
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.setTextColor(148, 163, 184);
   const now = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -334,7 +324,7 @@ export function generateTicketPdf(ticket: TicketData): void {
     { align: 'center' }
   );
 
-  // Save PDF file with sanitize filename
+  // Save PDF file with sanitized filename
   const cleanTitle = ticket.event.title.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().slice(0, 20);
   const fileName = `passfy_ingresso_${cleanTitle}_${ticket.ticketCode}.pdf`;
   doc.save(fileName);
