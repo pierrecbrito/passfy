@@ -125,6 +125,7 @@ export const LoginPage: React.FC = () => {
       } else {
         await register(name, email, password, role);
       }
+      navigate('/home');
     } catch (err: any) {
       if (err.response?.data?.message) {
         setError(err.response.data.message);
@@ -134,9 +135,9 @@ export const LoginPage: React.FC = () => {
         setError('Falha ao autenticar. Verifique suas credenciais.');
       }
     } finally {
-
       setIsLoading(false);
     }
+
   };
 
   const handleQuickFill = (demoEmail: string) => {
