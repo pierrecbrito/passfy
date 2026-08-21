@@ -446,8 +446,15 @@ export const EventDetailsPage: React.FC = () => {
       setIsAuthCardActive(false);
       setCurrentPhase(2);
     } catch (err: any) {
-      setAuthError(err.response?.data?.message || 'Falha ao autenticar. Verifique seus dados.');
+      if (err.response?.data?.message) {
+        setAuthError(err.response.data.message);
+      } else if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
+        setAuthError('Não foi possível conectar ao servidor da API. Verifique sua conexão.');
+      } else {
+        setAuthError('Falha ao autenticar. Verifique seus dados.');
+      }
     } finally {
+
       setIsAuthenticating(false);
     }
   };

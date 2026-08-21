@@ -125,10 +125,16 @@ export const LoginPage: React.FC = () => {
       } else {
         await register(name, email, password, role);
       }
-      navigate('/home');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Falha ao autenticar.');
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
+        setError('Não foi possível conectar ao servidor da API. Verifique se o backend está online.');
+      } else {
+        setError('Falha ao autenticar. Verifique suas credenciais.');
+      }
     } finally {
+
       setIsLoading(false);
     }
   };
