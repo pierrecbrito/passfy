@@ -29,6 +29,12 @@ jobs:
 
       - name: Run Backend Automated Tests
         run: npm run test --workspace=@passfy/api
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/passfy_test?schema=public
+          JWT_SECRET: test_jwt_secret_key_for_automated_tests_only_passfy
+          QR_SECRET_KEY: test_qr_cryptographic_secret_key_hmac_sha256_at_least_32_chars_passfy
 
       - name: Build Web Application
         run: npm run build --workspace=@passfy/web
+

@@ -3,17 +3,21 @@ import { z } from 'zod';
 
 dotenv.config();
 
+const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+
 const envSchema = z.object({
   PORT: z.coerce.number().default(3333),
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required and cannot be empty.'),
+  NODE_ENV: z.enum(['development', 'production', 'test']).default(isTest ? 'test' : 'development'),
+  DATABASE_URL: isTest
+    ? z.string().default('postgresql://postgres:postgres@localhost:5432/passfy_test?schema=public')
+    : z.string().min(1, 'DATABASE_URL is required and cannot be empty.'),
   DIRECT_URL: z.string().optional(),
-  JWT_SECRET: z
-    .string()
-    .min(16, 'JWT_SECRET must be at least 16 characters for cryptographic safety.'),
-  QR_SECRET_KEY: z
-    .string()
-    .min(32, 'QR_SECRET_KEY must be a strong secret of at least 32 characters for HMAC-SHA256 signing.'),
+  JWT_SECRET: isTest
+    ? z.string().default('test_jwt_secret_key_for_automated_tests_only_passfy')
+    : z.string().min(16, 'JWT_SECRET must be at least 16 characters for cryptographic safety.'),
+  QR_SECRET_KEY: isTest
+    ? z.string().default('test_qr_cryptographic_secret_key_hmac_sha256_at_least_32_chars_passfy')
+    : z.string().min(32, 'QR_SECRET_KEY must be a strong secret of at least 32 characters for HMAC-SHA256 signing.'),
   CORS_ORIGIN: z.string().default('*'),
   TICKETMASTER_API_KEY: z.string().optional().default(''),
   TICKETMASTER_BASE_URL: z.string().default('https://app.ticketmaster.com/discovery/v2'),
@@ -33,4 +37,5 @@ if (!_env.success) {
 }
 
 export const env = _env.data;
+
 
