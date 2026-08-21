@@ -253,7 +253,7 @@ export const LoginPage: React.FC = () => {
           
           {/* Badge / Brand Logo */}
           <div className="flex items-center gap-2 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#2b55f5] to-[#12288a] flex items-center justify-center text-white shadow-sm">
+            <div className="w-8 h-8 rounded-lg bg-[#2b55f5] flex items-center justify-center text-white shadow-sm">
               <Ticket className="w-4 h-4" />
             </div>
             <span className="font-bold text-slate-900 text-sm tracking-tight">Passfy Ingressos</span>

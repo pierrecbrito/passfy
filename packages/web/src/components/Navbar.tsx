@@ -18,7 +18,7 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#2b55f5] to-[#12288a] flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 rounded-xl bg-[#2b55f5] flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
               <Ticket className="w-5 h-5" />
             </div>
             <span className="text-xl font-black tracking-tight text-slate-900 flex items-center">

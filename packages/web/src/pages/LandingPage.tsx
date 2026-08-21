@@ -173,7 +173,7 @@ export const LandingPage: React.FC = () => {
   const personas = [
     {
       icon: Building2,
-      color: 'from-[#2b55f5] to-[#7c3aed]',
+      bgColor: 'bg-[#2b55f5]',
       title: 'Organizadores',
       subtitle: 'Crie e venda com confiança',
       items: [
@@ -186,7 +186,7 @@ export const LandingPage: React.FC = () => {
     },
     {
       icon: Ticket,
-      color: 'from-[#059669] to-[#2b55f5]',
+      bgColor: 'bg-[#2b55f5]',
       title: 'Compradores',
       subtitle: 'Compre e vá sem estresse',
       items: [
@@ -199,7 +199,7 @@ export const LandingPage: React.FC = () => {
     },
     {
       icon: ScanLine,
-      color: 'from-[#7c3aed] to-[#dc2626]',
+      bgColor: 'bg-emerald-600',
       title: 'Porteiros',
       subtitle: 'Valide rápido, sem filas',
       items: [
@@ -261,7 +261,7 @@ export const LandingPage: React.FC = () => {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #2b55f5, #7c3aed)' }}>
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm bg-[#2b55f5]">
               <Ticket className="text-white" style={{ width: '1.05rem', height: '1.05rem' }} />
             </div>
             <span className="text-base font-black text-slate-900 tracking-tight">Passfy</span>
@@ -280,8 +280,7 @@ export const LandingPage: React.FC = () => {
             </button>
             <button
               onClick={() => navigate('/login')}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-bold shadow-sm transition active:scale-[0.98] hover:-translate-y-0.5"
-              style={{ background: 'linear-gradient(135deg, #2b55f5, #7c3aed)' }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-sm font-bold shadow-sm transition active:scale-[0.98] bg-[#2b55f5] hover:bg-[#1f44d6]"
             >
               <span>Começar grátis</span>
               <ArrowRight className="w-4 h-4" />
@@ -331,8 +330,7 @@ export const LandingPage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                   <button
                     onClick={() => navigate('/login')}
-                    className="flex items-center gap-2 px-7 py-3.5 rounded-2xl text-white text-base font-bold shadow-lg transition hover:-translate-y-0.5 active:scale-[0.98]"
-                    style={{ background: 'linear-gradient(135deg, #2b55f5 0%, #7c3aed 100%)', boxShadow: '0 4px 24px rgba(43,85,245,0.35)' }}
+                    className="flex items-center gap-2 px-7 py-3.5 rounded-2xl text-white text-base font-bold shadow-lg transition hover:-translate-y-0.5 active:scale-[0.98] bg-[#2b55f5] hover:bg-[#1f44d6]"
                   >
                     <Ticket className="w-5 h-5" />
                     <span>Começar gratuitamente</span>
@@ -385,7 +383,7 @@ export const LandingPage: React.FC = () => {
 
                 {/* Floating stat: validated tickets */}
                 <div className="absolute -left-8 top-12 bg-white rounded-2xl border border-slate-200 shadow-xl p-3.5 flex items-center gap-3 animate-ticket-1">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #2b55f5, #7c3aed)' }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-[#2b55f5]">
                     <CheckCircle2 className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -648,11 +646,11 @@ export const LandingPage: React.FC = () => {
           </AnimatedSection>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {personas.map(({ icon: Icon, color, title, subtitle, items, cta }, i) => (
+            {personas.map(({ icon: Icon, bgColor, title, subtitle, items, cta }, i) => (
               <AnimatedSection key={title} delay={i * 100} direction="up">
                 <div className="group bg-white border border-slate-200 rounded-3xl p-8 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col space-y-6">
                   {/* Icon */}
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+                  <div className={`w-14 h-14 rounded-2xl ${bgColor} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}>
                     <Icon className="w-7 h-7 text-white" />
                   </div>
 
@@ -675,7 +673,7 @@ export const LandingPage: React.FC = () => {
                   {/* CTA */}
                   <button
                     onClick={() => navigate('/login')}
-                    className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-bold transition-all group-hover:shadow-md bg-gradient-to-r ${color} text-white`}
+                    className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-bold transition-all group-hover:shadow-md ${bgColor} hover:opacity-90 text-white`}
                   >
                     <span>{cta}</span>
                     <ArrowRight className="w-4 h-4" />
@@ -782,6 +780,7 @@ export const LandingPage: React.FC = () => {
       {/* ── GATEKEEPER HIGHLIGHT ── */}
       <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
+          {/* Left: simulated live validation feed */}
           <AnimatedSection direction="left" className="space-y-3">
             {[
               { status: 'VÁLIDO', name: 'Pedro Almeida', seat: 'B-07', bg: 'bg-emerald-50 border-emerald-200', badge: 'bg-emerald-500', dot: 'bg-emerald-500', time: '20:14:33' },
@@ -808,6 +807,7 @@ export const LandingPage: React.FC = () => {
             ))}
           </AnimatedSection>
 
+          {/* Right: Copy */}
           <AnimatedSection direction="right" delay={100} className="space-y-6">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
               <ShieldCheck className="w-3.5 h-3.5" />
@@ -846,7 +846,7 @@ export const LandingPage: React.FC = () => {
           </AnimatedSection>
 
           <div className="grid sm:grid-cols-3 gap-6">
-            {testimonials.map(({ name, role, company, text, stars, initials, grad }, i) => (
+            {testimonials.map(({ name, role, company, text, stars, initials }, i) => (
               <AnimatedSection key={name} delay={i * 100} direction="up">
                 <div className="bg-white border border-slate-200 rounded-3xl p-7 hover:shadow-md transition-all duration-300 h-full flex flex-col justify-between space-y-5 group">
                   {/* Quote icon */}
@@ -858,7 +858,7 @@ export const LandingPage: React.FC = () => {
                     <p className="text-sm text-slate-700 font-medium leading-relaxed flex-1">"{text}"</p>
                   </div>
                   <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
-                    <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${grad} flex items-center justify-center text-white text-sm font-black shrink-0`}>
+                    <div className="w-10 h-10 rounded-full bg-[#2b55f5] flex items-center justify-center text-white text-sm font-black shrink-0">
                       {initials}
                     </div>
                     <div>
@@ -879,7 +879,7 @@ export const LandingPage: React.FC = () => {
         <div className="absolute inset-0 pointer-events-none opacity-30" style={{ backgroundImage: 'radial-gradient(circle at 30% 50%, #2b55f5 0%, transparent 55%), radial-gradient(circle at 70% 50%, #7c3aed 0%, transparent 55%)' }} />
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-7">
           <AnimatedSection className="space-y-7">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl shadow-2xl mx-auto" style={{ background: 'linear-gradient(135deg, #2b55f5, #7c3aed)' }}>
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl shadow-2xl mx-auto bg-[#2b55f5]">
               <Ticket className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
@@ -891,8 +891,7 @@ export const LandingPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <button
                 onClick={() => navigate('/login')}
-                className="flex items-center gap-2 px-8 py-4 rounded-2xl text-white text-base font-bold transition hover:-translate-y-0.5 active:scale-[0.98]"
-                style={{ background: 'linear-gradient(135deg, #2b55f5, #7c3aed)', boxShadow: '0 4px 32px rgba(43,85,245,0.4)' }}
+                className="flex items-center gap-2 px-8 py-4 rounded-2xl text-white text-base font-bold bg-[#2b55f5] hover:bg-[#1f44d6] shadow-xl shadow-blue-500/30 transition hover:-translate-y-0.5 active:scale-[0.98]"
               >
                 <span>Criar minha conta grátis</span>
                 <ArrowRight className="w-5 h-5" />
@@ -903,7 +902,7 @@ export const LandingPage: React.FC = () => {
                 style={{ background: 'rgba(255,255,255,0.06)' }}
               >
                 <span>Explorar eventos</span>
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
             <p className="text-xs text-slate-500 font-semibold">
@@ -920,7 +919,7 @@ export const LandingPage: React.FC = () => {
             {/* Brand */}
             <div className="col-span-2 md:col-span-1 space-y-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #2b55f5, #7c3aed)' }}>
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm bg-[#2b55f5]">
                   <Ticket className="text-white" style={{ width: '1.05rem', height: '1.05rem' }} />
                 </div>
                 <span className="text-base font-black text-white tracking-tight">Passfy</span>
