@@ -17,6 +17,11 @@
     "test": "npm run test --workspace=@passfy/api",
     "lint": "npm run lint --workspaces"
   },
+  "dependencies": {
+    "prisma": "^5.18.0",
+    "typescript": "^5.5.4"
+  },
+
 
 
   "keywords": [
