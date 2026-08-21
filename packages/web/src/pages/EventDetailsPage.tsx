@@ -807,9 +807,6 @@ export const EventDetailsPage: React.FC = () => {
                         <span className="text-xs font-bold text-slate-800">
                           Tipo de Ingresso por Assento:
                         </span>
-                        <span className="text-[10px] text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
-                          🎓 Meia = 50% OFF
-                        </span>
                       </div>
 
                       <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
