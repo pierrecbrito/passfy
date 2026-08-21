@@ -13,6 +13,10 @@ import {
   Loader2,
   X,
   CheckCircle2,
+  Plus,
+  Trash2,
+  Users,
+  Award,
 } from 'lucide-react';
 
 interface CatalogItem {
@@ -28,6 +32,14 @@ interface CatalogItem {
   city?: string;
 }
 
+interface TicketTierItem {
+  id: string;
+  name: string;
+  price: string;
+  capacity: string;
+  description: string;
+}
+
 export const OrganizerCreatePage: React.FC = () => {
   const navigate = useNavigate();
 
@@ -35,7 +47,7 @@ export const OrganizerCreatePage: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<'MOVIE' | 'CONCERT' | 'THEATER' | 'OTHER'>('CONCERT');
-  const [type, setType] = useState<'SEATED' | 'GENERAL_ADMISSION'>('SEATED');
+  const [type, setType] = useState<'SEATED' | 'GENERAL_ADMISSION'>('GENERAL_ADMISSION');
   const [venue, setVenue] = useState('Allianz Parque, São Paulo - SP');
   const [date, setDate] = useState(() => {
     const d = new Date();
@@ -43,13 +55,31 @@ export const OrganizerCreatePage: React.FC = () => {
     d.setHours(21, 0, 0, 0);
     return d.toISOString().slice(0, 16);
   });
-  const [price, setPrice] = useState('180.00');
+  const [price, setPrice] = useState('120.00');
   const [capacity, setCapacity] = useState('500');
   const [bannerUrl, setBannerUrl] = useState('');
   const [externalId, setExternalId] = useState<string | null>(null);
   const [externalSource, setExternalSource] = useState<string | null>(null);
   const [rowsCount, setRowsCount] = useState(8);
   const [seatsPerRow, setSeatsPerRow] = useState(10);
+
+  // Default Ticket Tiers: Pista e Camarote como padrão
+  const [ticketTiers, setTicketTiers] = useState<TicketTierItem[]>([
+    {
+      id: 'pista',
+      name: 'Pista',
+      price: '120.00',
+      capacity: '400',
+      description: 'Acesso à pista geral e visão frontal do palco',
+    },
+    {
+      id: 'camarote',
+      name: 'Camarote',
+      price: '250.00',
+      capacity: '100',
+      description: 'Visão panorâmica elevada, entrada exclusiva e bar privativo',
+    },
+  ]);
 
   // Inline Ticketmaster Live Autocomplete State for Title Input
   const titleDropdownRef = useRef<HTMLDivElement>(null);
@@ -105,7 +135,9 @@ export const OrganizerCreatePage: React.FC = () => {
         console.warn('Live title search error:', err);
       } finally {
         if (isMounted) {
-          setIsSearchingTitle(false);
+          if (isMounted) {
+            setIsSearchingTitle(false);
+          }
         }
       }
     }, 250);
@@ -142,8 +174,43 @@ export const OrganizerCreatePage: React.FC = () => {
     }
 
     setType('GENERAL_ADMISSION');
-    setPrice('220.00');
   };
+
+  // Ticket Tiers Helpers
+  const handleAddTier = () => {
+    const nextIndex = ticketTiers.length + 1;
+    const newTier: TicketTierItem = {
+      id: `tier-${Date.now()}`,
+      name: nextIndex === 3 ? 'Área VIP' : `Setor ${nextIndex}`,
+      price: '180.00',
+      capacity: '100',
+      description: 'Acesso diferenciado com benefícios exclusivos',
+    };
+    setTicketTiers((prev) => [...prev, newTier]);
+  };
+
+  const handleUpdateTier = (index: number, field: keyof TicketTierItem, value: string) => {
+    setTicketTiers((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
+  const handleRemoveTier = (index: number) => {
+    if (ticketTiers.length <= 1) return;
+    setTicketTiers((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const calculatedGeneralCapacity = ticketTiers.reduce(
+    (acc, curr) => acc + (parseInt(curr.capacity) || 0),
+    0
+  );
+
+  const calculatedMinPrice =
+    ticketTiers.length > 0
+      ? Math.min(...ticketTiers.map((t) => parseFloat(t.price) || 0))
+      : parseFloat(price) || 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,6 +218,29 @@ export const OrganizerCreatePage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      const formattedTiers =
+        type === 'GENERAL_ADMISSION'
+          ? ticketTiers.map((t) => ({
+              id: t.id,
+              name: t.name.trim(),
+              price: parseFloat(t.price) || 0,
+              capacity: parseInt(t.capacity) || 0,
+              description: t.description.trim(),
+            }))
+          : undefined;
+
+      const finalPrice =
+        type === 'GENERAL_ADMISSION' && formattedTiers && formattedTiers.length > 0
+          ? calculatedMinPrice
+          : parseFloat(price);
+
+      const finalCapacity =
+        type === 'SEATED'
+          ? rowsCount * seatsPerRow
+          : formattedTiers && formattedTiers.length > 0
+          ? calculatedGeneralCapacity
+          : parseInt(capacity) || 500;
+
       const response = await api.post('/events', {
         title,
         description,
@@ -158,8 +248,9 @@ export const OrganizerCreatePage: React.FC = () => {
         type,
         venue,
         date: new Date(date).toISOString(),
-        price: parseFloat(price),
-        capacity: type === 'SEATED' ? rowsCount * seatsPerRow : parseInt(capacity),
+        price: finalPrice,
+        capacity: finalCapacity,
+        ticketTiers: formattedTiers,
         bannerUrl: bannerUrl || null,
         externalId,
         externalSource,
@@ -175,16 +266,17 @@ export const OrganizerCreatePage: React.FC = () => {
     }
   };
 
-  const calculatedCapacity = type === 'SEATED' ? rowsCount * seatsPerRow : parseInt(capacity) || 0;
+  const calculatedCapacity =
+    type === 'SEATED' ? rowsCount * seatsPerRow : calculatedGeneralCapacity;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-slate-50/60 pb-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Publicar Novo Evento</h1>
           <p className="text-sm text-slate-500 font-medium mt-1">
-            Digite o nome da turnê no título para autocompletar via <strong className="text-[#2b55f5]">Ticketmaster Discovery</strong> ou preencha todos os campos manualmente.
+            Configure seu evento com diferentes tipos de ingressos (como <strong className="text-[#2b55f5]">Pista</strong> e <strong className="text-purple-600">Camarote</strong>) ou assentos marcados.
           </p>
         </div>
 
@@ -218,22 +310,17 @@ export const OrganizerCreatePage: React.FC = () => {
                     Título do Evento *
                   </label>
                   {externalSource === 'TICKETMASTER' && (
-                    <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                      <span>Vinculado ao Ticketmaster</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setExternalId(null);
-                          setExternalSource(null);
-                          setIsManuallyOverridden(true);
-                        }}
-                        className="ml-1 text-slate-400 hover:text-slate-700 font-bold"
-                        title="Desvincular e editar manualmente"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExternalId(null);
+                        setExternalSource(null);
+                        setIsManuallyOverridden(true);
+                      }}
+                      className="text-[10px] text-slate-400 hover:text-slate-600 underline"
+                    >
+                      Remover Vínculo Ticketmaster
+                    </button>
                   )}
                 </div>
 
@@ -245,138 +332,57 @@ export const OrganizerCreatePage: React.FC = () => {
                     onChange={(e) => {
                       setTitle(e.target.value);
                       setIsManuallyOverridden(false);
-                      if (e.target.value.trim().length >= 2) {
-                        setShowTitleDropdown(true);
-                      }
                     }}
-                    onFocus={() => {
-                      if (titleSuggestions.length > 0 && !isManuallyOverridden) {
-                        setShowTitleDropdown(true);
-                      }
-                    }}
-                    placeholder="Digite o título ou nome da turnê (ex: Chitãozinho, Coldplay, Rock in Rio...)"
-                    className="w-full pl-4 pr-10 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#2b55f5] shadow-xs"
+                    placeholder="Ex: Rock in Rio 2026, Guns N' Roses World Tour..."
+                    className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#2b55f5] shadow-xs"
                   />
-
-                  {isSearchingTitle ? (
-                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[#2b55f5]">
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                  {isSearchingTitle && (
+                    <div className="absolute right-3 top-3.5 flex items-center gap-1.5 text-xs text-slate-400">
+                      <Loader2 className="w-4 h-4 animate-spin text-[#2b55f5]" />
                     </div>
-                  ) : title ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTitle('');
-                        setTitleSuggestions([]);
-                        setShowTitleDropdown(false);
-                      }}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  ) : null}
+                  )}
                 </div>
 
-                {/* Suggestions Dropdown Popover */}
+                {/* Autocomplete Dropdown */}
                 {showTitleDropdown && titleSuggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-40 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                    <div className="p-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-                        <Sparkles className="w-3.5 h-3.5 text-cyan-600" />
-                        <span>Sugestões Disponíveis no Ticketmaster ({titleSuggestions.length}):</span>
-                      </div>
-                      <span className="text-[10px] text-slate-500">Selecione para preencher tudo</span>
+                  <div className="absolute z-30 left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden max-h-72 overflow-y-auto">
+                    <div className="p-2 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                      <span>Sugestões da API Ticketmaster</span>
+                      <span>Selecione para preencher</span>
                     </div>
-
-                    <div className="max-h-72 overflow-y-auto divide-y divide-slate-100">
-                      {titleSuggestions.map((item) => (
-                        <div
-                          key={item.id}
-                          onClick={() => handleSelectCatalogItem(item)}
-                          className="p-3 flex items-center gap-3.5 hover:bg-blue-50/70 transition cursor-pointer group"
-                        >
-                          <img
-                            src={
-                              item.posterUrl ||
-                              item.backdropUrl ||
-                              'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&w=150&q=80'
-                            }
-                            alt={item.title}
-                            className="w-12 h-14 object-cover rounded-lg shrink-0 border border-slate-200 shadow-xs"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-800 border border-cyan-200 uppercase">
-                                Ticketmaster
-                              </span>
-                              {item.category && (
-                                <span className="text-[10px] text-slate-500 font-medium">
-                                  {item.category === 'CONCERT' ? '🎵 Show' : '🎬 Filme'}
-                                </span>
-                              )}
-                            </div>
-                            <h4 className="text-sm font-bold text-slate-900 group-hover:text-[#2b55f5] transition truncate">
-                              {item.title}
-                            </h4>
-                            <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-0.5 font-medium">
-                              {item.venue && (
-                                <span className="flex items-center gap-1 truncate text-slate-600">
-                                  <MapPin className="w-3 h-3 text-emerald-600 shrink-0" />
-                                  <span className="truncate">{item.venue}</span>
-                                </span>
-                              )}
-                              {item.releaseDate && (
-                                <span className="flex items-center gap-1 shrink-0">
-                                  <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
-                                  <span>{item.releaseDate}</span>
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            className="px-3 py-1.5 rounded-lg bg-white group-hover:bg-[#2b55f5] text-slate-700 group-hover:text-white border border-slate-300 group-hover:border-[#2b55f5] text-xs font-bold transition shadow-xs shrink-0"
-                          >
-                            Selecionar
-                          </button>
+                    {titleSuggestions.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleSelectCatalogItem(item)}
+                        className="w-full p-3 text-left hover:bg-blue-50/60 border-b border-slate-100 last:border-0 flex items-center gap-3 transition"
+                      >
+                        <img
+                          src={item.posterUrl || item.backdropUrl || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80'}
+                          alt={item.title}
+                          className="w-10 h-10 rounded-lg object-cover bg-slate-100 shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-slate-900 truncate">{item.title}</p>
+                          <p className="text-[11px] text-slate-500 truncate">{item.venue || item.city || 'Show Oficial'}</p>
                         </div>
-                      ))}
-                    </div>
-
-                    {/* Manual override action bar */}
-                    <div className="p-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowTitleDropdown(false);
-                          setIsManuallyOverridden(true);
-                        }}
-                        className="text-slate-600 hover:text-slate-900 font-medium hover:underline flex items-center gap-1"
-                      >
-                        <span>✍️ Continuar com "{title}" manualmente</span>
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowTitleDropdown(false)}
-                        className="text-slate-400 hover:text-slate-600 font-semibold"
-                      >
-                        Fechar
-                      </button>
-                    </div>
+                    ))}
                   </div>
                 )}
               </div>
 
+              {/* Description */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Sinopse / Descrição *
+                  Descrição Completa *
                 </label>
                 <textarea
-                  required
                   rows={3}
+                  required
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Descreva os detalhes da apresentação, festival ou sessão..."
+                  placeholder="Detalhes sobre atrações, classificação indicativa e infraestrutura..."
                   className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#2b55f5] shadow-xs"
                 />
               </div>
@@ -409,52 +415,14 @@ export const OrganizerCreatePage: React.FC = () => {
                   />
                 </div>
               </div>
-
-              {bannerUrl && (
-                <div className="pt-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-slate-600 font-bold flex items-center gap-1.5">
-                      <span>📸 Pré-visualização da Capa / Banner:</span>
-                      <span className="text-[11px] text-slate-400 font-normal">(Visão dos Compradores)</span>
-                    </p>
-                    <span className="text-[11px] text-slate-400 font-medium">Proporção 16:9 Panorâmica</span>
-                  </div>
-
-                  <div className="relative w-full h-64 sm:h-80 lg:h-96 rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-slate-950 group">
-                    <img
-                      src={bannerUrl}
-                      alt="Prévia da Capa do Evento"
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80';
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none" />
-
-                    <div className="absolute bottom-4 left-4 right-4 text-white pointer-events-none flex items-end justify-between">
-                      <div>
-                        <span className="inline-block px-2.5 py-1 rounded-lg bg-white/20 backdrop-blur-md text-[11px] font-bold text-white mb-2">
-                          {category === 'MOVIE' ? '🎬 Cinema' : category === 'CONCERT' ? '🎵 Show' : '🎭 Teatro'}
-                        </span>
-                        <h4 className="text-lg sm:text-2xl font-black drop-shadow-md line-clamp-1">
-                          {title || 'Título do seu Evento'}
-                        </h4>
-                        <p className="text-xs text-slate-200 drop-shadow-sm mt-0.5 line-clamp-1">
-                          {venue || 'Local do Evento'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Venue, Date & Pricing */}
+          {/* Venue, Date & Modality */}
           <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-emerald-600" />
-              <span>Local, Data e Preço</span>
+              <span>Local, Data e Modalidade</span>
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -485,58 +453,191 @@ export const OrganizerCreatePage: React.FC = () => {
                 />
               </div>
 
-              <div>
+              <div className="sm:col-span-2">
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Preço Unitário do Ingresso (R$) *
+                  Tipo de Lotação do Evento
                 </label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
-                  <input
-                    type="number"
-                    step="0.50"
-                    min="1"
-                    required
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#2b55f5] shadow-xs"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Tipo de Lotação
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setType('SEATED')}
-                    className={`py-3 px-3 rounded-xl text-xs font-bold border transition shadow-xs ${
-                      type === 'SEATED'
-                        ? 'bg-[#2b55f5] text-white border-[#2b55f5]'
-                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                    }`}
-                  >
-                    🪑 Assentos Marcados
-                  </button>
+                <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => setType('GENERAL_ADMISSION')}
-                    className={`py-3 px-3 rounded-xl text-xs font-bold border transition shadow-xs ${
+                    className={`py-3 px-4 rounded-2xl text-xs font-bold border transition shadow-xs text-left flex items-center justify-between ${
                       type === 'GENERAL_ADMISSION'
-                        ? 'bg-[#2b55f5] text-white border-[#2b55f5]'
+                        ? 'bg-blue-50/60 text-[#2b55f5] border-[#2b55f5]'
                         : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
                     }`}
                   >
-                    🎟️ Pista / Geral
+                    <div>
+                      <p className="text-sm font-bold">🎟️ Setores & Tipos de Ingressos</p>
+                      <p className="text-[11px] text-slate-500 font-normal mt-0.5">
+                        Pista, Camarote, VIP, etc.
+                      </p>
+                    </div>
+                    {type === 'GENERAL_ADMISSION' && (
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#2b55f5]" />
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setType('SEATED')}
+                    className={`py-3 px-4 rounded-2xl text-xs font-bold border transition shadow-xs text-left flex items-center justify-between ${
+                      type === 'SEATED'
+                        ? 'bg-blue-50/60 text-[#2b55f5] border-[#2b55f5]'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div>
+                      <p className="text-sm font-bold">🪑 Assentos Numerados</p>
+                      <p className="text-[11px] text-slate-500 font-normal mt-0.5">
+                        Mapa interativo por poltronas
+                      </p>
+                    </div>
+                    {type === 'SEATED' && (
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#2b55f5]" />
+                    )}
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Seat Layout Configurator (For SEATED type) */}
-          {type === 'SEATED' ? (
+          {/* ── SECTORS & TICKET TIERS CONFIGURATION (Pista e Camarote como padrão) ── */}
+          {type === 'GENERAL_ADMISSION' ? (
+            <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-4">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <Award className="w-5 h-5 text-[#2b55f5]" />
+                    <span>Tipos de Ingressos & Setores</span>
+                  </h2>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    Configure os setores disponíveis para compra (Pista, Camarote, etc).
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAddTier}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#2b55f5] text-xs font-bold transition shadow-2xs cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Adicionar Tipo de Ingresso</span>
+                </button>
+              </div>
+
+              {/* Tiers List */}
+              <div className="space-y-4">
+                {ticketTiers.map((tier, index) => (
+                  <div
+                    key={tier.id || index}
+                    className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-3.5 shadow-2xs relative"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-[#2b55f5] text-white flex items-center justify-center text-xs font-bold">
+                          {index + 1}
+                        </span>
+                        <span className="text-xs font-bold text-slate-700">Setor #{index + 1}</span>
+                      </div>
+
+                      {ticketTiers.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTier(index)}
+                          className="text-xs text-slate-400 hover:text-rose-600 flex items-center gap-1 transition p-1"
+                          title="Remover setor"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span className="hidden sm:inline">Remover</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Nome do Tipo / Setor *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={tier.name}
+                          onChange={(e) => handleUpdateTier(index, 'name', e.target.value)}
+                          placeholder="Ex: Pista, Camarote, Área VIP"
+                          className="w-full px-3.5 py-2.5 bg-white rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#2b55f5] shadow-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Preço Unitário (R$) *
+                        </label>
+                        <div className="relative">
+                          <DollarSign className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                          <input
+                            type="number"
+                            step="0.50"
+                            min="1"
+                            required
+                            value={tier.price}
+                            onChange={(e) => handleUpdateTier(index, 'price', e.target.value)}
+                            placeholder="120.00"
+                            className="w-full pl-8 pr-3 py-2.5 bg-white rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#2b55f5] shadow-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Quantidade / Capacidade *
+                        </label>
+                        <div className="relative">
+                          <Users className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                          <input
+                            type="number"
+                            min="1"
+                            required
+                            value={tier.capacity}
+                            onChange={(e) => handleUpdateTier(index, 'capacity', e.target.value)}
+                            placeholder="400"
+                            className="w-full pl-8 pr-3 py-2.5 bg-white rounded-xl border border-slate-300 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#2b55f5] shadow-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="sm:col-span-3">
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                          Benefícios / Descrição do Setor
+                        </label>
+                        <input
+                          type="text"
+                          value={tier.description}
+                          onChange={(e) => handleUpdateTier(index, 'description', e.target.value)}
+                          placeholder="Ex: Visão panorâmica elevada, entrada exclusiva e bar privativo"
+                          className="w-full px-3.5 py-2 bg-white rounded-xl border border-slate-200 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#2b55f5]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Summary Bar */}
+              <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#2b55f5]" />
+                  <span className="font-semibold text-slate-700">
+                    Capacidade Total Somada: <strong className="text-slate-900 font-bold">{calculatedGeneralCapacity} ingressos</strong>
+                  </span>
+                </div>
+                <div className="font-semibold text-slate-700">
+                  Ingressos a partir de: <strong className="text-[#2b55f5] font-black text-sm">R$ {calculatedMinPrice.toFixed(2)}</strong>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Seat Layout Configurator (For SEATED type) */
             <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
               <div className="flex items-center justify-between">
                 <div>
@@ -545,7 +646,7 @@ export const OrganizerCreatePage: React.FC = () => {
                     <span>Configuração da Grade de Assentos</span>
                   </h2>
                   <p className="text-xs text-slate-500 font-medium">
-                    Total de {calculatedCapacity} assentos que serão gerados automaticamente
+                    Total de {calculatedCapacity} assentos gerados automaticamente
                   </p>
                 </div>
                 <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
@@ -554,6 +655,21 @@ export const OrganizerCreatePage: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Preço Unitário da Poltrona (R$) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.50"
+                    min="1"
+                    required
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#2b55f5] shadow-xs"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1.5">
                     Número de Fileiras (Letras A até {String.fromCharCode(64 + rowsCount)})
@@ -567,88 +683,25 @@ export const OrganizerCreatePage: React.FC = () => {
                     className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#2b55f5] shadow-xs"
                   />
                 </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Assentos por Fileira
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="16"
-                    value={seatsPerRow}
-                    onChange={(e) => setSeatsPerRow(Math.min(16, Math.max(1, parseInt(e.target.value) || 1)))}
-                    className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#2b55f5] shadow-xs"
-                  />
-                </div>
-              </div>
-
-              {/* Seat Map Visual Mini Preview */}
-              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-4 shadow-xs">
-                <div className="w-3/4 mx-auto py-1.5 rounded-lg bg-blue-50 border border-blue-200 text-[10px] text-[#2b55f5] uppercase tracking-widest font-bold">
-                  Palco / Tela de Projeção
-                </div>
-
-                <div className="space-y-1.5 max-h-48 overflow-y-auto pt-2">
-                  {Array.from({ length: rowsCount }).map((_, r) => {
-                    const rowLetter = String.fromCharCode(65 + r);
-                    return (
-                      <div key={rowLetter} className="flex items-center justify-center gap-1.5">
-                        <span className="w-4 text-xs font-bold text-slate-500">{rowLetter}</span>
-                        <div className="flex gap-1">
-                          {Array.from({ length: seatsPerRow }).map((_, num) => (
-                            <div
-                              key={num}
-                              className="w-5 h-5 rounded-md bg-white border border-slate-300 flex items-center justify-center text-[9px] text-slate-700 font-bold shadow-xs"
-                            >
-                              {num + 1}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-4 shadow-xs">
-              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Ticket className="w-5 h-5 text-[#2b55f5]" />
-                <span>Capacidade Total da Pista / Acesso Geral</span>
-              </h2>
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Capacidade Máxima de Ingressos
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  required
-                  value={capacity}
-                  onChange={(e) => setCapacity(e.target.value)}
-                  placeholder="Ex: 500"
-                  className="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#2b55f5] shadow-xs max-w-xs"
-                />
               </div>
             </div>
           )}
 
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="py-3 px-5 rounded-xl text-xs font-bold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition shadow-xs"
+              className="py-3 px-5 rounded-xl text-xs font-bold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition shadow-xs cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 py-3 px-6 rounded-xl text-xs font-bold bg-[#2b55f5] hover:bg-[#1f44d6] text-white shadow-xs transition"
+              className="flex items-center gap-2 py-3 px-6 rounded-xl text-xs font-bold bg-[#2b55f5] hover:bg-[#1f44d6] text-white shadow-xs transition cursor-pointer active:scale-95"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>{isSubmitting ? 'Publicando...' : 'Publicar Evento Agora'}</span>
+              <span>{isSubmitting ? 'Publicando Evento...' : 'Publicar Evento'}</span>
             </button>
           </div>
         </form>

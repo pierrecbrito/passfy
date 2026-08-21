@@ -27,6 +27,7 @@ export class EventService {
           date: eventDate,
           price: data.price,
           capacity,
+          ticketTiers: (data.ticketTiers as any) || undefined,
           bannerUrl: data.bannerUrl,
           externalId: data.externalId,
           externalSource: data.externalSource,

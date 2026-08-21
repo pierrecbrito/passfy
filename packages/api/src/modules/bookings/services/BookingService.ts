@@ -172,10 +172,27 @@ export class BookingService {
           );
         }
 
+        const tiers: any[] = Array.isArray((event as any).ticketTiers)
+          ? ((event as any).ticketTiers as any[])
+          : [];
+
         const reservationItemsData = Array.from({ length: requestedQty }).map((_, index) => {
           const attendee = attendees[index];
           const isStudent = attendee?.ticketType === 'MEIA_ESTUDANTE';
-          const itemPrice = isStudent ? Number(event.price) * 0.5 : Number(event.price);
+
+          let basePrice = Number(event.price);
+          if (attendee?.tierName || attendee?.tierId) {
+            const matched = tiers.find(
+              (t) =>
+                t.id === attendee.tierId ||
+                t.name?.toLowerCase() === attendee.tierName?.toLowerCase()
+            );
+            if (matched) {
+              basePrice = Number(matched.price);
+            }
+          }
+
+          const itemPrice = isStudent ? basePrice * 0.5 : basePrice;
           totalAmount += itemPrice;
 
           return {

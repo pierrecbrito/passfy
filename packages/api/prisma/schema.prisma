@@ -66,6 +66,7 @@ model Event {
   date           DateTime
   price          Decimal       @db.Decimal(10, 2)
   capacity       Int
+  ticketTiers    Json?
   externalId     String?
   externalSource String?
   organizerId    String

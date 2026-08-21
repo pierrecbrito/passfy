@@ -5,6 +5,8 @@ export const attendeeSchema = z.object({
   name: z.string().min(2, 'Nome do titular deve ter ao menos 2 caracteres.').optional(),
   ticketType: z.enum(['INTEIRA', 'MEIA_ESTUDANTE']).optional().default('INTEIRA'),
   studentIdNumber: z.string().optional(),
+  tierId: z.string().optional(),
+  tierName: z.string().optional(),
 });
 
 export const checkoutSimulationSchema = z.object({

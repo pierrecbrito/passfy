@@ -31,11 +31,15 @@ import {
   Clock,
   RefreshCw,
   Share2,
+  Award,
+  Layers,
 } from 'lucide-react';
 
 interface AttendeeState {
   seatId?: string;
   seatLabel?: string;
+  tierId?: string;
+  tierName?: string;
   name: string;
   ticketType: 'INTEIRA' | 'MEIA_ESTUDANTE';
   studentIdNumber: string;
@@ -53,6 +57,7 @@ export const EventDetailsPage: React.FC = () => {
   // Selection State
   const [selectedSeats, setSelectedSeats] = useState<SeatItem[]>([]);
   const [quantity, setQuantity] = useState<number>(1);
+  const [selectedTierId, setSelectedTierId] = useState<string>('pista');
 
   // In-Card 3-Phase Flow State: 1 = Resumo, 2 = Titulares/Ingressos Pontilhados, 3 = Pagamento
   const [currentPhase, setCurrentPhase] = useState<1 | 2 | 3>(1);
@@ -114,17 +119,59 @@ export const EventDetailsPage: React.FC = () => {
     event?.title?.toLowerCase().includes('coldplay') ||
     event?.title?.toLowerCase().includes('tour');
 
-  const unitPrice = event ? Number(event.price) : 0;
+  // Available Ticket Tiers (Pista, Camarote, etc.)
+  const availableTiers = useMemo(() => {
+    if (!event) return [];
+    if (event.ticketTiers && Array.isArray(event.ticketTiers) && event.ticketTiers.length > 0) {
+      return event.ticketTiers;
+    }
+    if (event.type === 'GENERAL_ADMISSION') {
+      const base = Number(event.price) || 120;
+      return [
+        {
+          id: 'pista',
+          name: 'Pista',
+          price: base,
+          description: 'Acesso à pista geral e visão frontal do palco',
+        },
+        {
+          id: 'camarote',
+          name: 'Camarote',
+          price: base * 1.8,
+          description: 'Visão panorâmica elevada, entrada exclusiva e bar privativo',
+        },
+      ];
+    }
+    return [];
+  }, [event]);
+
+  // Set default selected tier when availableTiers load
+  useEffect(() => {
+    if (availableTiers.length > 0 && !availableTiers.some((t: any) => t.id === selectedTierId)) {
+      setSelectedTierId(availableTiers[0].id);
+    }
+  }, [availableTiers, selectedTierId]);
+
+  const currentTier =
+    availableTiers.find((t: any) => t.id === selectedTierId) || availableTiers[0];
+
+  const unitPrice = currentTier
+    ? Number(currentTier.price)
+    : event
+    ? Number(event.price)
+    : 0;
+
   const totalSelectedTickets = isSeated ? selectedSeats.length : quantity;
 
-  // Clear any previous error when seats or quantity change
+  // Clear any previous error when seats, tier or quantity change
   useEffect(() => {
     setPaymentError(null);
-  }, [selectedSeats, quantity, currentPhase]);
+  }, [selectedSeats, quantity, selectedTierId, currentPhase]);
 
-  // Synchronize Attendees List when seats or quantity change
+  // Synchronize Attendees List when seats, tier or quantity change
   useEffect(() => {
     const defaultStudentId = localStorage.getItem('passfy_saved_student_id') || '';
+    const tierName = currentTier?.name || 'Pista Geral';
 
     if (isSeated) {
       setAttendees((prev) => {
@@ -134,6 +181,7 @@ export const EventDetailsPage: React.FC = () => {
           return {
             seatId: seat.id,
             seatLabel: seat.label,
+            tierName: `Poltrona ${seat.label}`,
             name: idx === 0 && user?.name ? user.name : '',
             ticketType: 'INTEIRA',
             studentIdNumber: defaultStudentId,
@@ -145,9 +193,15 @@ export const EventDetailsPage: React.FC = () => {
         const newAttendees: AttendeeState[] = [];
         for (let i = 0; i < quantity; i++) {
           if (prev[i]) {
-            newAttendees.push(prev[i]);
+            newAttendees.push({
+              ...prev[i],
+              tierId: selectedTierId,
+              tierName,
+            });
           } else {
             newAttendees.push({
+              tierId: selectedTierId,
+              tierName,
               name: i === 0 && user?.name ? user.name : '',
               ticketType: 'INTEIRA',
               studentIdNumber: defaultStudentId,
@@ -157,7 +211,7 @@ export const EventDetailsPage: React.FC = () => {
         return newAttendees;
       });
     }
-  }, [selectedSeats, quantity, isSeated, user]);
+  }, [selectedSeats, quantity, isSeated, selectedTierId, currentTier, user]);
 
   // Dynamic Total Calculation: Inteira = 100%, Estudante = 50%
   const subtotal = useMemo(() => {
@@ -217,7 +271,9 @@ export const EventDetailsPage: React.FC = () => {
     // Validate all holders and student IDs
     for (let i = 0; i < attendees.length; i++) {
       const att = attendees[i];
-      const label = att.seatLabel ? `Poltrona ${att.seatLabel}` : `Ingresso #${i + 1}`;
+      const label = att.seatLabel
+        ? `Poltrona ${att.seatLabel}`
+        : `${att.tierName || 'Ingresso'} #${i + 1}`;
 
       if (!att.name.trim()) {
         setPaymentError(`Por favor, informe o nome do titular do ${label}.`);
@@ -245,6 +301,8 @@ export const EventDetailsPage: React.FC = () => {
         quantity: isSeated ? undefined : quantity,
         attendees: attendees.map((a) => ({
           seatId: a.seatId,
+          tierId: a.tierId,
+          tierName: a.tierName,
           name: a.name.trim(),
           ticketType: a.ticketType,
           studentIdNumber: a.ticketType === 'MEIA_ESTUDANTE' ? a.studentIdNumber.trim() : undefined,
@@ -261,7 +319,6 @@ export const EventDetailsPage: React.FC = () => {
       ]);
 
       if (response.data.status === 'APPROVED') {
-        // Redireciona para a página dedicada de confirmação de pedido
         navigate('/order-success', {
           state: {
             result: response.data,
@@ -328,7 +385,7 @@ export const EventDetailsPage: React.FC = () => {
         <p className="text-sm text-slate-500">{error || 'O evento que você procura não existe.'}</p>
         <button
           onClick={() => navigate('/home')}
-          className="px-5 py-2.5 rounded-xl bg-[#2b55f5] text-white text-sm font-bold shadow-xs hover:bg-[#1f44d6] transition"
+          className="px-5 py-2.5 rounded-xl bg-[#2b55f5] text-white text-sm font-bold shadow-xs hover:bg-[#1f44d6] transition cursor-pointer"
         >
           Voltar para Eventos
         </button>
@@ -357,7 +414,7 @@ export const EventDetailsPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <button
             onClick={() => navigate('/home')}
-            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition"
+            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 transition cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Voltar para todos os eventos</span>
@@ -394,7 +451,7 @@ export const EventDetailsPage: React.FC = () => {
                       : 'Teatro'}
                   </span>
                   <span className="px-3 py-1 rounded-lg text-xs font-black bg-slate-900/80 text-white backdrop-blur-md">
-                    {isSeated ? 'Poltronas Numeradas' : 'Pista Geral'}
+                    {isSeated ? 'Poltronas Numeradas' : 'Pista & Camarote'}
                   </span>
                 </div>
               </div>
@@ -578,7 +635,7 @@ export const EventDetailsPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setIsAuthCardActive(false)}
-                      className="text-xs text-slate-400 hover:text-slate-700 font-semibold"
+                      className="text-xs text-slate-400 hover:text-slate-700 font-semibold cursor-pointer"
                     >
                       Voltar
                     </button>
@@ -688,7 +745,7 @@ export const EventDetailsPage: React.FC = () => {
                     <button
                       type="submit"
                       disabled={isAuthenticating}
-                      className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-[#2b55f5] hover:bg-[#1f44d6] text-white shadow-xs transition flex items-center justify-center gap-1.5 active:scale-[0.99]"
+                      className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-[#2b55f5] hover:bg-[#1f44d6] text-white shadow-xs transition flex items-center justify-center gap-1.5 active:scale-[0.99] cursor-pointer"
                     >
                       <span>
                         {isAuthenticating
@@ -704,7 +761,7 @@ export const EventDetailsPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={handleQuickDemoFill}
-                        className="text-[11px] font-bold text-[#2b55f5] hover:underline"
+                        className="text-[11px] font-bold text-[#2b55f5] hover:underline cursor-pointer"
                       >
                         ⚡ Usar conta demo (1-clique)
                       </button>
@@ -712,23 +769,63 @@ export const EventDetailsPage: React.FC = () => {
                   </form>
                 </div>
               ) : currentPhase === 1 ? (
-                /* ── FASE 1: Resumo da Reserva (com opção de Estudante já aqui) ── */
+                /* ── FASE 1: Resumo da Reserva (com seleção de Setor Pista / Camarote e Estudante) ── */
                 <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
-                  {/* Preço Base */}
+                  
+                  {/* Seletor de Setor / Tipo de Ingresso (Pista vs Camarote) para eventos sem assento marcado */}
+                  {!isSeated && availableTiers.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-slate-800">
+                        Escolha o Setor do Ingresso:
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {availableTiers.map((tier: any) => {
+                          const isSelected = selectedTierId === tier.id;
+                          return (
+                            <button
+                              key={tier.id}
+                              type="button"
+                              onClick={() => setSelectedTierId(tier.id)}
+                              className={`p-3 rounded-2xl border text-left transition flex flex-col justify-between gap-1.5 cursor-pointer shadow-2xs ${
+                                isSelected
+                                  ? 'bg-blue-50/70 border-[#2b55f5] text-[#2b55f5] ring-2 ring-blue-100'
+                                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-black text-slate-900">{tier.name}</span>
+                                {isSelected && <span className="w-2 h-2 rounded-full bg-[#2b55f5]" />}
+                              </div>
+                              <p className="text-xs font-extrabold text-[#2b55f5]">
+                                R$ {Number(tier.price).toFixed(2)}
+                              </p>
+                              {tier.description && (
+                                <p className="text-[10px] text-slate-500 font-medium line-clamp-1">
+                                  {tier.description}
+                                </p>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Preço Base Atual */}
                   <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                    <span>Preço Unitário Base:</span>
+                    <span>Preço Unitário ({currentTier?.name || 'Ingresso'}):</span>
                     <span className="text-slate-900 font-bold text-sm">
                       R$ {unitPrice.toFixed(2)}
                     </span>
                   </div>
 
-                  {/* Controle de Quantidade (Pista Geral) */}
+                  {/* Controle de Quantidade (Pista / Camarote) */}
                   {!isSeated && (
                     <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-slate-700">Quantidade de Ingressos</span>
                         <span className="text-[11px] font-semibold text-slate-500">
-                          {event.availableCapacity} disponíveis
+                          {currentTier?.name || 'Geral'}
                         </span>
                       </div>
 
@@ -738,7 +835,7 @@ export const EventDetailsPage: React.FC = () => {
                             type="button"
                             disabled={quantity <= 1}
                             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                            className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 disabled:opacity-30 text-slate-800 flex items-center justify-center transition"
+                            className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 disabled:opacity-30 text-slate-800 flex items-center justify-center transition cursor-pointer"
                           >
                             <Minus className="w-3.5 h-3.5" />
                           </button>
@@ -747,9 +844,9 @@ export const EventDetailsPage: React.FC = () => {
                           </span>
                           <button
                             type="button"
-                            disabled={quantity >= 10 || quantity >= event.availableCapacity}
+                            disabled={quantity >= 10}
                             onClick={() => setQuantity((q) => q + 1)}
-                            className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 disabled:opacity-30 text-slate-800 flex items-center justify-center transition"
+                            className="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 disabled:opacity-30 text-slate-800 flex items-center justify-center transition cursor-pointer"
                           >
                             <Plus className="w-3.5 h-3.5" />
                           </button>
@@ -794,7 +891,7 @@ export const EventDetailsPage: React.FC = () => {
                     <div className="space-y-2 pt-2 border-t border-slate-100">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-slate-800">
-                          Tipo de Ingresso por Assento:
+                          Tipo de Ingresso por Unidade:
                         </span>
                       </div>
 
@@ -802,7 +899,7 @@ export const EventDetailsPage: React.FC = () => {
                         {attendees.map((att, idx) => {
                           const ticketLabel = att.seatLabel
                             ? `Poltrona ${att.seatLabel}`
-                            : `Ingresso #${idx + 1}`;
+                            : `${att.tierName || 'Ingresso'} #${idx + 1}`;
                           const isStudent = att.ticketType === 'MEIA_ESTUDANTE';
 
                           return (
@@ -819,12 +916,12 @@ export const EventDetailsPage: React.FC = () => {
                                 </p>
                               </div>
 
-                              {/* Toggle Inteira / Estudante sem ícones */}
+                              {/* Toggle Inteira / Estudante */}
                               <div className="flex p-0.5 rounded-lg bg-white border border-slate-200 text-[11px] font-bold">
                                 <button
                                   type="button"
                                   onClick={() => handleUpdateAttendee(idx, 'ticketType', 'INTEIRA')}
-                                  className={`px-2.5 py-1 rounded-md transition ${
+                                  className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
                                     !isStudent
                                       ? 'bg-[#2b55f5] text-white shadow-2xs'
                                       : 'text-slate-500 hover:text-slate-900'
@@ -837,7 +934,7 @@ export const EventDetailsPage: React.FC = () => {
                                   onClick={() =>
                                     handleUpdateAttendee(idx, 'ticketType', 'MEIA_ESTUDANTE')
                                   }
-                                  className={`px-2.5 py-1 rounded-md transition ${
+                                  className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
                                     isStudent
                                       ? 'bg-purple-600 text-white shadow-2xs'
                                       : 'text-slate-500 hover:text-slate-900'
@@ -865,7 +962,7 @@ export const EventDetailsPage: React.FC = () => {
                   <button
                     disabled={isSoldOut || totalSelectedTickets === 0}
                     onClick={handleProceedFromPhase1}
-                    className="w-full py-3.5 px-4 rounded-xl text-sm font-bold bg-[#2b55f5] hover:bg-[#1f44d6] disabled:bg-slate-200 disabled:text-slate-400 text-white shadow-xs transition active:scale-[0.99] flex items-center justify-center gap-2"
+                    className="w-full py-3.5 px-4 rounded-xl text-sm font-bold bg-[#2b55f5] hover:bg-[#1f44d6] disabled:bg-slate-200 disabled:text-slate-400 text-white shadow-xs transition active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {isSoldOut ? (
                       'Evento Esgotado'
@@ -898,7 +995,7 @@ export const EventDetailsPage: React.FC = () => {
                         setPaymentError(null);
                         setCurrentPhase(1);
                       }}
-                      className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1"
+                      className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 cursor-pointer"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
                       <span>Voltar ao Resumo</span>
@@ -922,7 +1019,7 @@ export const EventDetailsPage: React.FC = () => {
                       const isStudent = att.ticketType === 'MEIA_ESTUDANTE';
                       const ticketLabel = att.seatLabel
                         ? `Poltrona ${att.seatLabel}`
-                        : `Ingresso #${index + 1}`;
+                        : `${att.tierName || 'Ingresso'} #${index + 1}`;
 
                       return (
                         <div
@@ -945,7 +1042,7 @@ export const EventDetailsPage: React.FC = () => {
                               </h5>
                             </div>
 
-                            {/* Ticket Type Badge with Instant Toggle (sem ícones) */}
+                            {/* Ticket Type Badge with Instant Toggle */}
                             <button
                               type="button"
                               onClick={() =>
@@ -955,7 +1052,7 @@ export const EventDetailsPage: React.FC = () => {
                                   isStudent ? 'INTEIRA' : 'MEIA_ESTUDANTE'
                                 )
                               }
-                              className={`px-2.5 py-1 rounded-lg text-[10px] font-black border transition shrink-0 ${
+                              className={`px-2.5 py-1 rounded-lg text-[10px] font-black border transition shrink-0 cursor-pointer ${
                                 isStudent
                                   ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
                                   : 'bg-blue-50 text-[#2b55f5] border-blue-200 hover:bg-blue-100'
@@ -1004,7 +1101,7 @@ export const EventDetailsPage: React.FC = () => {
                                           savedStudentId
                                         )
                                       }
-                                      className="text-[10px] text-purple-700 font-bold hover:underline"
+                                      className="text-[10px] text-purple-700 font-bold hover:underline cursor-pointer"
                                     >
                                       Preencher salva ({savedStudentId})
                                     </button>
@@ -1050,7 +1147,7 @@ export const EventDetailsPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleProceedFromPhase2}
-                    className="w-full py-3.5 px-4 rounded-xl text-sm font-bold bg-[#2b55f5] hover:bg-[#1f44d6] text-white shadow-xs transition active:scale-[0.99] flex items-center justify-center gap-2"
+                    className="w-full py-3.5 px-4 rounded-xl text-sm font-bold bg-[#2b55f5] hover:bg-[#1f44d6] text-white shadow-xs transition active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <span>Avançar para o Pagamento</span>
                     <ArrowRight className="w-4 h-4" />
@@ -1066,7 +1163,7 @@ export const EventDetailsPage: React.FC = () => {
                         setPaymentError(null);
                         setCurrentPhase(2);
                       }}
-                      className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1"
+                      className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 cursor-pointer"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
                       <span>Voltar aos Titulares</span>
@@ -1089,7 +1186,7 @@ export const EventDetailsPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('PIX')}
-                      className={`p-3 rounded-xl border text-left transition flex flex-col justify-between gap-2 ${
+                      className={`p-3 rounded-xl border text-left transition flex flex-col justify-between gap-2 cursor-pointer ${
                         paymentMethod === 'PIX'
                           ? 'bg-blue-50/60 border-[#2b55f5] text-[#2b55f5] shadow-xs'
                           : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -1110,7 +1207,7 @@ export const EventDetailsPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('CREDIT_CARD')}
-                      className={`p-3 rounded-xl border text-left transition flex flex-col justify-between gap-2 ${
+                      className={`p-3 rounded-xl border text-left transition flex flex-col justify-between gap-2 cursor-pointer ${
                         paymentMethod === 'CREDIT_CARD'
                           ? 'bg-blue-50/60 border-[#2b55f5] text-[#2b55f5] shadow-xs'
                           : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -1163,7 +1260,7 @@ export const EventDetailsPage: React.FC = () => {
                             setCopiedPix(true);
                             setTimeout(() => setCopiedPix(false), 2000);
                           }}
-                          className="px-2.5 py-1 rounded-lg bg-blue-50 text-[#2b55f5] text-[11px] font-bold shrink-0 hover:bg-blue-100 transition flex items-center gap-1"
+                          className="px-2.5 py-1 rounded-lg bg-blue-50 text-[#2b55f5] text-[11px] font-bold shrink-0 hover:bg-blue-100 transition flex items-center gap-1 cursor-pointer"
                         >
                           {copiedPix ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                           <span>{copiedPix ? 'Copiado' : 'Copiar'}</span>
@@ -1238,7 +1335,7 @@ export const EventDetailsPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setSimulateStatus('APPROVED')}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition ${
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
                             simulateStatus === 'APPROVED'
                               ? 'bg-emerald-600 text-white'
                               : 'bg-white text-slate-600 border border-slate-200'
@@ -1249,7 +1346,7 @@ export const EventDetailsPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setSimulateStatus('DECLINED')}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition ${
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
                             simulateStatus === 'DECLINED'
                               ? 'bg-rose-600 text-white'
                               : 'bg-white text-slate-600 border border-slate-200'
@@ -1266,7 +1363,7 @@ export const EventDetailsPage: React.FC = () => {
                     type="button"
                     disabled={isProcessingPayment}
                     onClick={handleExecutePayment}
-                    className="w-full py-3.5 px-4 rounded-xl text-sm font-bold bg-[#2b55f5] hover:bg-[#1f44d6] disabled:opacity-50 text-white shadow-xs transition active:scale-[0.99] flex items-center justify-center gap-2"
+                    className="w-full py-3.5 px-4 rounded-xl text-sm font-bold bg-[#2b55f5] hover:bg-[#1f44d6] disabled:opacity-50 text-white shadow-xs transition active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <span>Pagar R$ {subtotal.toFixed(2)}</span>
                     <Check className="w-4 h-4" />
