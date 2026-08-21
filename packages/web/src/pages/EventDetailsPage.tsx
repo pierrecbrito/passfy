@@ -658,12 +658,10 @@ export const EventDetailsPage: React.FC = () => {
               </div>
             )}
 
-            {/* Card do Spotify */}
-            {isMusicEvent && (
-              <div className="space-y-3">
-                <SpotifyShowCard event={event} />
-              </div>
-            )}
+            {/* Card do Spotify Oficial */}
+            <div className="space-y-3">
+              <SpotifyShowCard event={event} />
+            </div>
           </div>
 
           {/* ── LADO DIREITO: Painel de Reserva / Finalização / Pagamento (3 Fases no mesmo Card) ── */}

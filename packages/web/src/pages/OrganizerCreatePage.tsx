@@ -415,6 +415,52 @@ export const OrganizerCreatePage: React.FC = () => {
                   />
                 </div>
               </div>
+
+              {/* Preview Visual do Banner / Poster */}
+              {bannerUrl ? (
+                <div className="space-y-2 pt-3 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                      <span>🖼️ Preview do Banner do Evento</span>
+                      <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                        Imagem carregada
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setBannerUrl('')}
+                      className="text-xs font-bold text-red-500 hover:text-red-700 hover:underline cursor-pointer"
+                    >
+                      Remover imagem
+                    </button>
+                  </div>
+                  <div className="relative w-full h-44 sm:h-56 rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 shadow-inner group">
+                    <img
+                      src={bannerUrl}
+                      alt="Banner Preview"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80';
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
+                    <div className="absolute bottom-3 left-4 right-4 text-white">
+                      <p className="text-sm font-black truncate">{title || 'Título do Evento'}</p>
+                      <p className="text-xs text-slate-300 font-medium truncate">{venue}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="pt-3 border-t border-slate-100">
+                  <div className="w-full h-24 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/60 flex flex-col items-center justify-center text-slate-400 gap-1.5">
+                    <Sparkles className="w-4 h-4 text-[#2b55f5]" />
+                    <p className="text-xs font-medium text-slate-500 text-center px-4">
+                      Digite o nome de um artista/evento oficial no título ou cole uma URL acima para ver o preview do banner.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
