@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: passfy-prod-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-passfy_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-passfy_password}
+      POSTGRES_DB: ${POSTGRES_DB:-passfy_db}
+    volumes:
+      - passfy-prod-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-passfy_user} -d ${POSTGRES_DB:-passfy_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - passfy-network
+
+  api:
+    build:
+      context: .
+      dockerfile: packages/api/Dockerfile
+    container_name: passfy-prod-api
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3333
+      DATABASE_URL: postgresql://${POSTGRES_USER:-passfy_user}:${POSTGRES_PASSWORD:-passfy_password}@postgres:5432/${POSTGRES_DB:-passfy_db}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-passfy_super_secret_jwt_key_2026}
+      QR_SECRET: ${QR_SECRET:-passfy_super_secret_qr_key_2026}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      TICKETMASTER_API_KEY: ${TICKETMASTER_API_KEY}
+    ports:
+      - "3333:3333"
+    networks:
+      - passfy-network
+
+  web:
+    build:
+      context: .
+      dockerfile: packages/web/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3333/api}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL:-http://localhost:3333}
+    container_name: passfy-prod-web
+    restart: always
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+    networks:
+      - passfy-network
+
+volumes:
+  passfy-prod-pgdata:
+    driver: local
+
+networks:
+  passfy-network:
+    driver: bridge
