@@ -1,6 +1,6 @@
 # 🎟️ Passfy — Plataforma de Eventos, Ingressos & Validação Criptográfica
 
-> Uma plataforma full-stack de gestão, venda concorrente e validação de ingressos em tempo real com QR Code anti-fraude, construída com arquitetura de **Monólito Modular**, integração oficial à **Ticketmaster Discovery API v2 (com Auto-Suggest em tempo real)**, **Spotify Web API**, geração de **Ingressos em PDF de Alta Definição**, agendamento no **Google Agenda**, e foco rigoroso em engenharia de software e intencionalidade de design.
+> Uma plataforma full-stack moderna de gestão, venda concorrente, sincronização em tempo real via **WebSocket (Socket.IO)** e validação de ingressos com **QR Code anti-fraude (HMAC-SHA256)**, construída com arquitetura de **Monólito Modular**, integração oficial ao **Stripe Payment Gateway**, catálogo mundial com a **Ticketmaster Discovery API v2 (com Auto-Suggest em tempo real)**, **Spotify Web API**, curadoria com **Google Gemini AI**, geração de **Ingressos em PDF de Alta Definição**, **Devolução ao Estoque**, agendamento no **Google Agenda**, e foco rigoroso em engenharia de software e intencionalidade de design.
 
 ---
 
@@ -8,14 +8,17 @@
 
 1. [Visão Geral & Recursos](#-visão-geral--recursos)
 2. [Arquitetura & Decisões Técnicas](#-arquitetura--decisões-técnicas)
-3. [Design System & Experiência de Usuário](#-design-system--experiência-de-usuário)
-4. [Tecnologias Utilizadas](#-tecnologias-utilizadas)
-5. [Como Executar o Projeto](#-como-executar-o-projeto)
-6. [Credenciais de Teste Pré-semeadas](#-credenciais-de-teste-pré-semeadas)
-7. [Guia de Teste Ponta a Ponta](#-guia-de-teste-ponta-a-ponta)
-8. [Testes Automatizados](#-testes-automatizados)
-9. [Declaração sobre o Uso de IA](#-declaração-sobre-o-uso-de-ia)
-10. [Deploy em Produção](#-deploy-em-produção)
+3. [Segurança, Anti-Fraude & RBAC](#-segurança-anti-fraude--rbac)
+4. [Sincronização em Tempo Real (WebSocket)](#-sincronização-em-tempo-real-websocket)
+5. [Integração com Gateway de Pagamento Stripe](#-integração-com-gateway-de-pagamento-stripe)
+6. [Design System & Experiência de Usuário](#-design-system--experiência-de-usuário)
+7. [Tecnologias Utilizadas](#-tecnologias-utilizadas)
+8. [Como Executar o Projeto Localmente](#-como-executar-o-projeto-localmente)
+9. [Credenciais de Teste Pré-semeadas](#-credenciais-de-teste-pré-semeadas)
+10. [Guia de Teste Ponta a Ponta](#-guia-de-teste-ponta-a-ponta)
+11. [Testes Automatizados](#-testes-automatizados)
+12. [Deploy em Produção (3 Estratégias)](#-deploy-em-produção)
+13. [Declaração sobre o Uso de IA](#-declaração-sobre-o-uso-de-ia)
 
 ---
 
@@ -24,32 +27,38 @@
 O **Passfy** soluciona o ciclo de vida completo de eventos e ingressos através de experiências integradas (**Pública / Landing Page**, **Organizador**, **Cliente** e **Portaria**):
 
 * 🚀 **Landing Page Corporativa & Dinâmica (`/`)**:
-  * Apresentação da solução com **hero split**, fotografia em alta definição, badges flutuantes de estatísticas ao vivo e carrossel navegável de eventos.
-  * **Faixa Marquee contínua de parceiros oficiais**: Ticketmaster, Spotify, Google Maps, Google Calendar, Apple Wallet, Visa, Mastercard, Pix.
-  * **Seção escura de métricas** com contadores e selos de segurança.
-  * **Navegação com rolagem suave inteligente** (*smooth scroll* com cálculo dinâmico de offset do cabeçalho fixo).
-* 🎪 **Painel do Organizador com Autocomplete em Tempo Real da Ticketmaster**:
-  * **Busca Conectada em Tempo Real via Ticketmaster Discovery API v2 & Auto-Suggest (`/suggest.json`)**: conforme o organizador digita o título do evento (ex: `Chitão`, `Cold`, `Jot`, `Rock`), um dropdown inteligente apresenta os eventos oficiais disponíveis no catálogo mundial.
-  * Ao selecionar uma sugestão, preenche instantaneamente título oficial, descrição, foto de capa em alta resolução (16:9), arena/local, categoria e data da apresentação.
-  * Liberdade total para **continuar com preenchimento manual** quando desejado.
-  * Criação de eventos com **grade interativa de assentos numerados** (cinema/teatro com fileiras A–L) ou **pista geral com capacidade configurável**.
-  * Métricas em tempo real de ocupação, ingressos vendidos e receita bruta no Dashboard.
-* 🎵 **Player Integrado Spotify Web API na Página do Evento**:
-  * Em eventos musicais, carrega dinamicamente o widget oficial do **Spotify** com as faixas mais tocadas e setlists do artista para aquecimento do público antes da compra.
-* 👤 **Experiência do Cliente & Checkout Simulado**:
-  * Catálogo de eventos com busca em tempo real e filtros de categoria (Shows, Festivais, Teatro).
-  * **Mapa de Assentos Interativo** em tempo real com prevenção instantânea de concorrência (*double booking*).
-  * **Fluxo Dinâmico de Pré-Cadastro na Página do Evento**: se o usuário estiver deslogado ao selecionar assentos, o card de resumo se transforma (*in-place flip*) no formulário de autenticação rápida, sem perder os assentos selecionados.
-  * **Simulação Completa de Gateway de Pagamento** (Pix ou Cartão) com alternador interativo para simular **Aprovação Imediata** ou **Recusa Proposital** (Saldo Insuficiente, Cartão Bloqueado, etc.).
-  * 📅 **Agendamento Automático no Google Agenda**: após a confirmação da compra, abre automaticamente uma nova aba com o evento pré-configurado no Google Calendar (título, data, horário e localização), com botão de reabertura persistente.
+  * Apresentação da solução com **Hero Bento Grid de 5 cards** (estatísticas, widget de vendas com mini-gráfico, uptime e portaria segura).
+  * **Grade de Serviços 3x2** com acentos em Midnight Navy e links de expansão rápida.
+  * **Radar Concêntrico de Integrações**: conexões com Stripe, Google Calendar, Ticketmaster, Gemini AI e WebSockets.
+  * **Planos Sob Medida** para produtores independentes e grandes arenas.
+* ⚡ **Sincronização de Assentos em Tempo Real (WebSocket / Socket.IO)**:
+  * Salas dinâmicas por evento (`event:${id}`).
+  * Ao comprar ou devolver um assento, a disponibilidade é transmitida instantaneamente para todos os usuários com o evento aberto, sem necessidade de refresh.
+  * Proteção em tempo real: se outro comprador reservar o assento que está no seu carrinho, ele é desmarcado automaticamente com aviso explicativo e retorno à Fase 1.
+* 🎪 **Painel do Organizador com Ingressos Multi-Tier & Ticketmaster Auto-Suggest**:
+  * **Configurador de Setores & Tipos de Ingresso**: suporte padrão a múltiplos tiers como **Pista** e **Camarote**, com preços, capacidades e subtotais dinâmicos.
+  * **Busca Conectada em Tempo Real via Ticketmaster Discovery API v2 & Auto-Suggest (`/suggest.json`)**: dropdown inteligente com artistas e turnês oficiais mundiais (Coldplay, Chitãozinho & Xororó, Rock in Rio, etc.).
+  * **Proteção Estrita de Acesso (RBAC)**: clientes e portaria são automaticamente barrados e redirecionados ao tentar acessar rotas do organizador.
+* 🤖 **Curadoria Inteligente com Google Gemini AI**:
+  * Assistente de busca em linguagem natural: o usuário informa o estilo do momento ou com quem vai sair, e a IA analisa o catálogo e recomenda a programação ideal.
+* 💳 **Integração Oficial com Stripe Payment Gateway**:
+  * Processamento nativo com o SDK oficial da Stripe e suporte a PIX e Cartão de Crédito.
+  * **Matriz de Cartões de Teste Oficiais Stripe em 1-Clique**:
+    * 🟢 **Aprovação**: `4242 4242 4242 4242`
+    * 🟡 **Saldo Insuficiente**: `4000 0000 0000 0069`
+    * 🔴 **Cartão Recusado/Bloqueado**: `4000 0000 0000 0002`
+    * ⚪ **Cartão Expirado**: `4000 0000 0000 0127`
+    * 🛡️ **Suspeita de Fraude (Stripe Radar)**: `4000 0000 0000 0082`
+* 🔄 **Devolução ao Estoque pelo Cliente**:
+  * Autonomia total para o comprador cancelar/devolver um ingresso válido antes da data do evento.
+  * Liberação atômica da vaga/poltrona no banco de dados e disparo de atualização WebSocket em tempo real para os outros compradores.
 * 📄 **Voucher em PDF de Alta Definição & Carteira Digital**:
   * Emissão de **Ingresso Oficial em PDF A4** via `jsPDF`, pronto para download e impressão, contendo:
     * Cabeçalho institucional elegante do Passfy com data de emissão.
     * Grade detalhada de informações (Comprador nominal, CPF/Documento, Evento, Local, Assento, Setor e Valor).
-    * Selo para identificação de **Meia-Entrada / Estudante**.
+    * Identificação de **Meia-Entrada / Estudante** (com persistência da carteirinha para compras futuras).
     * **QR Code criptográfico em alta resolução**.
-    * Selo de segurança **HMAC-SHA256** com hash de autenticidade e linha pontilhada picotada de corte.
-  * Carteira digital no formato *Apple Wallet Pass*, com link público compartilhável e visualização segura.
+    * Selo de segurança **HMAC-SHA256** com hash de autenticidade e linha picotada de corte.
 * 📷 **Portaria & Validação Criptográfica**:
   * **Leitor de Câmera em Tempo Real** via navegador (`html5-qrcode`) para leitura contínua de QR Codes.
   * **Digitação Manual de Código** como fallback imediato (ex: `PAS-DEMO1`).
@@ -59,7 +68,7 @@ O **Passfy** soluciona o ciclo de vida completo de eventos e ingressos através 
     * 🔵 **Evento Errado**: Ingresso autêntico, mas emitido para outra sessão/evento.
     * 🔴 **Inválido / Forjado**: Assinatura criptográfica violada ou código inexistente.
 * ⚡ **Barra de Demonstração (Role Switcher)**:
-  * Permite alternar instantaneamente entre Organizador, Cliente 1, Cliente 2 e Portaria com **1 clique**, sem atrito de login/logout manual.
+  * Permite alternar instantaneamente entre Organizador, Cliente 1, Cliente 2 e Portaria com **1 clique**, com controle estrito de rotas protegidas em cada troca de perfil.
 
 ---
 
@@ -70,62 +79,88 @@ Optou-se por um **Monólito Modular em Camadas (Modular Layered Monolith)** estr
 ```
 passfy/
 ├── packages/
-│   ├── api/                          # Backend Node.js + Express + Prisma
+│   ├── api/                          # Backend Node.js + Express + WebSocket + Prisma
 │   │   ├── prisma/                   # Schema relacional, migrations e seeds
 │   │   └── src/
-│   │       ├── core/                 # Config (Zod), AppError, Prisma, HMAC Security
+│   │       ├── core/                 # Config (Zod), AppError, Prisma, WebSocket Server, HMAC Security
 │   │       └── modules/
-│   │           ├── auth/             # Autenticação JWT e Guards de RBAC
+│   │           ├── ai/               # Assistente de Curadoria Google Gemini AI
+│   │           ├── auth/             # Autenticação JWT e Guards de RBAC (ensureRole)
 │   │           ├── catalog/          # Adapter Pattern (Ticketmaster v2 Discovery & Suggest)
-│   │           ├── events/           # Gestão de eventos e geração de assentos
-│   │           ├── bookings/         # Concorrência e Checkout Simulado
-│   │           ├── tickets/          # Emissão de ingressos, PDF e link compartilhável
+│   │           ├── events/           # Gestão de eventos, setores multi-tier e assentos
+│   │           ├── bookings/         # Concorrência ACID, Checkout e WebSocket Broadcast
+│   │           ├── payments/         # Integração com Stripe Payment Gateway
+│   │           ├── tickets/          # Emissão, Devolução ao Estoque e Link Compartilhável
 │   │           └── checkin/          # Validação da Portaria e Máquina de Estados
 │   │
-│   └── web/                          # Frontend React 18 + Vite + Tailwind CSS
+│   └── web/                          # Frontend React 18 + Vite + Tailwind CSS + Socket.IO Client
 │       └── src/
-│           ├── components/           # SeatMap, TicketCard, RoleSwitcher, CheckoutModal, UI
+│           ├── components/           # SeatMap, TicketCard, ProtectedRoute, RoleSwitcher, SupportWidget
 │           ├── contexts/             # AuthContext e Sessão
-│           ├── pages/                # LandingPage, HomePage, EventDetails, Organizer, Gatekeeper
-│           ├── services/             # Axios API Client com interceptors
+│           ├── pages/                # LandingPage, HomePage, EventDetails, MyTickets, Organizer, Gatekeeper
+│           ├── services/             # Axios API Client & Socket.IO Client
 │           └── utils/                # Geração de PDF (jsPDF), datas e calendários
 │
-├── docker-compose.yml                # PostgreSQL 16 local
+├── docker-compose.prod.yml           # Orquestração de Produção (Postgres + API + Web/Nginx)
+├── docker-compose.yml                # PostgreSQL local para desenvolvimento
 └── .github/workflows/ci.yml          # CI Pipeline (Build + Tests)
 ```
 
-### 1. Prevenção de Concorrência e Double Booking
-* **Desafio**: Impedir que dois clientes comprem a mesma poltrona no mesmo milissegundo.
-* **Solução**: Transações ACID no PostgreSQL via `prisma.$transaction`. A query de reserva executa um update atômico com trava condicional (`WHERE id IN (...) AND isAvailable = true`). Se o número de registros alterados diferir da quantidade solicitada, a transação aborta e retorna um `409 Conflict (SEAT_ALREADY_RESERVED)`.
+---
 
-### 2. QR Code Anti-Fraude com Assinatura HMAC-SHA256
-* **Desafio**: Impedir que um usuário forje um QR Code alterando IDs ou gerando códigos aleatórios.
-* **Solução**: O payload do QR Code é assinado criptograficamente com uma chave secreta no servidor: `base64(payload).HMAC_SHA256_Signature`. A portaria verifica a integridade da assinatura antes de consultar o banco.
+## 🛡️ Segurança, Anti-Fraude & RBAC
 
-### 3. Integração Ticketmaster Discovery API v2 & Auto-Suggest
-* Implementação resiliente via `TicketmasterCatalogProvider` com suporte a buscas por keyword, auto-suggest em tempo real (`/suggest.json`), fallback para normalização de acentuação (*ex: Chitãozinho -> Chitaozinho*) e dataset de fallback offline resiliente para testes sem internet.
+1. **Prevenção de Concorrência e Double Booking**:
+   * Transações ACID no PostgreSQL via `prisma.$transaction`. O update de assentos utiliza trava condicional (`WHERE id IN (...) AND isAvailable = true`). Se a quantidade de assentos atualizados diferir do total solicitado, a transação sofre rollback e retorna `409 Conflict (SEAT_ALREADY_RESERVED)`.
+
+2. **QR Code Anti-Fraude com Assinatura HMAC-SHA256**:
+   * O payload do QR Code é assinado criptograficamente com chave secreta no servidor: `base64(payload).HMAC_SHA256_Signature`. A portaria verifica a integridade matemática da assinatura antes de consultar o banco de dados.
+
+3. **Controle Estrito de Papéis (RBAC)**:
+   * **Backend**: Middleware `ensureRole(['ORGANIZER'])` nas rotas de criação e relatórios, e `ensureRole(['GATEKEEPER', 'ORGANIZER'])` na validação de portaria.
+   * **Frontend**: Componente `ProtectedRoute` que redireciona clientes ou porteiros para suas áreas permitidas caso tentem acessar URLs restritas do organizador.
+
+---
+
+## 📡 Sincronização em Tempo Real (WebSocket)
+
+* Servidor **Socket.IO** acoplado ao servidor HTTP da API.
+* Clientes na página do evento entram automaticamente na sala `event:${eventId}`.
+* Eventos disparados:
+  * `seats_updated`: Transmite a lista de poltronas alteradas (`id`, `label`, `isAvailable`).
+  * Atualização instantânea do mapa visual de assentos para todos os compradores conectados.
+
+---
+
+## 💳 Integração com Gateway de Pagamento Stripe
+
+* Suporte completo a processamento de pagamentos com o pacote oficial `stripe`.
+* Integração de ambiente de testes com cartões predefinidos em 1 clique para validação de fluxos de sucesso e exceção (saldo insuficiente, cartão bloqueado, cartão expirado e bloqueio de fraude pelo Stripe Radar).
 
 ---
 
 ## 🎨 Design System & Experiência de Usuário
 
-* **Linguagem Visual**: Inspirada no padrão *Untitled UI* com estética clara, minimalista e corporativa.
-* **Paleta de Cores**: Fundo branco puro (`#ffffff`), superfícies em tons neutros (`slate-50`/`slate-100`), bordas nítidas (`border-slate-200`) e cor primária oficial em **Azul Elétrico Royal** (`#2b55f5`, hover `#1f44d6`).
-* **Tipografia**: *Plus Jakarta Sans* e *Inter* com hierarquia tipográfica equilibrada.
-* **Micro-animações**: Marquee infinito de parceiros, animações de entrada com Tailwind, e feedback tátil/sonoro na portaria.
+* **Linguagem Visual**: Baseada no padrão *Untitled UI*, com paleta limpa e alto contraste.
+* **Cores Oficiais**:
+  * Cor Primária: **Azul Royal Sólido** (`#2b55f5`, hover `#1f44d6`), sem gradientes em botões e ações principais.
+  * Superfícies Neutras: `#ffffff` e `slate-50`/`slate-100`.
+  * Seções Escuras Institucionais: **Midnight Navy** (`#0b132b` / `#1c2541`).
+* **Tipografia**: *Plus Jakarta Sans* e *Inter*.
+* **Feedback Multissensorial**: Alertas sonoros sintéticos via Web Audio API e micro-animações táteis.
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-* **Backend**: Node.js 22, Express, TypeScript, Prisma ORM, PostgreSQL 16, Zod, JWT (`jsonwebtoken`), Bcryptjs, QRCode, Crypto nativo (HMAC-SHA256), Vitest.
-* **Frontend**: React 18, Vite, TypeScript, Tailwind CSS, Lucide Icons, Canvas-Confetti, Html5-QRCode, jsPDF, Axios.
-* **APIs Externas**: Ticketmaster Discovery API v2, Spotify Web API, Google Calendar API format, Google Maps Embed.
-* **Infraestrutura**: Docker Compose, GitHub Actions, Vercel (Frontend), Render/Neon (Backend & Database).
+* **Backend**: Node.js 20+, Express, TypeScript, Socket.IO, Stripe SDK, Prisma ORM, PostgreSQL 16, Google Generative AI (Gemini), Zod, JWT (`jsonwebtoken`), Bcryptjs, QRCode, Crypto nativo (HMAC-SHA256), Vitest.
+* **Frontend**: React 18, Vite, TypeScript, Socket.IO Client, Stripe.js, Tailwind CSS, Lucide Icons, Html5-QRCode, jsPDF, Axios.
+* **APIs Externas**: Stripe API, Ticketmaster Discovery API v2, Google Gemini AI Studio, Spotify Web API, Google Calendar API format.
+* **DevOps & Infra**: Docker, Docker Compose, Nginx, GitHub Actions, PM2.
 
 ---
 
-## 🚀 Como Executar o Projeto
+## 🚀 Como Executar o Projeto Localmente
 
 ### Pré-requisitos
 * Node.js >= 20.x e npm >= 10.x
@@ -133,7 +168,7 @@ passfy/
 
 ### 1. Clonar o repositório e instalar dependências:
 ```bash
-git clone https://github.com/SEU_USUARIO/passfy.git
+git clone https://github.com/pierrecbrito/passfy.git
 cd passfy
 npm install
 ```
@@ -145,9 +180,8 @@ cp .env.example .env
 ```
 
 ### 3. Subir o Banco de Dados e Rodar os Seeds:
-Com o Docker ativo:
 ```bash
-# Subir o PostgreSQL
+# Subir o PostgreSQL local
 docker compose up -d
 
 # Gerar o Prisma Client, aplicar migrations e semear os dados de teste
@@ -155,11 +189,9 @@ npx prisma generate --schema=packages/api/prisma/schema.prisma
 npm run seed --workspace=@passfy/api
 ```
 
-*(Caso utilize um banco PostgreSQL em nuvem como Neon ou Supabase, basta colar a `DATABASE_URL` no arquivo `.env` e rodar o comando de seed acima).*
-
 ### 4. Iniciar a Aplicação:
 ```bash
-# Inicia simultaneamente o Backend (porta 3333) e o Frontend (porta 5173)
+# Inicia simultaneamente o Backend com WebSocket (porta 3333) e o Frontend (porta 5173)
 npm run dev
 ```
 
@@ -169,50 +201,44 @@ Abra no navegador: **`http://localhost:5173`**
 
 ## 👥 Credenciais de Teste Pré-semeadas
 
-Todas as contas abaixo são criadas automaticamente pelo script de seed com a senha padrão **`password123`**:
+Todas as contas abaixo são criadas automaticamente com a senha padrão **`password123`**:
 
 | Perfil | Nome | E-mail | Senha | Acesso / Funcionalidade |
 | :--- | :--- | :--- | :--- | :--- |
-| 🎪 **Organizador** | Carlos Organizador | `organizador@passfy.com` | `password123` | Criação de eventos com Ticketmaster e Painel |
-| 👤 **Cliente 1** | Ana Silva | `cliente1@passfy.com` | `password123` | Compra de ingressos, PDF e Google Calendar |
-| 👤 **Cliente 2** | Bruno Costa | `cliente2@passfy.com` | `password123` | Teste de concorrência e compra |
+| 🎪 **Organizador** | Carlos Organizador | `organizador@passfy.com` | `password123` | Criação de eventos com Ticketmaster, Tiers e Painel |
+| 👤 **Cliente 1** | Ana Silva | `cliente1@passfy.com` | `password123` | Compra de ingressos, PDF, Devolução e Google Agenda |
+| 👤 **Cliente 2** | Bruno Costa | `cliente2@passfy.com` | `password123` | Teste de concorrência e compra em tempo real |
 | 📷 **Portaria** | Lucas Portaria | `portaria@passfy.com` | `password123` | Leitor de câmera e validação de ingressos |
 
-> 💡 **Dica de Avaliação**: Use a barra superior **Role Switcher** na interface para alternar entre qualquer um desses usuários com **1 único clique** sem precisar digitar e-mail e senha!
+> 💡 **Dica de Avaliação**: Use a barra superior **Role Switcher** na interface para alternar entre qualquer um desses usuários com **1 único clique**!
 
 ---
 
 ## 🧪 Guia de Teste Ponta a Ponta
 
-Para validar o fluxo completo do Passfy:
-
-1. **Explorar a Landing Page**:
-   * Acesse `http://localhost:5173/` e navegue pelas seções animadas usando os links suaves no cabeçalho (*Eventos*, *Organizadores*, *Compradores*, *Portaria*).
-2. **Explorar Eventos & Player do Spotify**:
-   * Clique em qualquer evento do carrossel ou em **"Explorar eventos"** (`/home`).
-   * Na página de detalhes do evento, experimente o **player dinâmico do Spotify** integrado com as faixas mais tocadas do artista.
-3. **Publicar Novo Evento com Autocomplete Ticketmaster**:
-   * Alterne para o perfil **Organizador** no topo.
-   * Acesse **"Criar Evento"** (`/organizer/create`).
-   * No campo **Título do Evento**, comece a digitar o nome de um artista (ex: `Chitãozinho`, `Coldplay`, `Jot`, `Taylor Swift`).
-   * Selecione uma sugestão do dropdown e veja o formulário auto-preenchido com título, descrição, banner cinematográfico em alta definição, arena e data oficial.
-4. **Fluxo de Pré-Cadastro & Reserva de Assento**:
-   * Deslogue ou abra um evento em aba anônima.
-   * Selecione poltronas no mapa interativo e clique em **"Garantir Ingresso"**.
-   * Observe o card lateral transformar-se no **formulário de pré-cadastro em tempo real**; conclua o cadastro sem sair da página e veja o modal de checkout abrir automaticamente.
-5. **Checkout, Pagamento Simulado & Google Agenda**:
-   * Experimente testar **"Simular Recusa"** (ex: Saldo Insuficiente) e depois confirme com **"Forçar Aprovação"** via Pix ou Cartão.
-   * Observe a **abertura automática da aba do Google Agenda** com o evento pronto para agendamento!
-6. **Voucher em PDF de Alta Definição & Compartilhamento**:
-   * Acesse **"Meus Ingressos"** e clique em **"Baixar Ingresso (PDF)"**.
-   * Veja o PDF A4 gerado com QR Code nítido, selo HMAC-SHA256 e linha picotada.
-   * Clique em **"Compartilhar Link"** e abra em uma janela anônima para comprovar a visualização pública.
-7. **Validação na Portaria**:
-   * Alterne para o perfil **Portaria** e acesse a tela do scanner.
-   * Valide com a câmera ou digite o código de teste semeado **`PAS-DEMO1`**:
-     * 1ª leitura: 🟢 **Entrada Autorizada** (com retorno sonoro).
-     * 2ª leitura do mesmo código: 🟡 **Ingresso Já Utilizado** (com histórico de data/hora).
-     * Código inexistente ou forjado: 🔴 **Ingresso Inválido**.
+1. **Explorar a Landing Page (`/`)**:
+   - Visualize o Hero Bento Grid de 5 cards, a grade escura de serviços e o mapa de radar concêntrico.
+2. **Curadoria com Inteligência Artificial (`/home`)**:
+   - Digite no assistente de IA: *"Quero ir para um show de rock com meus amigos"* e veja as recomendações personalizadas em tempo real.
+3. **Criação de Eventos Multi-Tier (`/organizer/create`)**:
+   - Alterne para o perfil **Organizador**.
+   - Digite `Coldplay` ou `Rock` e use o auto-complete da Ticketmaster.
+   - Configure setores como **Pista** e **Camarote** com valores e capacidades independentes.
+4. **Compra Concorrente & Sincronização em Tempo Real (WebSocket)**:
+   - Abra o evento em duas abas (uma com Ana e outra com Bruno).
+   - Ao comprar uma poltrona na Aba 1, veja a poltrona ficar ocupada instantaneamente na Aba 2 via WebSocket!
+5. **Checkout com Gateway Stripe Oficial**:
+   - Na Fase 3 do checkout, selecione **Cartão de Crédito**.
+   - Teste clicar em `🟡 Sem Saldo` ou `🔴 Recusado` para ver o tratamento de erro oficial da Stripe.
+   - Clique em `🟢 Aprovação` e confirme a compra.
+6. **Download do PDF & Agendamento no Google Agenda**:
+   - Acesse a página de confirmação de pedido ou **Meus Ingressos**.
+   - Baixe o voucher em PDF de alta definição com QR Code e selo HMAC.
+7. **Devolução ao Estoque**:
+   - Na tela **Meus Ingressos**, clique em **Devolver ao Estoque**.
+   - Confirme a devolução e observe a poltrona voltar a ficar verde e disponível para venda em tempo real em outras janelas.
+8. **Validação na Portaria**:
+   - Alterne para o perfil **Portaria** e valide ingressos pela câmera ou com o código `PAS-DEMO1`.
 
 ---
 
@@ -224,36 +250,40 @@ Para rodar a suíte completa de testes automatizados:
 npm run test --workspace=@passfy/api
 ```
 
-### Cobertura de Testes Chave:
-* `concurrency.spec.ts`: Simula requisições simultâneas disputando a mesma poltrona e valida que apenas uma tem sucesso e a outra recebe `409 Conflict`.
-* `checkin.spec.ts`: Valida os 4 estados da portaria (Válido, Já Usado, Evento Errado, Assinatura Forjada/Inválida).
-* `ticketmaster.spec.ts`: Valida o provider da Ticketmaster Discovery API v2, auto-suggest, mapeamento de campos e resiliência com fallback offline.
+---
+
+## 🌐 Deploy em Produção
+
+O projeto está configurado para deploy através de **3 estratégias**:
+
+### Opção 1: Deploy com Docker Compose (Recomendado para VPS / Servidores)
+```bash
+# 1. Configurar variáveis no .env
+# 2. Iniciar todos os containers (PostgreSQL + API com WebSocket + Web com Nginx)
+docker compose -f docker-compose.prod.yml up -d --build
+
+# 3. Executar migrações
+docker compose -f docker-compose.prod.yml exec api npx prisma db push
+docker compose -f docker-compose.prod.yml exec api npm run seed
+```
+
+### Opção 2: Plataformas Cloud Gerenciadas (PaaS)
+* **Banco de Dados**: [Supabase](https://supabase.com) ou [Neon.tech](https://neon.tech) (PostgreSQL Serverless).
+* **Backend API & WebSocket**: [Railway.app](https://railway.app) ou [Render.com](https://render.com) (Node.js + WebSockets).
+* **Frontend Web**: [Vercel](https://vercel.com) ou [Netlify](https://netlify.com) (SPA com Vite).
+
+### Opção 3: VPS Linux Tradicional (Ubuntu + PM2 + Nginx + Certbot SSL)
+Utilize o build de produção `npm run build` gerenciado via **PM2** e Nginx com proxy reverso para `/api` e `/socket.io`.
 
 ---
 
 ## 🤖 Declaração sobre o Uso de IA
 
-O desenvolvimento deste projeto utilizou Inteligência Artificial como uma ferramenta aceleradora de produtividade e pair programming. A condução do projeto, no entanto, foi orientada por critérios humanos rigorosos de engenharia de software para **evitar o "AI slop" (interfaces e códigos genéricos sem critério)**:
+O desenvolvimento deste projeto utilizou Inteligência Artificial como uma ferramenta aceleradora de produtividade e pair programming. A condução do projeto foi orientada por critérios humanos rigorosos de engenharia de software:
 
-1. **Onde a IA foi utilizada**:
-   * Auxílio na geração de boilerplate inicial de tipagens e na aceleração da escrita das suítes de teste automatizado.
-   * Apoio na estruturação sintática dos componentes React e consultas do Prisma.
-2. **Decisões Técnicas e Arquiteturais tomadas pelo Desenvolvedor**:
-   * Escolha da arquitetura de **Monólito Modular** com TypeScript estrito, alinhando a solução aos requisitos da vaga e facilitando a concorrência atômica.
-   * Implementação do **bloqueio atômico de assentos (Pessimistic Lock)** no banco relacional para solucionar de forma determinística o problema de *race conditions*.
-   * Desenho do mecanismo de **assinatura criptográfica HMAC-SHA256** no payload do QR Code para garantir anti-fraude real.
-   * Integração em tempo real com **Ticketmaster Discovery API v2 & Auto-Suggest** e **Spotify Web API**.
-   * Criação do gerador nativo de **PDFs de Alta Definição** para vouchers de ingresso com jsPDF e integração com **Google Agenda**.
-   * Criação do componente **Role Switcher** na UI para eliminar o atrito do avaliador durante o percurso dos fluxos.
-   * Modelagem intencional da interface no padrão *Untitled UI*, com paleta clara, tipografia moderna (*Plus Jakarta Sans*), micro-interações e feedback auditivo via Web Audio API.
-
----
-
-## 🌐 Deploy em Produção
-
-* **Frontend (Vercel)**: `https://passfy.vercel.app` *(ou URL fornecida na entrega)*
-* **Backend (Render / Railway)**: `https://passfy-api.onrender.com`
-* **Banco de Dados (PostgreSQL)**: Neon Serverless Database
+* **Arquitetura & Engenharia**: Monólito modular com TypeScript estrito, concorrência atômica ACID no banco relacional e protocolo de emissão e broadcast WebSocket em tempo real.
+* **Segurança Anti-Fraude**: Assinatura criptográfica HMAC-SHA256 e controle estrito de RBAC em rotas e interfaces.
+* **Integrações Oficiais**: Ticketmaster Discovery API v2 com Auto-Suggest, Stripe Payment Gateway oficial, Google Gemini AI e Spotify Web API.
 
 ---
 
