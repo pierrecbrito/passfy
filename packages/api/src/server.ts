@@ -9,7 +9,7 @@ const server = http.createServer(app);
 // Initialize WebSocket Service with Socket.IO
 SocketService.initialize(server);
 
-server.listen(PORT, () => {
-  console.log(`🚀 Passfy API server is running on http://localhost:${PORT}`);
+server.listen(Number(PORT), '0.0.0.0', () => {
+  console.log(`🚀 Passfy API server is running on port ${PORT}`);
   console.log(`⚡ WebSocket is active and listening for real-time seat synchronization`);
 });
