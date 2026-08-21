@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^9.14.0",
     "axios": "^1.7.4",
     "canvas-confetti": "^1.9.3",
     "clsx": "^2.1.1",

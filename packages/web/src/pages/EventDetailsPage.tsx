@@ -70,12 +70,12 @@ export const EventDetailsPage: React.FC = () => {
   const [isLiveConnected, setIsLiveConnected] = useState(false);
   const [realtimeWarning, setRealtimeWarning] = useState<string | null>(null);
 
-  // Payment Phase State
-  const [paymentMethod, setPaymentMethod] = useState<'CREDIT_CARD' | 'PIX'>('PIX');
-  const [cardNumber, setCardNumber] = useState('4532 •••• •••• 8892');
-  const [cardHolder, setCardHolder] = useState(user?.name || '');
+  // Payment Phase State (Stripe Test Integration)
+  const [paymentMethod, setPaymentMethod] = useState<'CREDIT_CARD' | 'PIX'>('CREDIT_CARD');
+  const [cardNumber, setCardNumber] = useState('4242 4242 4242 4242');
+  const [cardHolder, setCardHolder] = useState(user?.name || 'Cliente Teste Stripe');
   const [cardExpiry, setCardExpiry] = useState('12/28');
-  const [cardCvv, setCardCvv] = useState('884');
+  const [cardCvv, setCardCvv] = useState('123');
   const [simulateStatus, setSimulateStatus] = useState<'APPROVED' | 'DECLINED'>('APPROVED');
   const [declineReason, setDeclineReason] = useState('INSUFFICIENT_FUNDS');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -384,6 +384,15 @@ export const EventDetailsPage: React.FC = () => {
           studentIdNumber: a.ticketType === 'MEIA_ESTUDANTE' ? a.studentIdNumber.trim() : undefined,
         })),
         paymentMethod,
+        cardDetails:
+          paymentMethod === 'CREDIT_CARD'
+            ? {
+                holderName: cardHolder.trim() || 'Titular de Teste',
+                cardNumber: cardNumber.replace(/\s+/g, ''),
+                expiryDate: cardExpiry.trim(),
+                cvv: cardCvv.trim(),
+              }
+            : undefined,
         simulateStatus,
         declineReason: simulateStatus === 'DECLINED' ? declineReason : undefined,
       };
@@ -1380,94 +1389,181 @@ export const EventDetailsPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Conteúdo de Pagamento: Cartão de Crédito */}
+                  {/* Conteúdo de Pagamento: Cartão de Crédito com Stripe Test Gateway */}
                   {paymentMethod === 'CREDIT_CARD' && (
-                    <div className="space-y-2.5 p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-700 mb-1">
-                          Número do Cartão
-                        </label>
-                        <input
-                          type="text"
-                          value={cardNumber}
-                          onChange={(e) => setCardNumber(e.target.value)}
-                          placeholder="0000 0000 0000 0000"
-                          className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#2b55f5]"
-                        />
+                    <div className="space-y-3.5 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                      {/* Header Badge Stripe */}
+                      <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
+                        <div className="flex items-center gap-1.5">
+                          <CreditCard className="w-4 h-4 text-[#635BFF]" />
+                          <span className="text-xs font-black text-slate-900 tracking-tight">
+                            Stripe Gateway
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#635BFF]/10 text-[#635BFF] border border-[#635BFF]/20">
+                          Modo de Testes Oficial
+                        </span>
                       </div>
 
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-700 mb-1">
-                          Nome Impresso no Cartão
-                        </label>
-                        <input
-                          type="text"
-                          value={cardHolder}
-                          onChange={(e) => setCardHolder(e.target.value)}
-                          placeholder="Como está no cartão"
-                          className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#2b55f5]"
-                        />
+                      {/* Quick 1-Click Stripe Test Cards Matrix */}
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                          Cartões de Teste Oficiais Stripe (1-Clique):
+                        </p>
+                        <div className="grid grid-cols-2 gap-1.5 text-[10px] font-bold">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCardNumber('4242 4242 4242 4242');
+                              setCardExpiry('12/28');
+                              setCardCvv('123');
+                              setSimulateStatus('APPROVED');
+                            }}
+                            className={`p-1.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
+                              cardNumber.includes('4242')
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 ring-1 ring-emerald-200 font-black'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span>🟢 Aprovação</span>
+                            <span className="text-[9px] text-slate-400 font-mono">4242</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCardNumber('4000 0000 0000 0069');
+                              setCardExpiry('12/28');
+                              setCardCvv('123');
+                              setSimulateStatus('DECLINED');
+                              setDeclineReason('INSUFFICIENT_FUNDS');
+                            }}
+                            className={`p-1.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
+                              cardNumber.includes('0069')
+                                ? 'bg-amber-50 text-amber-800 border-amber-300 ring-1 ring-amber-200 font-black'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span>🟡 Sem Saldo</span>
+                            <span className="text-[9px] text-slate-400 font-mono">0069</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCardNumber('4000 0000 0000 0002');
+                              setCardExpiry('12/28');
+                              setCardCvv('123');
+                              setSimulateStatus('DECLINED');
+                              setDeclineReason('CARD_BLOCKED');
+                            }}
+                            className={`p-1.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
+                              cardNumber.includes('0002')
+                                ? 'bg-rose-50 text-rose-800 border-rose-300 ring-1 ring-rose-200 font-black'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span>🔴 Recusado</span>
+                            <span className="text-[9px] text-slate-400 font-mono">0002</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCardNumber('4000 0000 0000 0127');
+                              setCardExpiry('01/20');
+                              setCardCvv('123');
+                              setSimulateStatus('DECLINED');
+                              setDeclineReason('EXPIRED_CARD');
+                            }}
+                            className={`p-1.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
+                              cardNumber.includes('0127')
+                                ? 'bg-slate-200 text-slate-900 border-slate-400 ring-1 ring-slate-300 font-black'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span>⚪ Expirado</span>
+                            <span className="text-[9px] text-slate-400 font-mono">0127</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCardNumber('4000 0000 0000 0082');
+                              setCardExpiry('12/28');
+                              setCardCvv('123');
+                              setSimulateStatus('DECLINED');
+                              setDeclineReason('FRAUD_SUSPICION');
+                            }}
+                            className={`p-1.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer col-span-2 ${
+                              cardNumber.includes('0082')
+                                ? 'bg-purple-50 text-purple-800 border-purple-300 ring-1 ring-purple-200 font-black'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span>🛡️ Suspeita de Fraude (Radar)</span>
+                            <span className="text-[9px] text-slate-400 font-mono">0082</span>
+                          </button>
+                        </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2">
+                      {/* Card Inputs Form */}
+                      <div className="space-y-2 pt-1 border-t border-slate-200/60">
                         <div>
                           <label className="block text-[10px] font-bold text-slate-700 mb-1">
-                            Validade
+                            Número do Cartão
                           </label>
                           <input
                             type="text"
-                            value={cardExpiry}
-                            onChange={(e) => setCardExpiry(e.target.value)}
-                            placeholder="MM/AA"
-                            className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#2b55f5]"
+                            value={cardNumber}
+                            onChange={(e) => setCardNumber(e.target.value)}
+                            placeholder="4242 4242 4242 4242"
+                            className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#635BFF]/30 focus:border-[#635BFF] shadow-2xs"
                           />
                         </div>
+
                         <div>
                           <label className="block text-[10px] font-bold text-slate-700 mb-1">
-                            CVV
+                            Nome no Cartão
                           </label>
                           <input
                             type="text"
-                            value={cardCvv}
-                            onChange={(e) => setCardCvv(e.target.value)}
-                            placeholder="123"
-                            className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-[#2b55f5]"
+                            value={cardHolder}
+                            onChange={(e) => setCardHolder(e.target.value)}
+                            placeholder="Como impresso no cartão"
+                            className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#635BFF]/30 focus:border-[#635BFF] shadow-2xs"
                           />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-700 mb-1">
+                              Validade
+                            </label>
+                            <input
+                              type="text"
+                              value={cardExpiry}
+                              onChange={(e) => setCardExpiry(e.target.value)}
+                              placeholder="MM/AA"
+                              className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#635BFF]/30 focus:border-[#635BFF] shadow-2xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-700 mb-1">
+                              CVC / CVV
+                            </label>
+                            <input
+                              type="text"
+                              value={cardCvv}
+                              onChange={(e) => setCardCvv(e.target.value)}
+                              placeholder="123"
+                              className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#635BFF]/30 focus:border-[#635BFF] shadow-2xs"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
                   )}
-
-                  {/* Simulador de Testes (Desafio Dev) */}
-                  <div className="p-2.5 rounded-xl bg-blue-50/40 border border-blue-200/60 space-y-1.5">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500">
-                      <span>Simulação de Gateway:</span>
-                      <div className="flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setSimulateStatus('APPROVED')}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
-                            simulateStatus === 'APPROVED'
-                              ? 'bg-emerald-600 text-white'
-                              : 'bg-white text-slate-600 border border-slate-200'
-                          }`}
-                        >
-                          Aprovar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setSimulateStatus('DECLINED')}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
-                            simulateStatus === 'DECLINED'
-                              ? 'bg-rose-600 text-white'
-                              : 'bg-white text-slate-600 border border-slate-200'
-                          }`}
-                        >
-                          Recusar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
 
                   {/* Botão de Finalizar Pagamento */}
                   <button

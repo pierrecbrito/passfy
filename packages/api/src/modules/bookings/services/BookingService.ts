@@ -2,13 +2,23 @@ import { prisma } from '../../../core/database/prisma';
 import { AppError } from '../../../core/errors/AppError';
 import { CryptoProvider } from '../../../core/security/cryptoProvider';
 import { SocketService } from '../../../core/websocket/socketServer';
+import { StripePaymentService } from '../../payments/services/StripePaymentService';
 import { CheckoutSimulationInput } from '../dtos/bookingSchemas';
 import { TicketStatus, ReservationStatus } from '@prisma/client';
 import crypto from 'crypto';
 
 export class BookingService {
   static async processCheckout(userId: string, data: CheckoutSimulationInput) {
-    const { eventId, seatIds, quantity, attendees = [], paymentMethod, simulateStatus, declineReason } = data;
+    const {
+      eventId,
+      seatIds,
+      quantity,
+      attendees = [],
+      paymentMethod,
+      cardDetails,
+      simulateStatus,
+      declineReason,
+    } = data;
 
     // 1. Fetch event
     const event = await prisma.event.findUnique({
@@ -28,21 +38,46 @@ export class BookingService {
       throw new AppError('Não é possível comprar ingressos para eventos que já ocorreram.', 400, 'EVENT_EXPIRED');
     }
 
-    // 2. Validate simulation failure upfront if requested
-    if (simulateStatus === 'DECLINED') {
-      const declineMessages: Record<string, string> = {
-        INSUFFICIENT_FUNDS: 'Pagamento recusado: Saldo insuficiente ou limite do cartão excedido.',
-        CARD_BLOCKED: 'Pagamento recusado: Cartão bloqueado pela instituição financeira.',
-        EXPIRED_CARD: 'Pagamento recusado: Cartão expirado.',
-        FRAUD_SUSPICION: 'Pagamento recusado: Transação não autorizada por suspeita de fraude.',
-      };
+    // 2. Gateway Processing with Stripe
+    let stripeTransaction: any = null;
+    if (paymentMethod === 'CREDIT_CARD') {
+      if (simulateStatus === 'DECLINED') {
+        const declineMessages: Record<string, string> = {
+          INSUFFICIENT_FUNDS: 'Stripe [insufficient_funds]: Saldo insuficiente no cartão de teste.',
+          CARD_BLOCKED: 'Stripe [card_declined]: Cartão bloqueado ou recusado pela instituição financeira.',
+          EXPIRED_CARD: 'Stripe [expired_card]: Cartão de teste expirado.',
+          FRAUD_SUSPICION: 'Stripe [fraudulent]: Transação bloqueada por suspeita de fraude.',
+        };
 
-      return {
-        status: 'DECLINED',
-        message: declineMessages[declineReason || 'INSUFFICIENT_FUNDS'] || 'Pagamento recusado.',
-        reason: declineReason || 'INSUFFICIENT_FUNDS',
-        tickets: [],
-      };
+        return {
+          status: 'DECLINED',
+          message: declineMessages[declineReason || 'INSUFFICIENT_FUNDS'] || 'Pagamento recusado via Stripe.',
+          reason: declineReason || 'INSUFFICIENT_FUNDS',
+          tickets: [],
+        };
+      }
+
+      const approxAmount = Number(event.price) * (seatIds?.length || quantity || 1);
+      const stripeResult = await StripePaymentService.processCardPayment(
+        approxAmount,
+        cardDetails || {
+          cardNumber: '4242424242424242',
+          holderName: 'Titular de Teste',
+          cvv: '123',
+        },
+        { eventId: event.id, userId }
+      );
+
+      if (!stripeResult.success) {
+        return {
+          status: 'DECLINED',
+          message: stripeResult.message,
+          reason: stripeResult.declineCode || 'STRIPE_ERROR',
+          tickets: [],
+        };
+      }
+
+      stripeTransaction = stripeResult;
     }
 
     // 3. Execute atomic purchase in ACID transaction
@@ -262,9 +297,13 @@ export class BookingService {
 
       return {
         status: 'APPROVED',
-        message: 'Pagamento confirmado com sucesso! Seus ingressos foram emitidos.',
+        message:
+          paymentMethod === 'CREDIT_CARD'
+            ? 'Pagamento aprovado com sucesso via Stripe Gateway Oficial!'
+            : 'Pagamento PIX confirmado com sucesso!',
         paymentMethod,
         totalAmount,
+        stripeTransaction,
         tickets: createdTickets,
       };
     });
