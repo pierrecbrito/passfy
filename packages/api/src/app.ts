@@ -47,16 +47,30 @@ app.get('/health', (_req, res) => {
   });
 });
 
-// App Routes
+// App Routes (supporting both /api/* and /* routes directly)
 app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
+
 app.use('/api/catalog', catalogRoutes);
+app.use('/catalog', catalogRoutes);
+
 app.use('/api/events', eventRoutes);
+app.use('/events', eventRoutes);
+
 app.use('/api/checkout', bookingRoutes);
+app.use('/checkout', bookingRoutes);
+
 app.use('/api/tickets', ticketRoutes);
+app.use('/tickets', ticketRoutes);
+
 app.use('/api/checkin', checkinRoutes);
+app.use('/checkin', checkinRoutes);
+
 app.use('/api/ai', aiRoutes);
+app.use('/ai', aiRoutes);
 
 // Global Error Handler
 app.use(errorHandler);
+
 
 export { app };
