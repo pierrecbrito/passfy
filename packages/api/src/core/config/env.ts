@@ -6,32 +6,31 @@ dotenv.config();
 const envSchema = z.object({
   PORT: z.coerce.number().default(3333),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  DATABASE_URL: z
+  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required and cannot be empty.'),
+  DIRECT_URL: z.string().optional(),
+  JWT_SECRET: z
     .string()
-    .default(
-      process.env.DATABASE_URL ||
-        'postgresql://postgres.lqukhxcyuwupvqiexwwx:P13rr3Br1t0%21%40%23@aws-0-sa-east-1.pooler.supabase.com:5432/postgres'
-    ),
-  DIRECT_URL: z
+    .min(16, 'JWT_SECRET must be at least 16 characters for cryptographic safety.'),
+  QR_SECRET_KEY: z
     .string()
-    .default(
-      process.env.DIRECT_URL ||
-        'postgresql://postgres.lqukhxcyuwupvqiexwwx:P13rr3Br1t0%21%40%23@aws-0-sa-east-1.pooler.supabase.com:5432/postgres'
-    ),
-  JWT_SECRET: z.string().default('super_secret_passfy_jwt_key_development_only_change_in_production'),
-  QR_SECRET_KEY: z.string().default('passfy_cryptographic_qr_signing_key_hmac_sha256_secret'),
+    .min(32, 'QR_SECRET_KEY must be a strong secret of at least 32 characters for HMAC-SHA256 signing.'),
   CORS_ORIGIN: z.string().default('*'),
   TICKETMASTER_API_KEY: z.string().optional().default(''),
   TICKETMASTER_BASE_URL: z.string().default('https://app.ticketmaster.com/discovery/v2'),
   GEMINI_API_KEY: z.string().optional().default(''),
   STRIPE_SECRET_KEY: z.string().optional().default(''),
+  SPOTIFY_CLIENT_ID: z.string().optional().default(''),
+  SPOTIFY_CLIENT_SECRET: z.string().optional().default(''),
 });
 
 const _env = envSchema.safeParse(process.env);
 
 if (!_env.success) {
-  console.error('❌ Invalid environment variables:', _env.error.format());
-  throw new Error('Invalid environment variables.');
+  const formattedErrors = _env.error.format();
+  console.error('❌ [FATAL] Invalid or missing required environment variables:');
+  console.error(JSON.stringify(formattedErrors, null, 2));
+  throw new Error('Server cannot start: Missing or invalid environment variables. Check .env configuration.');
 }
 
 export const env = _env.data;
+

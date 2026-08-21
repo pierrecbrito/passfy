@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { env } from '../../../core/config/env';
 
 export interface StripeCardInput {
   holderName?: string;
@@ -22,11 +23,10 @@ export interface StripePaymentResult {
 export class StripePaymentService {
   private static stripeClient: Stripe | null = null;
 
-  private static getStripe(): Stripe {
-    if (!this.stripeClient) {
-      const secretKey = process.env.STRIPE_SECRET_KEY || 'sk_test_51MockPassfyStripeSecretKey2026TestEnvironmentValidKey';
-      this.stripeClient = new Stripe(secretKey, {
-        apiVersion: '2024-06-20' as any,
+  private static getStripe(): Stripe | null {
+    if (!this.stripeClient && env.STRIPE_SECRET_KEY && env.STRIPE_SECRET_KEY.startsWith('sk_')) {
+      this.stripeClient = new Stripe(env.STRIPE_SECRET_KEY, {
+        apiVersion: '2024-06-20' as Stripe.LatestApiVersion,
       });
     }
     return this.stripeClient;
@@ -38,10 +38,9 @@ export class StripePaymentService {
   static async processCardPayment(
     amountInBrl: number,
     card: StripeCardInput,
-    metadata: Record<string, string> = {}
+    _metadata: Record<string, string> = {}
   ): Promise<StripePaymentResult> {
     const rawCardNumber = (card.cardNumber || '').replace(/\D/g, '');
-    const amountInCents = Math.round(amountInBrl * 100);
     const last4 = rawCardNumber.slice(-4) || '4242';
     const randomId = Math.random().toString(36).substring(2, 10);
     const paymentIntentId = `pi_test_${Date.now()}_${randomId}`;
@@ -164,11 +163,9 @@ export class StripePaymentService {
     currency: string = 'brl',
     metadata: Record<string, string> = {}
   ): Promise<Stripe.PaymentIntent | StripePaymentResult> {
-    const secretKey = process.env.STRIPE_SECRET_KEY;
-
-    if (secretKey && secretKey.startsWith('sk_test_') && !secretKey.includes('Mock')) {
+    const stripe = this.getStripe();
+    if (stripe) {
       try {
-        const stripe = this.getStripe();
         const paymentIntent = await stripe.paymentIntents.create({
           amount: Math.round(amountInBrl * 100),
           currency,
@@ -176,8 +173,9 @@ export class StripePaymentService {
           automatic_payment_methods: { enabled: true },
         });
         return paymentIntent;
-      } catch (err: any) {
-        console.warn('Stripe API Live/Test error, falling back to simulated test matrix:', err.message);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown Stripe error';
+        console.warn('Stripe API Live/Test error, falling back to simulated test matrix:', errorMessage);
       }
     }
 
@@ -191,3 +189,4 @@ export class StripePaymentService {
     };
   }
 }
+

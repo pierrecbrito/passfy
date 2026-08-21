@@ -9,7 +9,7 @@ export const attendeeSchema = z.object({
   tierName: z.string().optional(),
 });
 
-export const checkoutSimulationSchema = z.object({
+export const checkoutSchema = z.object({
   eventId: z.string().uuid('ID do evento inválido.'),
   seatIds: z.array(z.string().uuid()).optional(),
   quantity: z.coerce.number().int().min(1).max(10).optional(),
@@ -23,11 +23,11 @@ export const checkoutSimulationSchema = z.object({
       cvv: z.string().min(3).max(4).optional(),
     })
     .optional(),
-  simulateStatus: z.enum(['APPROVED', 'DECLINED']).default('APPROVED'),
-  declineReason: z
-    .enum(['INSUFFICIENT_FUNDS', 'CARD_BLOCKED', 'EXPIRED_CARD', 'FRAUD_SUSPICION'])
-    .optional(),
 });
 
-export type CheckoutSimulationInput = z.infer<typeof checkoutSimulationSchema>;
+export const checkoutSimulationSchema = checkoutSchema;
+
+export type CheckoutInput = z.infer<typeof checkoutSchema>;
+export type CheckoutSimulationInput = CheckoutInput;
 export type AttendeeInput = z.infer<typeof attendeeSchema>;
+

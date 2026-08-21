@@ -51,7 +51,6 @@ describe('Booking Concurrency & Race Condition Prevention', () => {
               number: 1,
               label: 'A-1',
               isAvailable: false,
-              version: 1,
               createdAt: new Date(),
               updatedAt: new Date(),
             },
@@ -78,23 +77,29 @@ describe('Booking Concurrency & Race Condition Prevention', () => {
       return callback(mockTx);
     });
 
-    // Run both purchases simultaneously
+    // Run both purchases simultaneously with standard approved test card
     const purchase1Promise = BookingService.processCheckout(user1Id, {
       eventId: fakeEventId,
       seatIds: [fakeSeatId],
       paymentMethod: 'CREDIT_CARD',
-      simulateStatus: 'APPROVED',
+      cardDetails: {
+        cardNumber: '4242424242424242',
+        holderName: 'User 1',
+        cvv: '123',
+      },
       quantity: 1,
-      declineReason: 'INSUFFICIENT_FUNDS',
     });
 
     const purchase2Promise = BookingService.processCheckout(user2Id, {
       eventId: fakeEventId,
       seatIds: [fakeSeatId],
       paymentMethod: 'CREDIT_CARD',
-      simulateStatus: 'APPROVED',
+      cardDetails: {
+        cardNumber: '4242424242424242',
+        holderName: 'User 2',
+        cvv: '123',
+      },
       quantity: 1,
-      declineReason: 'INSUFFICIENT_FUNDS',
     });
 
     const results = await Promise.allSettled([purchase1Promise, purchase2Promise]);
@@ -113,3 +118,4 @@ describe('Booking Concurrency & Race Condition Prevention', () => {
     }
   });
 });
+

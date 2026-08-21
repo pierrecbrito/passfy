@@ -102,6 +102,49 @@ const FALLBACK_TICKETMASTER_EVENTS: CatalogItem[] = [
   },
 ];
 
+interface TicketmasterImage {
+  url: string;
+  ratio?: string;
+  width?: number;
+  height?: number;
+}
+
+interface TicketmasterVenue {
+  name?: string;
+  city?: { name?: string };
+}
+
+interface TicketmasterPriceRange {
+  min?: number;
+  max?: number;
+}
+
+interface TicketmasterEventRaw {
+  id: string;
+  name: string;
+  info?: string;
+  pleaseNote?: string;
+  description?: string;
+  url?: string;
+  images?: TicketmasterImage[];
+
+  dates?: {
+    start?: {
+      dateTime?: string;
+      localDate?: string;
+    };
+  };
+  priceRanges?: TicketmasterPriceRange[];
+  classifications?: Array<{
+    genre?: { name?: string };
+    subGenre?: { name?: string };
+    segment?: { name?: string };
+  }>;
+  _embedded?: {
+    venues?: TicketmasterVenue[];
+  };
+}
+
 export class TicketmasterCatalogProvider implements ICatalogProvider {
   private readonly client = axios.create({
     baseURL: process.env.TICKETMASTER_BASE_URL || env.TICKETMASTER_BASE_URL || 'https://app.ticketmaster.com/discovery/v2',
@@ -185,9 +228,10 @@ export class TicketmasterCatalogProvider implements ICatalogProvider {
         }
       }
 
-      return events.map((item: any) => this.mapEventToCatalogItem(item));
-    } catch (error: any) {
-      console.warn('Ticketmaster Discovery API call failed:', error?.message || error);
+      return events.map((item: TicketmasterEventRaw) => this.mapEventToCatalogItem(item));
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.warn('Ticketmaster Discovery API call failed:', errorMessage);
       const lower = query.toLowerCase();
       return FALLBACK_TICKETMASTER_EVENTS.filter(
         (e) =>
@@ -216,11 +260,11 @@ export class TicketmasterCatalogProvider implements ICatalogProvider {
         },
       });
 
-      const events: any[] = response.data._embedded?.events || [];
+      const events: TicketmasterEventRaw[] = response.data._embedded?.events || [];
 
       // Deduplicate recurring residencies / multi-day shows with identical titles
       const seenTitles = new Set<string>();
-      const uniqueEvents: any[] = [];
+      const uniqueEvents: TicketmasterEventRaw[] = [];
 
       for (const item of events) {
         const normalizedTitle = (item.name || '')
@@ -235,10 +279,11 @@ export class TicketmasterCatalogProvider implements ICatalogProvider {
         }
       }
 
-      const results = uniqueEvents.slice(0, 20).map((item: any) => this.mapEventToCatalogItem(item));
-      return results.length > 0 ? results : events.slice(0, 20).map((item: any) => this.mapEventToCatalogItem(item));
-    } catch (error: any) {
-      console.warn('Ticketmaster Discovery API trending failed:', error?.message || error);
+      const results = uniqueEvents.slice(0, 20).map((item: TicketmasterEventRaw) => this.mapEventToCatalogItem(item));
+      return results.length > 0 ? results : events.slice(0, 20).map((item: TicketmasterEventRaw) => this.mapEventToCatalogItem(item));
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.warn('Ticketmaster Discovery API trending failed:', errorMessage);
       return FALLBACK_TICKETMASTER_EVENTS;
     }
   }
@@ -258,26 +303,27 @@ export class TicketmasterCatalogProvider implements ICatalogProvider {
       });
 
       return this.mapEventToCatalogItem(response.data);
-    } catch (error) {
+    } catch {
       return FALLBACK_TICKETMASTER_EVENTS.find((e) => e.id === id) || null;
     }
   }
 
-  private mapEventToCatalogItem(item: any): CatalogItem {
+  private mapEventToCatalogItem(item: TicketmasterEventRaw): CatalogItem {
     // Select best resolution images
     const images = item.images || [];
     const backdropImg =
-      images.find((img: any) => img.ratio === '16_9' && img.width >= 1000) ||
-      images.find((img: any) => img.ratio === '16_9') ||
+      images.find((img: TicketmasterImage) => img.ratio === '16_9' && (img.width || 0) >= 1000) ||
+      images.find((img: TicketmasterImage) => img.ratio === '16_9') ||
       images[0];
 
     const posterImg =
-      images.find((img: any) => img.ratio === '3_2' || img.ratio === '4_3') ||
+      images.find((img: TicketmasterImage) => img.ratio === '3_2' || img.ratio === '4_3') ||
       images[0];
 
     // Venue details
     const venueObj = item._embedded?.venues?.[0];
     const venueName = venueObj ? `${venueObj.name}${venueObj.city ? `, ${venueObj.city.name}` : ''}` : undefined;
+
     const cityName = venueObj?.city?.name;
 
     // Classification to category

@@ -76,11 +76,10 @@ export const EventDetailsPage: React.FC = () => {
   const [cardHolder, setCardHolder] = useState(user?.name || 'Cliente Teste Stripe');
   const [cardExpiry, setCardExpiry] = useState('12/28');
   const [cardCvv, setCardCvv] = useState('123');
-  const [simulateStatus, setSimulateStatus] = useState<'APPROVED' | 'DECLINED'>('APPROVED');
-  const [declineReason, setDeclineReason] = useState('INSUFFICIENT_FUNDS');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [copiedPix, setCopiedPix] = useState(false);
+
 
   // In-Place Auth State
   const [isAuthCardActive, setIsAuthCardActive] = useState(false);
@@ -400,8 +399,6 @@ export const EventDetailsPage: React.FC = () => {
                 cvv: cardCvv.trim(),
               }
             : undefined,
-        simulateStatus,
-        declineReason: simulateStatus === 'DECLINED' ? declineReason : undefined,
       };
 
       // Aguarda no mínimo 2 segundos com o overlay de carregamento visível
@@ -409,6 +406,7 @@ export const EventDetailsPage: React.FC = () => {
         api.post('/checkout/simulate', payload),
         new Promise((resolve) => setTimeout(resolve, 2000)),
       ]);
+
 
       if (response.data.status === 'APPROVED') {
         navigate('/order-success', {
@@ -1421,7 +1419,6 @@ export const EventDetailsPage: React.FC = () => {
                               setCardNumber('4242 4242 4242 4242');
                               setCardExpiry('12/28');
                               setCardCvv('123');
-                              setSimulateStatus('APPROVED');
                             }}
                             className={`p-1.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
                               cardNumber.includes('4242')
@@ -1439,8 +1436,6 @@ export const EventDetailsPage: React.FC = () => {
                               setCardNumber('4000 0000 0000 0069');
                               setCardExpiry('12/28');
                               setCardCvv('123');
-                              setSimulateStatus('DECLINED');
-                              setDeclineReason('INSUFFICIENT_FUNDS');
                             }}
                             className={`p-1.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
                               cardNumber.includes('0069')
@@ -1458,8 +1453,6 @@ export const EventDetailsPage: React.FC = () => {
                               setCardNumber('4000 0000 0000 0002');
                               setCardExpiry('12/28');
                               setCardCvv('123');
-                              setSimulateStatus('DECLINED');
-                              setDeclineReason('CARD_BLOCKED');
                             }}
                             className={`p-1.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
                               cardNumber.includes('0002')
@@ -1477,8 +1470,6 @@ export const EventDetailsPage: React.FC = () => {
                               setCardNumber('4000 0000 0000 0127');
                               setCardExpiry('01/20');
                               setCardCvv('123');
-                              setSimulateStatus('DECLINED');
-                              setDeclineReason('EXPIRED_CARD');
                             }}
                             className={`p-1.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
                               cardNumber.includes('0127')
@@ -1496,8 +1487,6 @@ export const EventDetailsPage: React.FC = () => {
                               setCardNumber('4000 0000 0000 0082');
                               setCardExpiry('12/28');
                               setCardCvv('123');
-                              setSimulateStatus('DECLINED');
-                              setDeclineReason('FRAUD_SUSPICION');
                             }}
                             className={`p-1.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer col-span-2 ${
                               cardNumber.includes('0082')
@@ -1510,6 +1499,7 @@ export const EventDetailsPage: React.FC = () => {
                           </button>
                         </div>
                       </div>
+
 
                       {/* Card Inputs Form */}
                       <div className="space-y-2 pt-1 border-t border-slate-200/60">

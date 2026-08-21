@@ -2,13 +2,82 @@ import { prisma } from '../../../core/database/prisma';
 import { AppError } from '../../../core/errors/AppError';
 import { CryptoProvider } from '../../../core/security/cryptoProvider';
 import { SocketService } from '../../../core/websocket/socketServer';
-import { StripePaymentService } from '../../payments/services/StripePaymentService';
-import { CheckoutSimulationInput } from '../dtos/bookingSchemas';
-import { TicketStatus, ReservationStatus } from '@prisma/client';
+import { StripePaymentService, StripePaymentResult } from '../../payments/services/StripePaymentService';
+import { CheckoutInput, AttendeeInput } from '../dtos/bookingSchemas';
+import { TicketStatus, ReservationStatus, Ticket, Seat, Event, Prisma } from '@prisma/client';
 import crypto from 'crypto';
 
+export interface TicketTier {
+  id?: string;
+  name?: string;
+  price?: number | string;
+  description?: string;
+  capacity?: number;
+}
+
+export type TicketWithRelations = Ticket & {
+  seat?: Seat | null;
+  event?: Event;
+};
+
+interface CreateTicketParams {
+  eventId: string;
+  userId: string;
+  reservationId: string;
+  seatId?: string | null;
+  attendee?: AttendeeInput;
+}
+
 export class BookingService {
-  static async processCheckout(userId: string, data: CheckoutSimulationInput) {
+  /**
+   * Shared helper to issue a single cryptographic ticket
+   */
+  private static async issueSingleTicket(
+    tx: Prisma.TransactionClient,
+    params: CreateTicketParams
+  ): Promise<TicketWithRelations> {
+    const { eventId, userId, reservationId, seatId = null, attendee } = params;
+    const ticketId = crypto.randomUUID();
+    const ticketCode = CryptoProvider.generateRandomCode('PAS');
+    const shareToken = crypto.randomUUID();
+
+    const holderName = attendee?.name || null;
+    const ticketType = attendee?.ticketType || 'INTEIRA';
+    const studentId = ticketType === 'MEIA_ESTUDANTE' ? attendee?.studentIdNumber || null : null;
+
+    const { token: qrToken, signature: qrSignature } = CryptoProvider.sign({
+      ticketId,
+      eventId,
+      seatId,
+      holderName,
+      ticketType,
+      timestamp: Date.now(),
+    });
+
+    return tx.ticket.create({
+      data: {
+        id: ticketId,
+        ticketCode,
+        qrToken,
+        qrSignature,
+        shareToken,
+        status: TicketStatus.ISSUED,
+        holderName,
+        ticketType,
+        studentId,
+        userId,
+        eventId,
+        seatId,
+        reservationId,
+      },
+      include: {
+        seat: true,
+        event: true,
+      },
+    });
+  }
+
+  static async processCheckout(userId: string, data: CheckoutInput) {
     const {
       eventId,
       seatIds,
@@ -16,8 +85,6 @@ export class BookingService {
       attendees = [],
       paymentMethod,
       cardDetails,
-      simulateStatus,
-      declineReason,
     } = data;
 
     // 1. Fetch event
@@ -38,25 +105,9 @@ export class BookingService {
       throw new AppError('Não é possível comprar ingressos para eventos que já ocorreram.', 400, 'EVENT_EXPIRED');
     }
 
-    // 2. Gateway Processing with Stripe
-    let stripeTransaction: any = null;
+    // 2. Gateway Processing with Stripe (Server-enforced decision)
+    let stripeTransaction: StripePaymentResult | null = null;
     if (paymentMethod === 'CREDIT_CARD') {
-      if (simulateStatus === 'DECLINED') {
-        const declineMessages: Record<string, string> = {
-          INSUFFICIENT_FUNDS: 'Stripe [insufficient_funds]: Saldo insuficiente no cartão de teste.',
-          CARD_BLOCKED: 'Stripe [card_declined]: Cartão bloqueado ou recusado pela instituição financeira.',
-          EXPIRED_CARD: 'Stripe [expired_card]: Cartão de teste expirado.',
-          FRAUD_SUSPICION: 'Stripe [fraudulent]: Transação bloqueada por suspeita de fraude.',
-        };
-
-        return {
-          status: 'DECLINED',
-          message: declineMessages[declineReason || 'INSUFFICIENT_FUNDS'] || 'Pagamento recusado via Stripe.',
-          reason: declineReason || 'INSUFFICIENT_FUNDS',
-          tickets: [],
-        };
-      }
-
       const approxAmount = Number(event.price) * (seatIds?.length || quantity || 1);
       const stripeResult = await StripePaymentService.processCardPayment(
         approxAmount,
@@ -70,10 +121,10 @@ export class BookingService {
 
       if (!stripeResult.success) {
         return {
-          status: 'DECLINED',
+          status: 'DECLINED' as const,
           message: stripeResult.message,
           reason: stripeResult.declineCode || 'STRIPE_ERROR',
-          tickets: [],
+          tickets: [] as TicketWithRelations[],
         };
       }
 
@@ -83,7 +134,7 @@ export class BookingService {
     // 3. Execute atomic purchase in ACID transaction
     const checkoutResult = await prisma.$transaction(async (tx) => {
       let totalAmount = 0;
-      const createdTickets = [];
+      const createdTickets: TicketWithRelations[] = [];
 
       if (event.type === 'SEATED') {
         if (!seatIds || seatIds.length === 0) {
@@ -146,46 +197,15 @@ export class BookingService {
           },
         });
 
-        // Generate cryptographic tickets for each seat
+        // Generate cryptographic tickets for each seat using shared helper
         for (const item of reservationItemsData) {
-          const seat = seats.find((s) => s.id === item.seatId)!;
-          const ticketId = crypto.randomUUID();
-          const ticketCode = CryptoProvider.generateRandomCode('PAS');
-          const shareToken = crypto.randomUUID();
-
-          const holderName = item.attendee?.name || null;
-          const ticketType = item.attendee?.ticketType || 'INTEIRA';
-          const studentId = ticketType === 'MEIA_ESTUDANTE' ? item.attendee?.studentIdNumber || null : null;
-
-          const { token: qrToken, signature: qrSignature } = CryptoProvider.sign({
-            ticketId,
+          const seat = seats.find((s) => s.id === item.seatId);
+          const ticket = await this.issueSingleTicket(tx, {
             eventId: event.id,
-            seatId: seat.id,
-            holderName,
-            ticketType,
-            timestamp: Date.now(),
-          });
-
-          const ticket = await tx.ticket.create({
-            data: {
-              id: ticketId,
-              ticketCode,
-              qrToken,
-              qrSignature,
-              shareToken,
-              status: TicketStatus.ISSUED,
-              holderName,
-              ticketType,
-              studentId,
-              userId,
-              eventId: event.id,
-              seatId: seat.id,
-              reservationId: reservation.id,
-            },
-            include: {
-              seat: true,
-              event: true,
-            },
+            userId,
+            reservationId: reservation.id,
+            seatId: seat?.id || null,
+            attendee: item.attendee,
           });
 
           createdTickets.push(ticket);
@@ -208,8 +228,8 @@ export class BookingService {
           );
         }
 
-        const tiers: any[] = Array.isArray((event as any).ticketTiers)
-          ? ((event as any).ticketTiers as any[])
+        const tiers: TicketTier[] = Array.isArray(event.ticketTiers)
+          ? (event.ticketTiers as unknown as TicketTier[])
           : [];
 
         const reservationItemsData = Array.from({ length: requestedQty }).map((_, index) => {
@@ -252,43 +272,15 @@ export class BookingService {
           },
         });
 
+        // Generate cryptographic tickets for General Admission using shared helper
         for (let i = 0; i < requestedQty; i++) {
           const item = reservationItemsData[i];
-          const ticketId = crypto.randomUUID();
-          const ticketCode = CryptoProvider.generateRandomCode('PAS');
-          const shareToken = crypto.randomUUID();
-
-          const holderName = item.attendee?.name || null;
-          const ticketType = item.attendee?.ticketType || 'INTEIRA';
-          const studentId = ticketType === 'MEIA_ESTUDANTE' ? item.attendee?.studentIdNumber || null : null;
-
-          const { token: qrToken, signature: qrSignature } = CryptoProvider.sign({
-            ticketId,
+          const ticket = await this.issueSingleTicket(tx, {
             eventId: event.id,
+            userId,
+            reservationId: reservation.id,
             seatId: null,
-            holderName,
-            ticketType,
-            timestamp: Date.now(),
-          });
-
-          const ticket = await tx.ticket.create({
-            data: {
-              id: ticketId,
-              ticketCode,
-              qrToken,
-              qrSignature,
-              shareToken,
-              status: TicketStatus.ISSUED,
-              holderName,
-              ticketType,
-              studentId,
-              userId,
-              eventId: event.id,
-              reservationId: reservation.id,
-            },
-            include: {
-              event: true,
-            },
+            attendee: item.attendee,
           });
 
           createdTickets.push(ticket);
@@ -296,7 +288,7 @@ export class BookingService {
       }
 
       return {
-        status: 'APPROVED',
+        status: 'APPROVED' as const,
         message:
           paymentMethod === 'CREDIT_CARD'
             ? 'Pagamento aprovado com sucesso via Stripe Gateway Oficial!'
@@ -311,8 +303,8 @@ export class BookingService {
     // 4. Broadcast real-time WebSocket seat updates to all connected users
     if (checkoutResult.status === 'APPROVED' && event.type === 'SEATED' && seatIds && seatIds.length > 0) {
       let updatedSeats: Array<{ id: string; label?: string; isAvailable: boolean }> = checkoutResult.tickets
-        .filter((t: any) => t.seat)
-        .map((t: any) => ({
+        .filter((t): t is TicketWithRelations & { seat: Seat } => Boolean(t.seat))
+        .map((t) => ({
           id: t.seat.id,
           label: t.seat.label,
           isAvailable: false,
@@ -325,10 +317,10 @@ export class BookingService {
         }));
       }
 
-      console.log(`📡 [WebSocket] Broadcasting ${updatedSeats.length} occupied seats for event ${event.id}:`, updatedSeats);
       SocketService.broadcastSeatsUpdated(event.id, updatedSeats);
     }
 
     return checkoutResult;
   }
 }
+

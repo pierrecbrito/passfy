@@ -10,7 +10,9 @@ import {
   RotateCcw,
   AlertTriangle,
   XCircle,
+  Shield,
 } from 'lucide-react';
+
 import { generateTicketPdf } from '../utils/generateTicketPdf';
 import { api } from '../services/api';
 
@@ -192,29 +194,49 @@ export const TicketCard: React.FC<TicketCardProps> = ({
 
       {/* QR Code & Validation Section */}
       <div className="px-6 pb-6 text-center space-y-4">
-        <div className="relative inline-block p-4 rounded-2xl bg-white shadow-xs border-2 border-slate-200">
-          {ticket.qrDataUrl ? (
-            <img
-              src={ticket.qrDataUrl}
-              alt={`QR Code ${ticket.ticketCode}`}
-              className={`w-48 h-48 mx-auto ${isCancelled ? 'grayscale opacity-30' : ''}`}
-            />
-          ) : (
-            <div className="w-48 h-48 flex items-center justify-center text-xs text-slate-500">
-              Gerando QR Code...
+        {isPublicView ? (
+          <div className="p-6 rounded-2xl bg-gradient-to-b from-blue-50/70 to-slate-50 border-2 border-dashed border-blue-200 text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-blue-100/80 border border-blue-300 text-[#2b55f5] flex items-center justify-center mx-auto shadow-xs">
+              <Shield className="w-6 h-6 text-[#2b55f5]" />
             </div>
-          )}
-
-          {isCancelled && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/85 backdrop-blur-[2px] rounded-2xl p-4 text-center">
-              <XCircle className="w-8 h-8 text-rose-500 mb-1" />
-              <p className="text-xs font-black text-rose-600">INGRESSO CANCELADO</p>
-              <p className="text-[10px] text-slate-500 font-medium mt-0.5">
-                Vaga liberada de volta ao estoque
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">
+                Ingresso Digital Autêntico
+              </h4>
+              <p className="text-[11px] text-slate-500 font-medium mt-1 leading-relaxed max-w-xs mx-auto">
+                Este link público valida a autenticidade da compra. O <strong>QR Code oficial de acesso à portaria</strong> é exclusivo do titular e fica protegido na sua conta pessoal.
               </p>
             </div>
-          )}
-        </div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold">
+              <Check className="w-3 h-3 text-emerald-600" />
+              <span>Status: {isCancelled ? 'Cancelado' : isUsed ? 'Utilizado' : 'Válido & Confirmado'}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="relative inline-block p-4 rounded-2xl bg-white shadow-xs border-2 border-slate-200">
+            {ticket.qrDataUrl ? (
+              <img
+                src={ticket.qrDataUrl}
+                alt={`QR Code ${ticket.ticketCode}`}
+                className={`w-48 h-48 mx-auto ${isCancelled ? 'grayscale opacity-30' : ''}`}
+              />
+            ) : (
+              <div className="w-48 h-48 flex items-center justify-center text-xs text-slate-500">
+                Gerando QR Code...
+              </div>
+            )}
+
+            {isCancelled && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/85 backdrop-blur-[2px] rounded-2xl p-4 text-center">
+                <XCircle className="w-8 h-8 text-rose-500 mb-1" />
+                <p className="text-xs font-black text-rose-600">INGRESSO CANCELADO</p>
+                <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                  Vaga liberada de volta ao estoque
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         <div>
           <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold block">
@@ -228,28 +250,26 @@ export const TicketCard: React.FC<TicketCardProps> = ({
         </div>
 
         {/* Action Buttons */}
-        {!isCancelled ? (
+        {!isCancelled && !isPublicView ? (
           <div className="space-y-2 pt-2">
             <div className="flex gap-2">
-              {!isPublicView && (
-                <button
-                  onClick={handleCopyLink}
-                  className="py-2.5 px-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                  title="Copiar link público do ingresso"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Copiado!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="w-3.5 h-3.5 text-[#2b55f5]" />
-                      <span>Compartilhar</span>
-                    </>
-                  )}
-                </button>
-              )}
+              <button
+                onClick={handleCopyLink}
+                className="py-2.5 px-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                title="Copiar link público do ingresso"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Copiado!</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="w-3.5 h-3.5 text-[#2b55f5]" />
+                    <span>Compartilhar</span>
+                  </>
+                )}
+              </button>
 
               <button
                 onClick={handleDownloadPdf}
@@ -269,6 +289,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
                 )}
               </button>
             </div>
+
 
             {/* Devolução ao Estoque pelo Cliente */}
             {!isPublicView && isIssued && (

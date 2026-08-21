@@ -1,6 +1,7 @@
 import { prisma } from '../../../core/database/prisma';
 import { AppError } from '../../../core/errors/AppError';
 import { CreateEventInput, ListEventsQuery } from '../dtos/eventSchemas';
+import { Prisma } from '@prisma/client';
 
 export class EventService {
   static async createEvent(organizerId: string, data: CreateEventInput) {
@@ -27,7 +28,7 @@ export class EventService {
           date: eventDate,
           price: data.price,
           capacity,
-          ticketTiers: (data.ticketTiers as any) || undefined,
+          ticketTiers: data.ticketTiers ? (data.ticketTiers as Prisma.InputJsonValue) : undefined,
           bannerUrl: data.bannerUrl,
           externalId: data.externalId,
           externalSource: data.externalSource,
@@ -73,7 +74,8 @@ export class EventService {
     const { search, category, type, page = 1, limit = 20 } = query;
     const skip = (page - 1) * limit;
 
-    const whereClause: any = {};
+    const whereClause: Prisma.EventWhereInput = {};
+
 
     if (search && search.trim()) {
       whereClause.OR = [

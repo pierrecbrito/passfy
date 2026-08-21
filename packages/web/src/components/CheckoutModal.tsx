@@ -47,8 +47,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const { user } = useAuth();
 
   const [paymentMethod, setPaymentMethod] = useState<'CREDIT_CARD' | 'PIX'>('CREDIT_CARD');
-  const [simulateStatus, setSimulateStatus] = useState<'APPROVED' | 'DECLINED'>('APPROVED');
-  const [declineReason, setDeclineReason] = useState('INSUFFICIENT_FUNDS');
+  const [cardNumber, setCardNumber] = useState('4242 4242 4242 4242');
+  const [cardHolder, setCardHolder] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('12/28');
+  const [cardCvv, setCardCvv] = useState('123');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successData, setSuccessData] = useState<any | null>(null);
@@ -137,8 +139,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           studentIdNumber: a.ticketType === 'MEIA_ESTUDANTE' ? a.studentIdNumber.trim() : undefined,
         })),
         paymentMethod,
-        simulateStatus,
-        declineReason: simulateStatus === 'DECLINED' ? declineReason : undefined,
+        cardDetails:
+          paymentMethod === 'CREDIT_CARD'
+            ? {
+                holderName: cardHolder.trim() || user?.name || 'Titular do Cartão',
+                cardNumber: cardNumber.replace(/\s+/g, ''),
+                expiryDate: cardExpiry.trim(),
+                cvv: cardCvv.trim(),
+              }
+            : undefined,
       };
 
       const response = await api.post('/checkout/simulate', payload);
@@ -150,6 +159,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           spread: 80,
           origin: { y: 0.6 },
         });
+
 
         // Construct Google Calendar Scheduling Link & Open in a New Tab
         try {
@@ -436,62 +446,137 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </div>
           </div>
 
-          {/* Simulation Playground Controls */}
-          <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-200 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <span className="text-xs font-bold text-slate-900">
-                  Simulador de Cenários (Avaliação)
+          {/* Credit Card Details Form */}
+          {paymentMethod === 'CREDIT_CARD' && (
+            <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                  <CreditCard className="w-4 h-4 text-[#2b55f5]" />
+                  <span>Dados do Cartão (Ambiente Seguro Stripe)</span>
+                </div>
+              </div>
+
+              {/* Quick 1-Click Test Cards */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                  Cartões de Teste Stripe (1-Clique):
                 </span>
+                <div className="grid grid-cols-2 gap-1.5 text-[10px] font-bold">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCardNumber('4242 4242 4242 4242');
+                      setCardExpiry('12/28');
+                      setCardCvv('123');
+                    }}
+                    className={`p-1.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
+                      cardNumber.includes('4242')
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300 ring-1 ring-emerald-200'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span>🟢 Aprovado</span>
+                    <span className="text-[9px] text-slate-400 font-mono">4242</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCardNumber('4000 0000 0000 0069');
+                      setCardExpiry('12/28');
+                      setCardCvv('123');
+                    }}
+                    className={`p-1.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
+                      cardNumber.includes('0069')
+                        ? 'bg-amber-50 text-amber-800 border-amber-300 ring-1 ring-amber-200'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span>🟡 Sem Saldo</span>
+                    <span className="text-[9px] text-slate-400 font-mono">0069</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCardNumber('4000 0000 0000 0002');
+                      setCardExpiry('12/28');
+                      setCardCvv('123');
+                    }}
+                    className={`p-1.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
+                      cardNumber.includes('0002')
+                        ? 'bg-rose-50 text-rose-800 border-rose-300 ring-1 ring-rose-200'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span>🔴 Bloqueado</span>
+                    <span className="text-[9px] text-slate-400 font-mono">0002</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCardNumber('4000 0000 0000 0082');
+                      setCardExpiry('12/28');
+                      setCardCvv('123');
+                    }}
+                    className={`p-1.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
+                      cardNumber.includes('0082')
+                        ? 'bg-purple-50 text-purple-800 border-purple-300 ring-1 ring-purple-200'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span>🛡️ Fraude</span>
+                    <span className="text-[9px] text-slate-400 font-mono">0082</span>
+                  </button>
+                </div>
               </div>
-              <span className="text-[10px] text-blue-700 font-semibold">Alternar Resposta do Gateway</span>
-            </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setSimulateStatus('APPROVED')}
-                className={`py-2 px-3 rounded-xl text-xs font-bold border transition ${
-                  simulateStatus === 'APPROVED'
-                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                }`}
-              >
-                ✅ Forçar Aprovação
-              </button>
+              {/* Card Inputs */}
+              <div className="space-y-2 pt-1 border-t border-slate-200/60">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Número do Cartão
+                  </label>
+                  <input
+                    type="text"
+                    value={cardNumber}
+                    onChange={(e) => setCardNumber(e.target.value)}
+                    placeholder="4242 4242 4242 4242"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs font-mono font-bold"
+                  />
+                </div>
 
-              <button
-                type="button"
-                onClick={() => setSimulateStatus('DECLINED')}
-                className={`py-2 px-3 rounded-xl text-xs font-bold border transition ${
-                  simulateStatus === 'DECLINED'
-                    ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
-                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                }`}
-              >
-                ❌ Simular Recusa
-              </button>
-            </div>
-
-            {simulateStatus === 'DECLINED' && (
-              <div className="pt-2 animate-in fade-in">
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                  Motivo da Recusa:
-                </label>
-                <select
-                  value={declineReason}
-                  onChange={(e) => setDeclineReason(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs font-medium"
-                >
-                  <option value="INSUFFICIENT_FUNDS">Saldo ou Limite Insuficiente</option>
-                  <option value="CARD_BLOCKED">Cartão Bloqueado pelo Banco</option>
-                  <option value="EXPIRED_CARD">Cartão Expirado</option>
-                  <option value="FRAUD_SUSPICION">Suspeita de Fraude</option>
-                </select>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Validade (MM/AA)
+                    </label>
+                    <input
+                      type="text"
+                      value={cardExpiry}
+                      onChange={(e) => setCardExpiry(e.target.value)}
+                      placeholder="12/28"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      CVC / CVV
+                    </label>
+                    <input
+                      type="text"
+                      value={cardCvv}
+                      onChange={(e) => setCardCvv(e.target.value)}
+                      placeholder="123"
+                      maxLength={4}
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-xs font-mono"
+                    />
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {error && (
             <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 flex items-center gap-2.5 text-xs text-rose-700 font-medium">
@@ -513,24 +598,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               <button
                 onClick={onClose}
                 disabled={isLoading}
-                className="py-2.5 px-4 rounded-xl text-xs font-bold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition shadow-xs"
+                className="py-2.5 px-4 rounded-xl text-xs font-bold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition shadow-xs cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 disabled={isLoading}
                 onClick={handleCheckout}
-                className={`py-3 px-5 rounded-xl text-xs font-bold text-white shadow-xs transition flex items-center justify-center gap-2 ${
-                  simulateStatus === 'APPROVED'
-                    ? 'bg-[#2b55f5] hover:bg-[#1f44d6]'
-                    : 'bg-rose-600 hover:bg-rose-700'
-                }`}
+                className="py-3 px-5 rounded-xl text-xs font-bold text-white bg-[#2b55f5] hover:bg-[#1f44d6] shadow-xs transition flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] disabled:opacity-75"
               >
-                <span>
-                  {simulateStatus === 'APPROVED'
-                    ? `Pagar R$ ${totalAmount.toFixed(2)}`
-                    : 'Processar Recusa Simulada'}
-                </span>
+                <span>Pagar R$ {totalAmount.toFixed(2)}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

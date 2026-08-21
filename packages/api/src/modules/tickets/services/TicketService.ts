@@ -51,7 +51,14 @@ export class TicketService {
   static async getShareableTicket(shareToken: string) {
     const ticket = await prisma.ticket.findUnique({
       where: { shareToken },
-      include: {
+      select: {
+        id: true,
+        shareToken: true,
+        status: true,
+        holderName: true,
+        ticketType: true,
+        studentId: true,
+        createdAt: true,
         user: {
           select: { name: true },
         },
@@ -68,7 +75,14 @@ export class TicketService {
             bannerUrl: true,
           },
         },
-        seat: true,
+        seat: {
+          select: {
+            id: true,
+            row: true,
+            number: true,
+            label: true,
+          },
+        },
       },
     });
 
@@ -76,20 +90,14 @@ export class TicketService {
       throw new AppError('Ingresso não encontrado ou link expirado.', 404, 'TICKET_NOT_FOUND');
     }
 
-    const qrDataUrl = await QRCode.toDataURL(ticket.qrToken, {
-      width: 300,
-      margin: 2,
-      color: {
-        dark: '#0f172a',
-        light: '#ffffff',
-      },
-    });
-
+    // Return safe public metadata with masked code — strictly NO qrToken, qrSignature or qrDataUrl
     return {
       ...ticket,
-      qrDataUrl,
+      ticketCode: 'PAS-•••••',
+      isPublicView: true,
     };
   }
+
 
   static async getTicketById(id: string, userId: string) {
     const ticket = await prisma.ticket.findUnique({
