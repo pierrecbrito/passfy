@@ -28,6 +28,7 @@ export class SocketService {
       socket.on('join_event', (eventId: string) => {
         if (eventId) {
           socket.join(`event:${eventId}`);
+          console.log(`⚡ [WebSocket] Client ${socket.id} joined room event:${eventId}`);
         }
       });
 
@@ -35,6 +36,7 @@ export class SocketService {
       socket.on('leave_event', (eventId: string) => {
         if (eventId) {
           socket.leave(`event:${eventId}`);
+          console.log(`⚡ [WebSocket] Client ${socket.id} left room event:${eventId}`);
         }
       });
 
@@ -66,8 +68,10 @@ export class SocketService {
       timestamp: Date.now(),
     };
 
-    // Broadcast to everyone in the room (including or excluding sender)
+    console.log(`⚡ [WebSocket] Emitting seats_updated to event:${eventId} and broadcast:`, payload);
+
+    // Broadcast to room and global
     this.io.to(`event:${eventId}`).emit('seats_updated', payload);
-    this.io.emit('global_seats_updated', payload);
+    this.io.emit('seats_updated', payload);
   }
 }

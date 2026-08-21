@@ -46,7 +46,7 @@ export class BookingService {
     }
 
     // 3. Execute atomic purchase in ACID transaction
-    return prisma.$transaction(async (tx) => {
+    const checkoutResult = await prisma.$transaction(async (tx) => {
       let totalAmount = 0;
       const createdTickets = [];
 
@@ -271,7 +271,7 @@ export class BookingService {
 
     // 4. Broadcast real-time WebSocket seat updates to all connected users
     if (checkoutResult.status === 'APPROVED' && event.type === 'SEATED' && seatIds && seatIds.length > 0) {
-      const updatedSeats = checkoutResult.tickets
+      let updatedSeats = checkoutResult.tickets
         .filter((t: any) => t.seat)
         .map((t: any) => ({
           id: t.seat.id,
@@ -279,6 +279,14 @@ export class BookingService {
           isAvailable: false,
         }));
 
+      if (updatedSeats.length === 0) {
+        updatedSeats = seatIds.map((sid) => ({
+          id: sid,
+          isAvailable: false,
+        }));
+      }
+
+      console.log(`📡 [WebSocket] Broadcasting ${updatedSeats.length} occupied seats for event ${event.id}:`, updatedSeats);
       SocketService.broadcastSeatsUpdated(event.id, updatedSeats);
     }
 
