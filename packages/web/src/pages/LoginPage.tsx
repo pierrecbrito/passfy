@@ -477,28 +477,28 @@ export const LoginPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleQuickFill('organizador@passfy.com')}
-                className="px-2.5 py-1 rounded-md bg-purple-50 border border-purple-200 text-purple-700 text-[11px] font-semibold hover:bg-purple-100 transition shadow-none"
+                className="px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-semibold hover:bg-slate-100 hover:border-slate-300 hover:text-slate-900 transition shadow-none"
               >
                 🎪 Organizador
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickFill('cliente1@passfy.com')}
-                className="px-2.5 py-1 rounded-md bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-semibold hover:bg-blue-100 transition shadow-none"
+                className="px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-semibold hover:bg-slate-100 hover:border-slate-300 hover:text-slate-900 transition shadow-none"
               >
                 👤 Cliente 1
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickFill('cliente2@passfy.com')}
-                className="px-2.5 py-1 rounded-md bg-sky-50 border border-sky-200 text-sky-700 text-[11px] font-semibold hover:bg-sky-100 transition shadow-none"
+                className="px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-semibold hover:bg-slate-100 hover:border-slate-300 hover:text-slate-900 transition shadow-none"
               >
                 👤 Cliente 2
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickFill('portaria@passfy.com')}
-                className="px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold hover:bg-emerald-100 transition shadow-none"
+                className="px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-semibold hover:bg-slate-100 hover:border-slate-300 hover:text-slate-900 transition shadow-none"
               >
                 📷 Portaria
               </button>
