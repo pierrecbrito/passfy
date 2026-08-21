@@ -187,12 +187,19 @@ export const EventDetailsPage: React.FC = () => {
   }, [id]);
 
   const isSeated = event?.type === 'SEATED';
-  const isSoldOut = event?.availableCapacity <= 0;
-  const isMusicEvent =
+  const isSoldOut = (event?.availableCapacity ?? 0) <= 0;
+  const isMusicEvent = Boolean(
     event?.category === 'CONCERT' ||
+    event?.title?.toLowerCase().includes('show') ||
+    event?.title?.toLowerCase().includes('festival') ||
+    event?.title?.toLowerCase().includes('turnê') ||
+    event?.title?.toLowerCase().includes('tour') ||
     event?.title?.toLowerCase().includes('rock') ||
     event?.title?.toLowerCase().includes('coldplay') ||
-    event?.title?.toLowerCase().includes('tour');
+    event?.title?.toLowerCase().includes('taylor') ||
+    event?.title?.toLowerCase().includes('música') ||
+    event?.title?.toLowerCase().includes('musica')
+  );
 
   // Available Ticket Tiers (Pista, Camarote, etc.)
   const availableTiers = useMemo(() => {
@@ -658,10 +665,12 @@ export const EventDetailsPage: React.FC = () => {
               </div>
             )}
 
-            {/* Card do Spotify Oficial */}
-            <div className="space-y-3">
-              <SpotifyShowCard event={event} />
-            </div>
+            {/* Card do Spotify Oficial (Apenas para eventos musicais / shows) */}
+            {isMusicEvent && (
+              <div className="space-y-3">
+                <SpotifyShowCard event={event} />
+              </div>
+            )}
           </div>
 
           {/* ── LADO DIREITO: Painel de Reserva / Finalização / Pagamento (3 Fases no mesmo Card) ── */}
