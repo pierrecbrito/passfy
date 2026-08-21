@@ -1,0 +1,14 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "npx prisma generate --schema=packages/api/prisma/schema.prisma && npm run build --workspace=@passfy/api"
+  },
+  "deploy": {
+    "startCommand": "npm run start --workspace=@passfy/api",
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 120,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  }
+}
