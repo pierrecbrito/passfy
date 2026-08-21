@@ -10,7 +10,7 @@ const envSchema = z.object({
     .string()
     .default(
       process.env.DATABASE_URL ||
-        'postgresql://postgres.lqukhxcyuwupvqiexwwx:P13rr3Br1t0%21%40%23@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true'
+        'postgresql://postgres.lqukhxcyuwupvqiexwwx:P13rr3Br1t0%21%40%23@aws-0-sa-east-1.pooler.supabase.com:5432/postgres'
     ),
   DIRECT_URL: z
     .string()
