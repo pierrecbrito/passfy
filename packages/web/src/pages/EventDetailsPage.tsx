@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
+import { getSocket } from '../services/socket';
 import { useAuth } from '../contexts/AuthContext';
 import { SeatMap, SeatItem } from '../components/SeatMap';
 import { SpotifyShowCard } from '../components/SpotifyShowCard';
@@ -33,6 +34,7 @@ import {
   Share2,
   Award,
   Layers,
+  Radio,
 } from 'lucide-react';
 
 interface AttendeeState {
@@ -63,6 +65,10 @@ export const EventDetailsPage: React.FC = () => {
   const [currentPhase, setCurrentPhase] = useState<1 | 2 | 3>(1);
   const [attendees, setAttendees] = useState<AttendeeState[]>([]);
   const [savedStudentId, setSavedStudentId] = useState<string>('');
+
+  // WebSocket Live Sync State
+  const [isLiveConnected, setIsLiveConnected] = useState(false);
+  const [realtimeWarning, setRealtimeWarning] = useState<string | null>(null);
 
   // Payment Phase State
   const [paymentMethod, setPaymentMethod] = useState<'CREDIT_CARD' | 'PIX'>('PIX');
@@ -109,6 +115,75 @@ export const EventDetailsPage: React.FC = () => {
     }
 
     if (id) loadEventDetails();
+  }, [id]);
+
+  // ── WebSocket Real-Time Seat Synchronization ──
+  useEffect(() => {
+    if (!id) return;
+
+    const socket = getSocket();
+
+    const onConnect = () => setIsLiveConnected(true);
+    const onDisconnect = () => setIsLiveConnected(false);
+
+    if (socket.connected) {
+      setIsLiveConnected(true);
+    }
+
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
+
+    // Join room for this event
+    socket.emit('join_event', id);
+
+    // Receive live updates when seats are purchased by ANY user
+    const onSeatsUpdated = (data: {
+      eventId: string;
+      seats: Array<{ id: string; label?: string; isAvailable: boolean }>;
+      timestamp: number;
+    }) => {
+      if (data.eventId !== id) return;
+
+      // 1. Instantly update seat availability in the local state
+      setEvent((prevEvent: any) => {
+        if (!prevEvent || !prevEvent.seats) return prevEvent;
+        const availabilityMap = new Map(data.seats.map((s) => [s.id, s.isAvailable]));
+        const updatedSeats = prevEvent.seats.map((seat: any) => {
+          if (availabilityMap.has(seat.id)) {
+            return { ...seat, isAvailable: availabilityMap.get(seat.id) };
+          }
+          return seat;
+        });
+        return { ...prevEvent, seats: updatedSeats };
+      });
+
+      // 2. Check if the current user had selected one of these purchased seats
+      const newlyOccupiedIds = data.seats.filter((s) => !s.isAvailable).map((s) => s.id);
+      if (newlyOccupiedIds.length > 0) {
+        setSelectedSeats((prevSelected) => {
+          const conflictingSeats = prevSelected.filter((s) => newlyOccupiedIds.includes(s.id));
+          if (conflictingSeats.length > 0) {
+            const conflictLabels = conflictingSeats.map((s) => `Poltrona ${s.label}`).join(', ');
+            setRealtimeWarning(
+              `⚠️ A ${conflictLabels} acabou de ser comprada por outro cliente e foi desmarcada automaticamente. Por favor, escolha outro assento.`
+            );
+            // Invalidate checkout progress and return to Phase 1 so user cannot complete with an occupied seat
+            setCurrentPhase(1);
+            return prevSelected.filter((s) => !newlyOccupiedIds.includes(s.id));
+          }
+          return prevSelected;
+        });
+      }
+    };
+
+    socket.on('seats_updated', onSeatsUpdated);
+
+    return () => {
+      socket.emit('leave_event', id);
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
+      socket.off('seats_updated', onSeatsUpdated);
+    };
   }, [id]);
 
   const isSeated = event?.type === 'SEATED';
@@ -225,6 +300,7 @@ export const EventDetailsPage: React.FC = () => {
   const handleToggleSeat = (seat: SeatItem) => {
     if (!seat.isAvailable) return;
     setPaymentError(null);
+    setRealtimeWarning(null);
 
     setSelectedSeats((prev) => {
       const isAlreadySelected = prev.some((s) => s.id === seat.id);
@@ -546,11 +622,29 @@ export const EventDetailsPage: React.FC = () => {
                   </p>
                 </div>
 
+                {/* Real-time occupied warning banner above seat map */}
+                {realtimeWarning && (
+                  <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-center justify-between gap-3 animate-in fade-in duration-300 shadow-xs">
+                    <div className="flex items-center gap-2.5">
+                      <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+                      <span>{realtimeWarning}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setRealtimeWarning(null)}
+                      className="text-amber-700 hover:text-amber-900 font-bold text-xs shrink-0 cursor-pointer"
+                    >
+                      Entendi
+                    </button>
+                  </div>
+                )}
+
                 <SeatMap
                   seats={event.seats || []}
                   selectedSeatIds={selectedSeats.map((s) => s.id)}
                   onToggleSeat={handleToggleSeat}
                   maxSelection={6}
+                  isLiveConnected={isLiveConnected}
                 />
               </div>
             )}
@@ -613,6 +707,23 @@ export const EventDetailsPage: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {/* Real-time Invalidation Warning inside the checkout card */}
+              {realtimeWarning && (
+                <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-center justify-between gap-2 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>{realtimeWarning}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setRealtimeWarning(null)}
+                    className="text-amber-700 hover:text-amber-900 font-bold text-[11px] shrink-0 cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
 
               {/* ── STATE 0: In-Place Authentication / Pre-Cadastro Form ── */}
               {isAuthCardActive && !user ? (

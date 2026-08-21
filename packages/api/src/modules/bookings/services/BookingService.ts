@@ -1,6 +1,7 @@
 import { prisma } from '../../../core/database/prisma';
 import { AppError } from '../../../core/errors/AppError';
 import { CryptoProvider } from '../../../core/security/cryptoProvider';
+import { SocketService } from '../../../core/websocket/socketServer';
 import { CheckoutSimulationInput } from '../dtos/bookingSchemas';
 import { TicketStatus, ReservationStatus } from '@prisma/client';
 import crypto from 'crypto';
@@ -267,5 +268,20 @@ export class BookingService {
         tickets: createdTickets,
       };
     });
+
+    // 4. Broadcast real-time WebSocket seat updates to all connected users
+    if (checkoutResult.status === 'APPROVED' && event.type === 'SEATED' && seatIds && seatIds.length > 0) {
+      const updatedSeats = checkoutResult.tickets
+        .filter((t: any) => t.seat)
+        .map((t: any) => ({
+          id: t.seat.id,
+          label: t.seat.label,
+          isAvailable: false,
+        }));
+
+      SocketService.broadcastSeatsUpdated(event.id, updatedSeats);
+    }
+
+    return checkoutResult;
   }
 }
