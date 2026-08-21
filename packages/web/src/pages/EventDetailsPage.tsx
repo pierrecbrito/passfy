@@ -4,7 +4,6 @@ import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { SeatMap, SeatItem } from '../components/SeatMap';
 import { SpotifyShowCard } from '../components/SpotifyShowCard';
-import confetti from 'canvas-confetti';
 import {
   Calendar,
   MapPin,
@@ -24,8 +23,6 @@ import {
   UserPlus,
   ArrowRight,
   ShieldCheck,
-  GraduationCap,
-  FileBadge,
   CreditCard,
   QrCode,
   Copy,
@@ -72,7 +69,6 @@ export const EventDetailsPage: React.FC = () => {
   const [declineReason, setDeclineReason] = useState('INSUFFICIENT_FUNDS');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [paymentSuccess, setPaymentSuccess] = useState<any | null>(null);
   const [copiedPix, setCopiedPix] = useState(false);
 
   // In-Place Auth State
@@ -121,6 +117,11 @@ export const EventDetailsPage: React.FC = () => {
   const unitPrice = event ? Number(event.price) : 0;
   const totalSelectedTickets = isSeated ? selectedSeats.length : quantity;
 
+  // Clear any previous error when seats or quantity change
+  useEffect(() => {
+    setPaymentError(null);
+  }, [selectedSeats, quantity, currentPhase]);
+
   // Synchronize Attendees List when seats or quantity change
   useEffect(() => {
     const defaultStudentId = localStorage.getItem('passfy_saved_student_id') || '';
@@ -158,7 +159,7 @@ export const EventDetailsPage: React.FC = () => {
     }
   }, [selectedSeats, quantity, isSeated, user]);
 
-  // Dynamic Total Calculation: Inteira = 100%, Meia Estudante = 50%
+  // Dynamic Total Calculation: Inteira = 100%, Estudante = 50%
   const subtotal = useMemo(() => {
     if (attendees.length === 0) return 0;
     return attendees.reduce((acc, curr) => {
@@ -169,6 +170,7 @@ export const EventDetailsPage: React.FC = () => {
 
   const handleToggleSeat = (seat: SeatItem) => {
     if (!seat.isAvailable) return;
+    setPaymentError(null);
 
     setSelectedSeats((prev) => {
       const isAlreadySelected = prev.some((s) => s.id === seat.id);
@@ -185,6 +187,7 @@ export const EventDetailsPage: React.FC = () => {
   };
 
   const handleUpdateAttendee = (index: number, field: keyof AttendeeState, value: string) => {
+    setPaymentError(null);
     setAttendees((prev) => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: value };
@@ -199,6 +202,7 @@ export const EventDetailsPage: React.FC = () => {
 
   // Phase Transition Handlers
   const handleProceedFromPhase1 = () => {
+    setPaymentError(null);
     if (totalSelectedTickets === 0) return;
     if (!user) {
       setIsAuthCardActive(true);
@@ -221,7 +225,7 @@ export const EventDetailsPage: React.FC = () => {
       }
 
       if (att.ticketType === 'MEIA_ESTUDANTE' && !att.studentIdNumber.trim()) {
-        setPaymentError(`Informe a carteira de estudante para o ${label} (Meia-Entrada).`);
+        setPaymentError(`Informe a carteira de estudante para o ${label}.`);
         return;
       }
     }
@@ -253,11 +257,12 @@ export const EventDetailsPage: React.FC = () => {
       const response = await api.post('/checkout/simulate', payload);
 
       if (response.data.status === 'APPROVED') {
-        setPaymentSuccess(response.data);
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
+        // Redireciona para a página dedicada de confirmação de pedido
+        navigate('/order-success', {
+          state: {
+            result: response.data,
+            event,
+          },
         });
       } else {
         setPaymentError(response.data.message || 'Pagamento recusado pela operadora.');
@@ -401,27 +406,51 @@ export const EventDetailsPage: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Grid de Data e Local */}
+                {/* Grid de Data e Local com Atalho para Google Agenda e Google Maps */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
-                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200/70">
-                    <div className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-[#2b55f5] shrink-0">
+                  {/* Google Calendar Link */}
+                  <div
+                    onClick={() => {
+                      const startDate = new Date(event.date);
+                      const endDate = new Date(startDate.getTime() + 3 * 60 * 60 * 1000);
+                      const formatUTC = (d: Date) => d.toISOString().replace(/-|:|\.\d\d\d/g, '');
+                      const params = new URLSearchParams({
+                        action: 'TEMPLATE',
+                        text: event.title,
+                        dates: `${formatUTC(startDate)}/${formatUTC(endDate)}`,
+                        details: `${event.description || ''}`,
+                        location: event.venue,
+                      });
+                      window.open(`https://calendar.google.com/calendar/render?${params.toString()}`, '_blank');
+                    }}
+                    className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 hover:bg-blue-50/70 border border-slate-200/70 hover:border-blue-200 transition group cursor-pointer"
+                    title="Clique para adicionar este evento à sua agenda Google"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-[#2b55f5] shrink-0 group-hover:scale-105 group-hover:bg-[#2b55f5] group-hover:text-white transition-all shadow-xs">
                       <Calendar className="w-5 h-5" />
                     </div>
-                    <div>
-                      <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">
-                        Data e Horário
-                      </p>
-                      <p className="text-slate-900 font-bold text-xs sm:text-sm capitalize">
+                    <div className="overflow-hidden">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">
+                          Data e Horário
+                        </p>
+                        <span className="text-[10px] font-bold text-[#2b55f5] bg-blue-50 px-1.5 py-0.5 rounded group-hover:underline">
+                          Google Agenda ↗
+                        </span>
+                      </div>
+                      <p className="text-slate-900 font-bold text-xs sm:text-sm capitalize group-hover:text-[#2b55f5] transition-colors truncate">
                         {formattedDate}
                       </p>
                     </div>
                   </div>
 
+                  {/* Google Maps Link */}
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.venue)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 hover:bg-emerald-50/70 border border-slate-200/70 hover:border-emerald-200 transition group cursor-pointer"
+                    title="Clique para abrir a localização no Google Maps"
                   >
                     <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0 group-hover:scale-105 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-xs">
                       <MapPin className="w-5 h-5" />
@@ -431,7 +460,7 @@ export const EventDetailsPage: React.FC = () => {
                         <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">
                           Local do Evento
                         </p>
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1 rounded">
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
                           Ver no Maps ↗
                         </span>
                       </div>
@@ -475,15 +504,24 @@ export const EventDetailsPage: React.FC = () => {
 
           {/* ── LADO DIREITO: Painel de Reserva / Finalização / Pagamento (3 Fases no mesmo Card) ── */}
           <div className="lg:col-span-5 xl:col-span-4 sticky top-24 self-start space-y-4">
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 space-y-5 shadow-sm transition-all duration-300">
+            <div className="relative bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 space-y-5 shadow-sm transition-all duration-300">
               
+              {/* Overlay de Carregamento com Spinner durante processamento de pagamento */}
+              {isProcessingPayment && (
+                <div className="absolute inset-0 bg-white/90 backdrop-blur-xs z-30 flex flex-col items-center justify-center space-y-3 rounded-3xl animate-in fade-in duration-200">
+                  <div className="w-10 h-10 border-3 border-[#2b55f5] border-t-transparent rounded-full animate-spin" />
+                  <div className="text-center space-y-0.5">
+                    <p className="text-sm font-black text-slate-900">Processando Pagamento...</p>
+                    <p className="text-xs text-slate-500 font-medium">Validando transação com segurança bancária</p>
+                  </div>
+                </div>
+              )}
+
               {/* Top Bar: Title on Left, 3 Dots Step Indicator on Right */}
               <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-black text-slate-900">
-                    {paymentSuccess
-                      ? 'Pedido Confirmado'
-                      : currentPhase === 1
+                    {currentPhase === 1
                       ? 'Resumo da Reserva'
                       : currentPhase === 2
                       ? 'Finalização do Pedido'
@@ -492,7 +530,7 @@ export const EventDetailsPage: React.FC = () => {
                 </div>
 
                 {/* 3 Dots Phase Indicator */}
-                {!paymentSuccess && !isAuthCardActive && (
+                {!isAuthCardActive && (
                   <div className="flex items-center gap-1.5" title={`Fase ${currentPhase} de 3`}>
                     {[1, 2, 3].map((step) => {
                       const isCurrent = currentPhase === step;
@@ -669,61 +707,8 @@ export const EventDetailsPage: React.FC = () => {
                     </div>
                   </form>
                 </div>
-              ) : paymentSuccess ? (
-                /* ── STATE: Sucesso do Pagamento ── */
-                <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200 text-center py-2">
-                  <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
-                    <CheckCircle2 className="w-8 h-8" />
-                  </div>
-
-                  <div className="space-y-1">
-                    <h4 className="text-lg font-black text-slate-900">Compra Concluída!</h4>
-                    <p className="text-xs text-slate-500 font-medium">
-                      Seus ingressos com QR Code criptográfico já estão disponíveis na sua carteira digital.
-                    </p>
-                  </div>
-
-                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-left space-y-1.5 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-medium">Total Pago:</span>
-                      <span className="font-black text-slate-900">R$ {subtotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-medium">Ingressos:</span>
-                      <span className="font-bold text-slate-800">{attendees.length} unidade(s)</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 font-medium">Status:</span>
-                      <span className="font-bold text-emerald-600 flex items-center gap-1">
-                        <Check className="w-3 h-3" /> Aprovado
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 pt-2">
-                    <button
-                      onClick={() => navigate('/my-tickets')}
-                      className="w-full py-3 rounded-xl bg-[#2b55f5] hover:bg-[#1f44d6] text-white text-xs font-bold shadow-xs transition flex items-center justify-center gap-1.5"
-                    >
-                      <Ticket className="w-4 h-4" />
-                      <span>Acessar Meus Ingressos</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setPaymentSuccess(null);
-                        setCurrentPhase(1);
-                        setSelectedSeats([]);
-                        setQuantity(1);
-                      }}
-                      className="w-full py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition"
-                    >
-                      Comprar mais ingressos
-                    </button>
-                  </div>
-                </div>
               ) : currentPhase === 1 ? (
-                /* ── FASE 1: Resumo da Reserva (com opção de Meia Estudante já aqui) ── */
+                /* ── FASE 1: Resumo da Reserva (com opção de Estudante já aqui) ── */
                 <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
                   {/* Preço Base */}
                   <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
@@ -800,7 +785,7 @@ export const EventDetailsPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Opção de Meia Estudante já no Resumo da Reserva */}
+                  {/* Opção de Estudante / Inteira por Ingresso já no Resumo da Reserva */}
                   {totalSelectedTickets > 0 && (
                     <div className="space-y-2 pt-2 border-t border-slate-100">
                       <div className="flex items-center justify-between">
@@ -830,12 +815,12 @@ export const EventDetailsPage: React.FC = () => {
                                 </p>
                               </div>
 
-                              {/* Toggle Inteira / Meia Estudante */}
+                              {/* Toggle Inteira / Estudante sem ícones */}
                               <div className="flex p-0.5 rounded-lg bg-white border border-slate-200 text-[11px] font-bold">
                                 <button
                                   type="button"
                                   onClick={() => handleUpdateAttendee(idx, 'ticketType', 'INTEIRA')}
-                                  className={`px-2 py-1 rounded-md transition ${
+                                  className={`px-2.5 py-1 rounded-md transition ${
                                     !isStudent
                                       ? 'bg-[#2b55f5] text-white shadow-2xs'
                                       : 'text-slate-500 hover:text-slate-900'
@@ -848,14 +833,13 @@ export const EventDetailsPage: React.FC = () => {
                                   onClick={() =>
                                     handleUpdateAttendee(idx, 'ticketType', 'MEIA_ESTUDANTE')
                                   }
-                                  className={`px-2 py-1 rounded-md transition flex items-center gap-1 ${
+                                  className={`px-2.5 py-1 rounded-md transition ${
                                     isStudent
                                       ? 'bg-purple-600 text-white shadow-2xs'
                                       : 'text-slate-500 hover:text-slate-900'
                                   }`}
                                 >
-                                  <GraduationCap className="w-3 h-3" />
-                                  <span>Meia</span>
+                                  Estudante
                                 </button>
                               </div>
                             </div>
@@ -906,7 +890,10 @@ export const EventDetailsPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <button
                       type="button"
-                      onClick={() => setCurrentPhase(1)}
+                      onClick={() => {
+                        setPaymentError(null);
+                        setCurrentPhase(1);
+                      }}
                       className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
@@ -954,7 +941,7 @@ export const EventDetailsPage: React.FC = () => {
                               </h5>
                             </div>
 
-                            {/* Ticket Type Badge with Instant Toggle */}
+                            {/* Ticket Type Badge with Instant Toggle (sem ícones) */}
                             <button
                               type="button"
                               onClick={() =>
@@ -964,14 +951,14 @@ export const EventDetailsPage: React.FC = () => {
                                   isStudent ? 'INTEIRA' : 'MEIA_ESTUDANTE'
                                 )
                               }
-                              className={`px-2 py-1 rounded-lg text-[10px] font-black border transition shrink-0 ${
+                              className={`px-2.5 py-1 rounded-lg text-[10px] font-black border transition shrink-0 ${
                                 isStudent
                                   ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
                                   : 'bg-blue-50 text-[#2b55f5] border-blue-200 hover:bg-blue-100'
                               }`}
-                              title="Clique para alternar entre Inteira e Meia Estudante"
+                              title="Clique para alternar entre Inteira e Estudante"
                             >
-                              {isStudent ? '🎓 Meia Estudante' : 'Inteira'}
+                              {isStudent ? 'Estudante' : 'Inteira'}
                             </button>
                           </div>
 
@@ -996,13 +983,12 @@ export const EventDetailsPage: React.FC = () => {
                               </div>
                             </div>
 
-                            {/* Carteira de Estudante (Obrigatória para Meia-Entrada) */}
+                            {/* Carteira de Estudante (Obrigatória para Estudante) */}
                             {isStudent && (
                               <div className="space-y-1 animate-in fade-in duration-200">
                                 <div className="flex items-center justify-between">
-                                  <label className="block text-[11px] font-bold text-purple-800 flex items-center gap-1">
-                                    <GraduationCap className="w-3.5 h-3.5 text-purple-600" />
-                                    <span>Carteira de Estudante / Matrícula</span>
+                                  <label className="block text-[11px] font-bold text-purple-800">
+                                    Carteira de Estudante / Matrícula
                                   </label>
                                   {savedStudentId && !att.studentIdNumber && (
                                     <button
@@ -1021,8 +1007,7 @@ export const EventDetailsPage: React.FC = () => {
                                   )}
                                 </div>
 
-                                <div className="relative">
-                                  <FileBadge className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400" />
+                                <div>
                                   <input
                                     type="text"
                                     required
@@ -1035,7 +1020,7 @@ export const EventDetailsPage: React.FC = () => {
                                       )
                                     }
                                     placeholder="Nº DNE / CIE / Matrícula Estudantil"
-                                    className="w-full pl-9 pr-3 py-2 bg-white rounded-xl border border-purple-200 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-500 shadow-2xs"
+                                    className="w-full px-3 py-2 bg-white rounded-xl border border-purple-200 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-500 shadow-2xs"
                                   />
                                 </div>
                                 <p className="text-[10px] text-slate-400 font-medium">
@@ -1073,7 +1058,10 @@ export const EventDetailsPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <button
                       type="button"
-                      onClick={() => setCurrentPhase(2)}
+                      onClick={() => {
+                        setPaymentError(null);
+                        setCurrentPhase(2);
+                      }}
                       className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
@@ -1276,17 +1264,8 @@ export const EventDetailsPage: React.FC = () => {
                     onClick={handleExecutePayment}
                     className="w-full py-3.5 px-4 rounded-xl text-sm font-bold bg-[#2b55f5] hover:bg-[#1f44d6] disabled:opacity-50 text-white shadow-xs transition active:scale-[0.99] flex items-center justify-center gap-2"
                   >
-                    {isProcessingPayment ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 animate-spin text-white" />
-                        <span>Processando Pagamento...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Pagar R$ {subtotal.toFixed(2)}</span>
-                        <Check className="w-4 h-4" />
-                      </>
-                    )}
+                    <span>Pagar R$ {subtotal.toFixed(2)}</span>
+                    <Check className="w-4 h-4" />
                   </button>
                 </div>
               )}

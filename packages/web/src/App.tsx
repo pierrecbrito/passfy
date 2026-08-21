@@ -16,6 +16,7 @@ import { PublicTicketPage } from './pages/PublicTicketPage';
 import { OrganizerCreatePage } from './pages/OrganizerCreatePage';
 import { OrganizerDashboardPage } from './pages/OrganizerDashboardPage';
 import { GatekeeperPage } from './pages/GatekeeperPage';
+import { OrderSuccessPage } from './pages/OrderSuccessPage';
 
 const AppLayout: React.FC = () => {
   const location = useLocation();
@@ -53,6 +54,7 @@ const AppLayout: React.FC = () => {
           <Route path="/home" element={<HomePage />} />
           <Route path="/event/:id" element={<EventDetailsPage />} />
           <Route path="/events/:id" element={<EventDetailsPage />} />
+          <Route path="/order-success" element={<OrderSuccessPage />} />
           <Route path="/ticket/:shareToken" element={<PublicTicketPage />} />
 
           {/* Customer Routes */}
