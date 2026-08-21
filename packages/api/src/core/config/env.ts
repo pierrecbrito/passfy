@@ -6,8 +6,18 @@ dotenv.config();
 const envSchema = z.object({
   PORT: z.coerce.number().default(3333),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
-  DIRECT_URL: z.string().optional(),
+  DATABASE_URL: z
+    .string()
+    .default(
+      process.env.DATABASE_URL ||
+        'postgresql://postgres.lqukhxcyuwupvqiexwwx:P13rr3Br1t0%21%40%23@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true'
+    ),
+  DIRECT_URL: z
+    .string()
+    .default(
+      process.env.DIRECT_URL ||
+        'postgresql://postgres.lqukhxcyuwupvqiexwwx:P13rr3Br1t0%21%40%23@aws-0-sa-east-1.pooler.supabase.com:5432/postgres'
+    ),
   JWT_SECRET: z.string().default('super_secret_passfy_jwt_key_development_only_change_in_production'),
   QR_SECRET_KEY: z.string().default('passfy_cryptographic_qr_signing_key_hmac_sha256_secret'),
   CORS_ORIGIN: z.string().default('*'),
