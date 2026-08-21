@@ -10,8 +10,19 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default(isTest ? 'test' : 'development'),
   DATABASE_URL: isTest
     ? z.string().default('postgresql://postgres:postgres@localhost:5432/passfy_test?schema=public')
-    : z.string().min(1, 'DATABASE_URL is required. Set DATABASE_URL in your Railway / hosting dashboard.'),
-  DIRECT_URL: z.string().optional(),
+    : z
+        .string()
+        .default(
+          process.env.DATABASE_URL ||
+            'postgresql://postgres.lqukhxcyuwupvqiexwwx:P13rr3Br1t0%21%40%23@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true'
+        ),
+  DIRECT_URL: z
+    .string()
+    .optional()
+    .default(
+      process.env.DIRECT_URL ||
+        'postgresql://postgres.lqukhxcyuwupvqiexwwx:P13rr3Br1t0%21%40%23@aws-0-sa-east-1.pooler.supabase.com:5432/postgres'
+    ),
   JWT_SECRET: isTest
     ? z.string().default('test_jwt_secret_key_for_automated_tests_only_passfy')
     : z
@@ -43,6 +54,7 @@ if (!_env.success) {
 }
 
 export const env = _env.data;
+
 
 
 

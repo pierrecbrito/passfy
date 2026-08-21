@@ -38,14 +38,15 @@ app.use(
 
 app.use(express.json());
 
-// Basic health check route
-app.get('/health', (_req, res) => {
+// Basic health check routes
+app.get(['/', '/health', '/api/health'], (_req, res) => {
   res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     service: 'passfy-api',
   });
 });
+
 
 // App Routes (supporting both /api/* and /* routes directly)
 app.use('/api/auth', authRoutes);
