@@ -254,7 +254,11 @@ export const EventDetailsPage: React.FC = () => {
         declineReason: simulateStatus === 'DECLINED' ? declineReason : undefined,
       };
 
-      const response = await api.post('/checkout/simulate', payload);
+      // Aguarda no mínimo 2 segundos com o overlay de carregamento visível
+      const [response] = await Promise.all([
+        api.post('/checkout/simulate', payload),
+        new Promise((resolve) => setTimeout(resolve, 2000)),
+      ]);
 
       if (response.data.status === 'APPROVED') {
         // Redireciona para a página dedicada de confirmação de pedido

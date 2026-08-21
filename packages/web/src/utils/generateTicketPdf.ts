@@ -1,11 +1,15 @@
 import { jsPDF } from 'jspdf';
+import QRCode from 'qrcode';
 
 interface TicketData {
   id: string;
   ticketCode: string;
   qrDataUrl?: string;
-  status: string;
-  ticketType?: 'INTEIRA' | 'MEIA_ESTUDANTE' | string;
+  qrToken?: string;
+  qrSignature?: string;
+  shareToken?: string;
+  status?: string;
+  ticketType?: 'INTEIRA' | 'MEIA_ESTUDANTE' | 'ESTUDANTE' | string;
   holderName?: string;
   studentId?: string;
   createdAt?: string;
@@ -19,6 +23,7 @@ interface TicketData {
     number?: number;
   };
   event: {
+    id?: string;
     title: string;
     venue: string;
     date: string;
@@ -28,7 +33,7 @@ interface TicketData {
   };
 }
 
-export function generateTicketPdf(ticket: TicketData): void {
+export async function generateTicketPdf(ticket: TicketData): Promise<void> {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -60,7 +65,7 @@ export function generateTicketPdf(ticket: TicketData): void {
   doc.roundedRect(cardX, cardY, cardWidth, cardHeight, 6, 6, 'FD');
 
   // ── CARD HEADER (Compact & Elegant Brand Navy) ──
-  const headerHeight = 20; // Reduced height to eliminate empty space
+  const headerHeight = 20;
   doc.setFillColor(15, 23, 42); // slate-900
   doc.roundedRect(cardX, cardY, cardWidth, headerHeight, 6, 6, 'F');
   // Cover bottom round corners of header
@@ -121,72 +126,76 @@ export function generateTicketPdf(ticket: TicketData): void {
   doc.roundedRect(cardX + 8, gridY, cardWidth - 16, gridHeight, 4, 4, 'FD');
 
   const col1X = cardX + 14;
-  const col2X = cardX + (cardWidth / 2) + 4;
+  const col2X = cardX + 94;
 
-  // Date Formatting
-  const eventDateObj = new Date(ticket.event.date);
-  const formattedDate = eventDateObj.toLocaleDateString('pt-BR', {
-    weekday: 'short',
+  // Data e Horário
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(100, 116, 139); // slate-500
+  doc.text('DATA E HORÁRIO', col1X, gridY + 8);
+
+  const eventDate = new Date(ticket.event.date);
+  const formattedDate = eventDate.toLocaleDateString('pt-BR', {
+    weekday: 'long',
     day: '2-digit',
-    month: 'short',
+    month: 'long',
     year: 'numeric',
   });
-  const formattedTime = eventDateObj.toLocaleTimeString('pt-BR', {
+  const formattedTime = eventDate.toLocaleTimeString('pt-BR', {
     hour: '2-digit',
     minute: '2-digit',
   });
 
-  // Row 1: Date & Seat
+  doc.setFontSize(9.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42); // slate-900
+  doc.text(formattedDate, col1X, gridY + 14.5);
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(43, 85, 245);
+  doc.text(`Início às ${formattedTime}h`, col1X, gridY + 19.5);
+
+  // Local / Espaço
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(100, 116, 139); // slate-500
-  doc.text('DATA & HORÁRIO', col1X, gridY + 7.5);
+  doc.setTextColor(100, 116, 139);
+  doc.text('LOCAL DO EVENTO', col2X, gridY + 8);
+
   doc.setFontSize(9.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 23, 42);
-  doc.text(`${formattedDate} às ${formattedTime}h`, col1X, gridY + 13);
+  const venueLines = doc.splitTextToSize(ticket.event.venue, cardWidth - 100);
+  doc.text(venueLines, col2X, gridY + 14.5);
 
+  // Setor / Poltrona
+  const seatInfoY = gridY + 28;
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(100, 116, 139);
-  doc.text('SETOR / POLTRONA', col2X, gridY + 7.5);
-  doc.setFontSize(10.5);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(43, 85, 245);
-  doc.text(ticket.seat?.label ? `Poltrona ${ticket.seat.label}` : 'Pista Geral / Livre', col2X, gridY + 13);
+  doc.text('SETOR / ASSENTO', col1X, seatInfoY);
 
-  // Divider inside grid
-  doc.setDrawColor(226, 232, 240);
-  doc.line(col1X, gridY + 18, cardX + cardWidth - 14, gridY + 18);
-
-  // Row 2: Venue & Price
-  doc.setFontSize(7.5);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(100, 116, 139);
-  doc.text('LOCAL DO EVENTO', col1X, gridY + 25);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(15, 23, 42);
-  const venueLines = doc.splitTextToSize(ticket.event.venue, (cardWidth / 2) - 16);
-  doc.text(venueLines, col1X, gridY + 30);
-
-  doc.setFontSize(7.5);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(100, 116, 139);
-  doc.text('VALOR DO INGRESSO', col2X, gridY + 25);
   doc.setFontSize(10.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 23, 42);
-  const isStudent = ticket.ticketType === 'MEIA_ESTUDANTE';
+  const seatText = ticket.seat?.label ? `Poltrona ${ticket.seat.label}` : 'Pista Geral';
+  doc.text(seatText, col1X, seatInfoY + 6);
+
+  // Valor Pago
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(100, 116, 139);
+  doc.text('VALOR', col2X, seatInfoY);
+
+  doc.setFontSize(10.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42);
+  const isStudent =
+    ticket.ticketType === 'MEIA_ESTUDANTE' || ticket.ticketType === 'ESTUDANTE';
   const finalPrice = isStudent ? Number(ticket.event.price) * 0.5 : Number(ticket.event.price);
-  doc.text(
-    finalPrice === 0 ? 'Gratuito' : `R$ ${finalPrice.toFixed(2)} (${isStudent ? 'Meia' : 'Inteira'})`,
-    col2X,
-    gridY + 30
-  );
+  doc.text(`R$ ${finalPrice.toFixed(2)}`, col2X, seatInfoY + 6);
 
-  // ── HOLDER & NOMINAL IDENTIFICATION BOX ──
-  const holderY = gridY + gridHeight + 4;
+  // ── HOLDER & TICKET MODALITY ──
+  const holderY = gridY + gridHeight + 6;
   const holderHeight = 21;
   doc.setFillColor(241, 245, 249);
   doc.roundedRect(cardX + 8, holderY, cardWidth - 16, holderHeight, 3, 3, 'F');
@@ -210,7 +219,7 @@ export function generateTicketPdf(ticket: TicketData): void {
   doc.setFont('helvetica', 'bold');
   if (isStudent) {
     doc.setTextColor(124, 58, 237); // violet-600
-    doc.text('Meia Estudante', col2X, holderY + 12.5);
+    doc.text('Estudante', col2X, holderY + 12.5);
     if (ticket.studentId) {
       doc.setFontSize(7);
       doc.setFont('helvetica', 'normal');
@@ -219,7 +228,7 @@ export function generateTicketPdf(ticket: TicketData): void {
     }
   } else {
     doc.setTextColor(43, 85, 245);
-    doc.text('Inteira Regular', col2X, holderY + 12.5);
+    doc.text('Inteira', col2X, holderY + 12.5);
   }
 
   // ── PERFORATED LINE CUTOUT ──
@@ -228,9 +237,9 @@ export function generateTicketPdf(ticket: TicketData): void {
   doc.setLineDashPattern([2.5, 2], 0);
   doc.setLineWidth(0.5);
   doc.line(cardX + 4, cutY, cardX + cardWidth - 4, cutY);
-  doc.setLineDashPattern([], 0); // reset line dash
+  doc.setLineDashPattern([], 0);
 
-  // Left & Right circular notch holes (ticket cut effect)
+  // Left & Right circular notch holes
   doc.setFillColor(248, 250, 252);
   doc.circle(cardX, cutY, 4, 'F');
   doc.circle(cardX + cardWidth, cutY, 4, 'F');
@@ -241,7 +250,7 @@ export function generateTicketPdf(ticket: TicketData): void {
   // ── QR CODE & VALIDATION SECTION ──
   const qrSectionY = cutY + 5;
   const qrSize = 46; // 46mm x 46mm
-  const qrX = cardX + (cardWidth / 2) - (qrSize / 2);
+  const qrX = cardX + cardWidth / 2 - qrSize / 2;
 
   // QR Code Frame
   doc.setFillColor(255, 255, 255);
@@ -249,10 +258,37 @@ export function generateTicketPdf(ticket: TicketData): void {
   doc.setLineWidth(0.8);
   doc.roundedRect(qrX - 3, qrSectionY, qrSize + 6, qrSize + 6, 3, 3, 'FD');
 
-  if (ticket.qrDataUrl) {
+  // Generate QR Code Data URL if not already present
+  let qrImageSrc = ticket.qrDataUrl;
+  if (!qrImageSrc) {
+    const qrPayload = JSON.stringify({
+      ticketId: ticket.id,
+      ticketCode: ticket.ticketCode,
+      eventId: ticket.event?.id,
+      holderName: ticket.holderName,
+      ticketType: ticket.ticketType,
+      signature: ticket.qrSignature || ticket.qrToken || ticket.ticketCode,
+    });
     try {
-      doc.addImage(ticket.qrDataUrl, 'PNG', qrX, qrSectionY + 3, qrSize, qrSize);
-    } catch {
+      qrImageSrc = await QRCode.toDataURL(qrPayload, {
+        errorCorrectionLevel: 'M',
+        margin: 1,
+        width: 320,
+        color: {
+          dark: '#0f172a',
+          light: '#ffffff',
+        },
+      });
+    } catch (e) {
+      console.error('Error generating QR code data URL for PDF:', e);
+    }
+  }
+
+  if (qrImageSrc) {
+    try {
+      doc.addImage(qrImageSrc, 'PNG', qrX, qrSectionY + 3, qrSize, qrSize);
+    } catch (err) {
+      console.error('Failed to add QR Code image to PDF:', err);
       doc.setFontSize(8);
       doc.setTextColor(100, 116, 139);
       doc.text('QR Code Disponível no App', qrX + qrSize / 2, qrSectionY + 23, { align: 'center' });
@@ -271,13 +307,13 @@ export function generateTicketPdf(ticket: TicketData): void {
   doc.setTextColor(15, 23, 42);
   doc.text(ticket.ticketCode, cardX + cardWidth / 2, codeY + 6, { align: 'center' });
 
-  // ── SECURITY TOKEN HMAC BADGE (Properly sized & padded) ──
+  // ── SECURITY TOKEN HMAC BADGE ──
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
   const badgeText = 'Criptografia HMAC-SHA256 • Validação Única';
   const textWidth = doc.getTextWidth(badgeText);
   const badgeBoxWidth = textWidth + 14;
-  const badgeBoxX = cardX + (cardWidth / 2) - (badgeBoxWidth / 2);
+  const badgeBoxX = cardX + cardWidth / 2 - badgeBoxWidth / 2;
   const badgeBoxY = codeY + 9;
 
   doc.setFillColor(236, 253, 245); // emerald-50
@@ -297,7 +333,7 @@ export function generateTicketPdf(ticket: TicketData): void {
   doc.setTextColor(100, 116, 139);
   const instructions = [
     '• Apresente este ingresso impresso ou na tela do seu smartphone diretamente na portaria do evento.',
-    '• Obrigatória a apresentação de documento oficial com foto. Para ingressos de meia-entrada, apresente a carteirinha de estudante válida.',
+    '• Obrigatória a apresentação de documento oficial com foto. Para estudantes, apresente carteirinha válida.',
     '• Cada QR Code permite 1 único acesso e é invalidado automaticamente após a leitura na portaria.',
   ];
 

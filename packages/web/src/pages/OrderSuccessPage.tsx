@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   CheckCircle2,
@@ -8,11 +8,9 @@ import {
   Printer,
   Download,
   ArrowRight,
-  PlusCircle,
-  ExternalLink,
   ShieldCheck,
-  QrCode,
-  Share2,
+  ExternalLink,
+  Loader2,
 } from 'lucide-react';
 import { generateTicketPdf } from '../utils/generateTicketPdf';
 
@@ -24,38 +22,34 @@ export const OrderSuccessPage: React.FC = () => {
   const event = location.state?.event || checkoutResult?.tickets?.[0]?.event;
 
   const tickets = checkoutResult?.tickets || [];
-  const reservationId = checkoutResult?.reservationId || 'PAS-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+  const reservationId =
+    checkoutResult?.reservationId ||
+    'PAS-' + Math.random().toString(36).substring(2, 9).toUpperCase();
   const totalAmount = checkoutResult?.totalAmount || 0;
 
-  const formattedDate = event?.date
-    ? new Date(event.date).toLocaleDateString('pt-BR', {
-        weekday: 'long',
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : '';
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
 
-  const handleDownloadAllPdfs = () => {
-    tickets.forEach((t: any, i: number) => {
-      setTimeout(() => {
-        try {
-          generateTicketPdf({
-            ...t,
-            event: event || t.event,
-          });
-        } catch (err) {
-          console.error('Error generating PDF:', err);
-        }
-      }, i * 300);
-    });
+  const handleDownloadAllPdfs = async () => {
+    setIsDownloadingAll(true);
+    for (let i = 0; i < tickets.length; i++) {
+      const t = tickets[i];
+      try {
+        await generateTicketPdf({
+          ...t,
+          event: event || t.event,
+        });
+      } catch (err) {
+        console.error('Error generating PDF:', err);
+      }
+      // Small pause between multiple PDF downloads
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+    setIsDownloadingAll(false);
   };
 
   return (
     <div className="min-h-screen bg-slate-50/60 py-10 sm:py-14 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         
         {/* Top Celebration Hero Card */}
         <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 text-center space-y-4 shadow-sm">
@@ -76,69 +70,27 @@ export const OrderSuccessPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Action CTAs */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-3 border-t border-slate-100">
+          {/* Somente o botão "Imprimir / Baixar Todos em PDF" */}
+          <div className="pt-3 border-t border-slate-100 flex justify-center">
             <button
-              onClick={() => navigate('/home')}
-              className="px-5 py-3 rounded-xl bg-[#2b55f5] hover:bg-[#1f44d6] text-white text-xs sm:text-sm font-bold shadow-xs transition flex items-center gap-2 active:scale-[0.99]"
+              onClick={handleDownloadAllPdfs}
+              disabled={isDownloadingAll || tickets.length === 0}
+              className="px-6 py-3.5 rounded-xl bg-[#2b55f5] hover:bg-[#1f44d6] disabled:opacity-50 text-white text-sm font-bold shadow-xs transition flex items-center gap-2 active:scale-[0.99] cursor-pointer"
             >
-              <PlusCircle className="w-4 h-4" />
-              <span>Comprar mais ingressos</span>
-            </button>
-
-            {tickets.length > 0 && (
-              <button
-                onClick={handleDownloadAllPdfs}
-                className="px-5 py-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs sm:text-sm font-bold shadow-xs transition flex items-center gap-2"
-              >
-                <Download className="w-4 h-4 text-[#2b55f5]" />
-                <span>Imprimir / Baixar Todos em PDF</span>
-              </button>
-            )}
-
-            <button
-              onClick={() => navigate('/my-tickets')}
-              className="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-bold transition flex items-center gap-2"
-            >
-              <Ticket className="w-4 h-4 text-[#2b55f5]" />
-              <span>Ver na Carteira Digital</span>
+              {isDownloadingAll ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  <span>Gerando PDFs com QR Code...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 text-white" />
+                  <span>Imprimir / Baixar Todos em PDF</span>
+                </>
+              )}
             </button>
           </div>
         </div>
-
-        {/* Event Summary Card */}
-        {event && (
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 space-y-4 shadow-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Evento Selecionado
-                </span>
-                <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
-                  {event.title}
-                </h3>
-              </div>
-
-              {event.category && (
-                <span className="px-3 py-1 rounded-lg text-xs font-black bg-blue-50 text-[#2b55f5] border border-blue-200">
-                  {event.category === 'MOVIE' ? 'Cinema' : event.category === 'CONCERT' ? 'Show' : 'Teatro'}
-                </span>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600 font-medium">
-              <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-slate-50 border border-slate-200/70">
-                <Calendar className="w-4 h-4 text-[#2b55f5] shrink-0" />
-                <span className="capitalize">{formattedDate}</span>
-              </div>
-
-              <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-slate-50 border border-slate-200/70">
-                <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span className="truncate">{event.venue}</span>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Issued Tickets List */}
         <div className="space-y-4">
@@ -153,7 +105,8 @@ export const OrderSuccessPage: React.FC = () => {
 
           <div className="space-y-3.5">
             {tickets.map((ticket: any, index: number) => {
-              const isStudent = ticket.ticketType === 'MEIA_ESTUDANTE' || ticket.ticketType === 'ESTUDANTE';
+              const isStudent =
+                ticket.ticketType === 'MEIA_ESTUDANTE' || ticket.ticketType === 'ESTUDANTE';
 
               return (
                 <div
@@ -176,7 +129,7 @@ export const OrderSuccessPage: React.FC = () => {
                         </span>
                       </div>
                       <h4 className="text-base font-black text-slate-900 mt-0.5">
-                        {event?.title || 'Ingresso Passfy'}
+                        {event?.title || ticket.event?.title || 'Ingresso Passfy'}
                       </h4>
                     </div>
 
@@ -194,7 +147,9 @@ export const OrderSuccessPage: React.FC = () => {
                   {/* Body Details */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     <div>
-                      <span className="text-slate-400 text-[11px] block font-semibold">Titular do Ingresso</span>
+                      <span className="text-slate-400 text-[11px] block font-semibold">
+                        Titular do Ingresso
+                      </span>
                       <span className="font-bold text-slate-900 text-sm">
                         {ticket.holderName || 'Titular da Conta'}
                       </span>
@@ -202,7 +157,9 @@ export const OrderSuccessPage: React.FC = () => {
 
                     {isStudent && ticket.studentId && (
                       <div>
-                        <span className="text-purple-600 text-[11px] block font-semibold">Carteira de Estudante</span>
+                        <span className="text-purple-600 text-[11px] block font-semibold">
+                          Carteira de Estudante
+                        </span>
                         <span className="font-bold text-slate-900 font-mono">
                           {ticket.studentId}
                         </span>
@@ -220,8 +177,10 @@ export const OrderSuccessPage: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => generateTicketPdf({ ...ticket, event: event || ticket.event })}
-                        className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold shadow-2xs transition flex items-center gap-1.5"
+                        onClick={() =>
+                          generateTicketPdf({ ...ticket, event: event || ticket.event })
+                        }
+                        className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold shadow-2xs transition flex items-center gap-1.5 cursor-pointer"
                       >
                         <Printer className="w-3.5 h-3.5 text-[#2b55f5]" />
                         <span>Imprimir em PDF</span>
@@ -245,11 +204,11 @@ export const OrderSuccessPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Bottom Back to Catalog Action */}
-        <div className="text-center pt-4">
+        {/* Bottom Back to Catalog / Comprar mais ingressos Action */}
+        <div className="text-center pt-2">
           <button
             onClick={() => navigate('/home')}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#2b55f5] hover:bg-[#1f44d6] text-white text-sm font-bold shadow-xs transition"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-sm font-bold shadow-xs transition cursor-pointer"
           >
             <span>Comprar mais ingressos no catálogo</span>
             <ArrowRight className="w-4 h-4" />
