@@ -727,7 +727,7 @@ export const LandingPage: React.FC = () => {
 
           <AnimatedSection delay={150}>
             <button
-              onClick={() => navigate('/home')}
+              onClick={() => navigate('/register')}
               className="px-8 py-3.5 rounded-full bg-[#2b55f5] hover:bg-[#1f44d6] text-white text-sm font-bold shadow-md transition hover:-translate-y-0.5 active:scale-[0.98] cursor-pointer"
             >
               Publicar Meu Evento
