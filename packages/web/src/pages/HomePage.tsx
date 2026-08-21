@@ -125,15 +125,77 @@ export const HomePage: React.FC = () => {
     ];
   }, [events]);
 
-  // Synthetic distance calculator based on venue names
-  const calculateDistance = (venue: string): number => {
-    const v = venue.toLowerCase();
-    if (v.includes('allianz') || v.includes('parque')) return 3.4;
-    if (v.includes('cinépolis') || v.includes('cinemark') || v.includes('iguatemi')) return 5.8;
-    if (v.includes('renault') || v.includes('teatro') || v.includes('bradesco')) return 4.1;
-    if (v.includes('cidade do rock') || v.includes('rio')) return isNearMeActive ? 428.0 : 12.5;
-    if (v.includes('maeda') || v.includes('itu')) return 78.0;
-    return 8.9;
+  // Coordinates of major Brazilian Arenas & Capitals
+  const VENUE_COORDS: Record<string, { lat: number; lng: number; city: string }> = {
+    allianz: { lat: -23.5275, lng: -46.6784, city: 'São Paulo, SP' },
+    parque: { lat: -23.5275, lng: -46.6784, city: 'São Paulo, SP' },
+    morumbi: { lat: -23.6000, lng: -46.7202, city: 'São Paulo, SP' },
+    morumbis: { lat: -23.6000, lng: -46.7202, city: 'São Paulo, SP' },
+    cinépolis: { lat: -23.5912, lng: -46.6896, city: 'São Paulo, SP' },
+    cinemark: { lat: -23.5505, lng: -46.6333, city: 'São Paulo, SP' },
+    iguatemi: { lat: -23.5786, lng: -46.6882, city: 'São Paulo, SP' },
+    bradesco: { lat: -23.5268, lng: -46.6792, city: 'São Paulo, SP' },
+    renault: { lat: -23.5558, lng: -46.6433, city: 'São Paulo, SP' },
+    'cidade do rock': { lat: -22.9786, lng: -43.3957, city: 'Rio de Janeiro, RJ' },
+    maracanã: { lat: -22.9122, lng: -43.2302, city: 'Rio de Janeiro, RJ' },
+    maracana: { lat: -22.9122, lng: -43.2302, city: 'Rio de Janeiro, RJ' },
+    pedreira: { lat: -25.3857, lng: -49.2764, city: 'Curitiba, PR' },
+    maeda: { lat: -23.3642, lng: -47.3364, city: 'Itu, SP' },
+    mineirão: { lat: -19.8659, lng: -43.9711, city: 'Belo Horizonte, MG' },
+    mineirao: { lat: -19.8659, lng: -43.9711, city: 'Belo Horizonte, MG' },
+    fonte: { lat: -12.9789, lng: -38.5042, city: 'Salvador, BA' },
+    mané: { lat: -15.7836, lng: -47.8992, city: 'Brasília, DF' },
+    mane: { lat: -15.7836, lng: -47.8992, city: 'Brasília, DF' },
+    beira: { lat: -30.0655, lng: -51.2360, city: 'Porto Alegre, RS' },
+    castelão: { lat: -3.8069, lng: -38.5217, city: 'Fortaleza, CE' },
+    castelao: { lat: -3.8069, lng: -38.5217, city: 'Fortaleza, CE' },
+    recife: { lat: -8.0476, lng: -34.8770, city: 'Recife, PE' },
+    florianopolis: { lat: -27.5954, lng: -48.5480, city: 'Florianópolis, SC' },
+    goiania: { lat: -16.6869, lng: -49.2648, city: 'Goiânia, GO' },
+    salvador: { lat: -12.9777, lng: -38.5016, city: 'Salvador, BA' },
+    curitiba: { lat: -25.4290, lng: -49.2671, city: 'Curitiba, PR' },
+    'rio de janeiro': { lat: -22.9068, lng: -43.1729, city: 'Rio de Janeiro, RJ' },
+    'são paulo': { lat: -23.5505, lng: -46.6333, city: 'São Paulo, SP' },
+    'sao paulo': { lat: -23.5505, lng: -46.6333, city: 'São Paulo, SP' },
+  };
+
+  const getVenueLocation = (venue: string) => {
+    const v = (venue || '').toLowerCase();
+    for (const [key, val] of Object.entries(VENUE_COORDS)) {
+      if (v.includes(key)) {
+        return val;
+      }
+    }
+    return { lat: -23.5505, lng: -46.6333, city: venue || 'São Paulo, SP' };
+  };
+
+  // Real Haversine Great-Circle Distance Formula (in km)
+  const calculateHaversineDistance = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+  ): number => {
+    const R = 6371; // Earth radius in km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Math.round(R * c * 10) / 10;
+  };
+
+  // Real GPS State
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  const getEventDistance = (venue: string): number | null => {
+    if (!userCoords) return null;
+    const loc = getVenueLocation(venue);
+    return calculateHaversineDistance(userCoords.lat, userCoords.lng, loc.lat, loc.lng);
   };
 
   // AI Prompt Processor (Direct & Concise)
@@ -196,26 +258,24 @@ export const HomePage: React.FC = () => {
     setIsDetectingLocation(true);
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
-        () => {
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserCoords({ lat: latitude, lng: longitude });
           setIsDetectingLocation(false);
           setIsNearMeActive(true);
           setSortByDistance(true);
-          setDetectedLocationName('São Paulo, SP (Sua Localização GPS)');
+          setDetectedLocationName('Sua Localização GPS');
         },
-        () => {
-          // Fallback simulation
+        (error) => {
+          console.warn('Geolocation permission denied:', error);
           setIsDetectingLocation(false);
-          setIsNearMeActive(true);
-          setSortByDistance(true);
-          setDetectedLocationName('São Paulo, SP (Localização Aproximada)');
+          alert('Para buscar eventos próximos com precisão, por favor autorize o acesso à sua localização no navegador.');
         },
-        { timeout: 4000 }
+        { timeout: 8000, enableHighAccuracy: true }
       );
     } else {
       setIsDetectingLocation(false);
-      setIsNearMeActive(true);
-      setSortByDistance(true);
-      setDetectedLocationName('São Paulo, SP (Localização Aproximada)');
+      alert('Seu navegador não possui suporte a geolocalização.');
     }
   };
 
@@ -239,8 +299,10 @@ export const HomePage: React.FC = () => {
       return true;
     })
     .sort((a, b) => {
-      if (sortByDistance || isNearMeActive) {
-        return calculateDistance(a.venue) - calculateDistance(b.venue);
+      if ((sortByDistance || isNearMeActive) && userCoords) {
+        const distA = getEventDistance(a.venue) ?? 99999;
+        const distB = getEventDistance(b.venue) ?? 99999;
+        return distA - distB;
       }
       return 0;
     });
@@ -450,7 +512,7 @@ export const HomePage: React.FC = () => {
                         event.title.toLowerCase().includes('rock') ||
                         event.title.toLowerCase().includes('coldplay') ||
                         event.title.toLowerCase().includes('tour');
-                      const distanceKm = calculateDistance(event.venue);
+                      const realDistance = getEventDistance(event.venue);
 
                       const formattedDate = new Date(event.date).toLocaleDateString('pt-BR', {
                         weekday: 'short',
@@ -495,12 +557,23 @@ export const HomePage: React.FC = () => {
                             </div>
 
                             <div className="absolute bottom-2 left-2">
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-600 text-white shadow-xs flex items-center gap-0.5">
-                                <MapPin className="w-2.5 h-2.5" />
-                                <span>
-                                  {distanceKm < 10 ? `${distanceKm.toFixed(1)} km` : `${Math.round(distanceKm)} km`}
+                              {userCoords && realDistance !== null ? (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-600 text-white shadow-xs flex items-center gap-1">
+                                  <Navigation className="w-2.5 h-2.5" />
+                                  <span>
+                                    {realDistance < 1
+                                      ? `${Math.round(realDistance * 1000)} m`
+                                      : `${realDistance} km`}
+                                  </span>
                                 </span>
-                              </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-900/80 text-white backdrop-blur-xs shadow-xs flex items-center gap-1">
+                                  <MapPin className="w-2.5 h-2.5 text-emerald-400" />
+                                  <span className="truncate max-w-[130px]">
+                                    {getVenueLocation(event.venue).city}
+                                  </span>
+                                </span>
+                              )}
                             </div>
                           </div>
 
@@ -775,7 +848,7 @@ export const HomePage: React.FC = () => {
                   event.title.toLowerCase().includes('rock') ||
                   event.title.toLowerCase().includes('coldplay') ||
                   event.title.toLowerCase().includes('tour');
-                const distanceKm = calculateDistance(event.venue);
+                const realDistance = getEventDistance(event.venue);
 
                 const formattedDate = new Date(event.date).toLocaleDateString('pt-BR', {
                   weekday: 'short',
@@ -813,13 +886,22 @@ export const HomePage: React.FC = () => {
                             : 'Teatro'}
                         </span>
 
-                        {/* Distance Badge */}
-                        <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-600 text-white shadow-xs flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          <span>
-                            {distanceKm < 10 ? `${distanceKm.toFixed(1)} km` : `${Math.round(distanceKm)} km`}
+                        {/* Real Distance Badge or City */}
+                        {userCoords && realDistance !== null ? (
+                          <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-600 text-white shadow-xs flex items-center gap-1">
+                            <Navigation className="w-3 h-3" />
+                            <span>
+                              {realDistance < 1
+                                ? `${Math.round(realDistance * 1000)}m`
+                                : `${realDistance} km`}
+                            </span>
                           </span>
-                        </span>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-900/80 text-white backdrop-blur-xs shadow-xs flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-emerald-400" />
+                            <span>{getVenueLocation(event.venue).city}</span>
+                          </span>
+                        )}
 
                         {/* Spotify Indicator Badge */}
                         {isMusic && (
@@ -893,7 +975,16 @@ export const HomePage: React.FC = () => {
                           title="Ver no Google Maps"
                         >
                           <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          <span className="truncate hover:underline">{event.venue}</span>
+                          <span className="truncate hover:underline">
+                            {event.venue}
+                            {userCoords && getEventDistance(event.venue) !== null && (
+                              <span className="ml-1 text-emerald-600 font-bold">
+                                • a {getEventDistance(event.venue)! < 1
+                                  ? `${Math.round(getEventDistance(event.venue)! * 1000)}m`
+                                  : `${getEventDistance(event.venue)} km`}
+                              </span>
+                            )}
+                          </span>
                         </div>
                       </div>
                     </div>
