@@ -251,6 +251,8 @@ export const HomePage: React.FC = () => {
     return events.filter((e) => aiRecommendation.matchedEventIds.includes(e.id));
   }, [aiRecommendation, events]);
 
+  const hasAiResults = Boolean(aiRecommendation?.isActive && aiRecommendedEvents.length > 0);
+
   const quickPrompts = [
     { label: '💑 Encontro a dois', prompt: 'Quero um evento romântico para sair a dois' },
     { label: '👨‍👩‍👧‍👦 Em Família', prompt: 'Quero um evento confortável para levar a família' },
@@ -264,16 +266,24 @@ export const HomePage: React.FC = () => {
       {/* Hero Section with ChatGPT-style AI Concierge Agent */}
       <section className="relative overflow-hidden pt-10 pb-16 bg-gradient-to-b from-blue-50/80 via-white to-slate-50/50 border-b border-slate-200/70">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center max-w-3xl mx-auto space-y-4">
+          <div className="text-center max-w-3xl mx-auto">
             
-            {/* Main Headline */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-[1.15]">
-              Viva momentos inesquecíveis com <span className="text-[#2b55f5]">Passfy</span>
-            </h1>
+            {/* Main Headline with Smooth Fade Up / Collapse when AI results are found */}
+            <div
+              className={`transition-all duration-500 ease-in-out overflow-hidden space-y-4 ${
+                hasAiResults
+                  ? 'max-h-0 opacity-0 -translate-y-6 pointer-events-none scale-95 mb-0'
+                  : 'max-h-96 opacity-100 translate-y-0 scale-100 mb-4'
+              }`}
+            >
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-[1.15]">
+                Viva momentos inesquecíveis com <span className="text-[#2b55f5]">Passfy</span>
+              </h1>
 
-            <p className="text-sm sm:text-base text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed">
-              Diga com quem você vai, o estilo do momento ou o que procura. Nosso assistente de IA encontra a programação ideal em tempo real.
-            </p>
+              <p className="text-sm sm:text-base text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed">
+                Diga com quem você vai, o estilo do momento ou o que procura. Nosso assistente de IA encontra a programação ideal em tempo real.
+              </p>
+            </div>
 
             {/* ChatGPT-style AI Box */}
             <div className="pt-3 max-w-2xl mx-auto space-y-3 text-left">
