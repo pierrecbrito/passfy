@@ -27,10 +27,10 @@ export class GeminiAiService {
   }
 
   static async recommendEvents(userPrompt: string): Promise<AiConciergeResponse> {
-    // 1. Fetch current available events from database to provide as ground truth
+    // 1. Fetch current available events from database
     const events = await prisma.event.findMany({
       where: {
-        date: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }, // current and future events
+        date: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
       },
       select: {
         id: true,
@@ -50,15 +50,15 @@ export class GeminiAiService {
 
     // If Gemini API key is configured, call Google Gemini
     if (client) {
-      const candidateModels = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-1.5-flash'];
-      
+      const candidateModels = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+
       for (const modelName of candidateModels) {
         try {
           const model = client.getGenerativeModel({
             model: modelName,
             generationConfig: {
-              temperature: 0.7,
-              topP: 0.9,
+              temperature: 0.2, // Low temperature for high precision and no hallucinated extra categories
+              topP: 0.8,
               maxOutputTokens: 2048,
               responseMimeType: 'application/json',
             },
@@ -69,7 +69,7 @@ export class GeminiAiService {
               id: e.id,
               title: e.title,
               description: e.description,
-              category: e.category,
+              category: e.category, // MOVIE, CONCERT, THEATER
               type: e.type,
               venue: e.venue,
               price: `R$ ${Number(e.price).toFixed(2)}`,
@@ -77,8 +77,23 @@ export class GeminiAiService {
             }))
           );
 
-          const prompt = `Você é o "Passfy IA", o assistente de ingressos da plataforma Passfy.
-Sua missão é entender a intenção do usuário e selecionar os melhores eventos do catálogo abaixo de forma direta, sem se explicar demais.
+          const prompt = `Você é o "Passfy IA", o assistente de recomendação de ingressos da plataforma Passfy.
+Sua missão é selecionar APENAS os eventos do catálogo que atendem com EXATIDÃO e RELEVÂNCIA ao pedido do usuário.
+
+REGRAS OBRIGATÓRIAS DE FILTRAGEM:
+1. SE O USUÁRIO PEDIR SHOW, ROCK, MÚSICA, BANDA OU FESTIVAL:
+   - Selecione SOMENTE eventos da categoria "CONCERT" do gênero solicitado.
+   - NUNCA inclua filmes de cinema (como Duna, Alien) nem peças de teatro.
+2. SE O USUÁRIO PEDIR CINEMA OU FILME:
+   - Selecione SOMENTE eventos da categoria "MOVIE".
+   - NUNCA inclua shows musicais nem teatro.
+3. SE O USUÁRIO PEDIR TEATRO OU PEÇA:
+   - Selecione SOMENTE eventos da categoria "THEATER".
+4. SE O USUÁRIO PEDIR PASSEIO A DOIS, FAMÍLIA OU COM AMIGOS:
+   - Selecione apenas eventos que façam sentido temático para essa ocasião.
+5. PRECISÃO TOTAL:
+   - No array "matchedEventIds", inclua APENAS os IDs dos eventos que são 100% relevantes.
+   - NÃO adicione eventos aleatórios para aumentar o tamanho da lista.
 
 Catálogo Oficial de Eventos do Passfy:
 ${eventsCatalogJson}
@@ -87,9 +102,9 @@ Pedido do Usuário: "${userPrompt}"
 
 Retorne OBRIGATORIAMENTE um JSON válido com o seguinte formato:
 {
-  "recommendation": "Frase curta, direta e objetiva (máximo 1 frase, sem enrolação ou explicações longas).",
-  "matchedEventIds": ["array com os IDs dos eventos correspondentes"],
-  "suggestedVibe": "Tag curta (ex: 'Romântico & VIP', 'Passeio em Família', 'Rock com Amigos', 'Cinema Especial')",
+  "recommendation": "Frase curta e direta de no máximo 1 sentença (ex: 'Aqui estão os shows de rock disponíveis no catálogo para você curtir.').",
+  "matchedEventIds": ["array com os IDs dos eventos estritamente relevantes"],
+  "suggestedVibe": "Tag curta (ex: 'Rock & Shows', 'Cinema Especial', 'Teatro & Cultura', 'Passeio em Família')",
   "highlightTip": "Dica curta opcional"
 }`;
 
@@ -107,20 +122,26 @@ Retorne OBRIGATORIAMENTE um JSON válido com o seguinte formato:
           cleaned = cleaned.trim();
 
           const parsed = JSON.parse(cleaned);
+          let matchedIds: string[] = Array.isArray(parsed.matchedEventIds)
+            ? parsed.matchedEventIds
+            : [];
 
-          return {
-            recommendation: parsed.recommendation || 'Aqui estão as melhores opções selecionadas para você.',
-            matchedEventIds: Array.isArray(parsed.matchedEventIds) && parsed.matchedEventIds.length > 0
-              ? parsed.matchedEventIds
-              : events.map((e) => e.id),
-            suggestedVibe: parsed.suggestedVibe || 'Recomendação',
-            highlightTip: parsed.highlightTip || '',
-            isGeminiActive: true,
-            modelUsed: 'Passfy IA',
-          };
+          // Post-processing sanity filter to ensure 100% semantic consistency
+          matchedIds = this.enforceStrictRelevance(userPrompt, matchedIds, events);
+
+          if (matchedIds.length > 0) {
+            return {
+              recommendation:
+                parsed.recommendation || 'Aqui estão as melhores opções selecionadas para você.',
+              matchedEventIds: matchedIds,
+              suggestedVibe: parsed.suggestedVibe || 'Recomendação',
+              highlightTip: parsed.highlightTip || '',
+              isGeminiActive: true,
+              modelUsed: 'Passfy IA',
+            };
+          }
         } catch (err: any) {
           console.warn(`⚠️ Error trying Gemini model ${modelName}:`, err.message || err);
-          // try next model
         }
       }
     }
@@ -129,18 +150,111 @@ Retorne OBRIGATORIAMENTE um JSON válido com o seguinte formato:
     return this.fallbackLocalSemantic(userPrompt, events);
   }
 
+  /**
+   * Deterministic guard to guarantee non-matching categories are stripped out
+   */
+  private static enforceStrictRelevance(
+    prompt: string,
+    matchedIds: string[],
+    events: any[]
+  ): string[] {
+    const p = prompt.toLowerCase();
+    const isRockOrShow =
+      p.includes('rock') ||
+      p.includes('metal') ||
+      p.includes('guns') ||
+      p.includes('metallica') ||
+      p.includes('show') ||
+      p.includes('festival') ||
+      p.includes('banda') ||
+      p.includes('música') ||
+      p.includes('musica');
+
+    const isCinema =
+      p.includes('cinema') ||
+      p.includes('filme') ||
+      p.includes('imax') ||
+      p.includes('pipoca') ||
+      p.includes('duna') ||
+      p.includes('sessão') ||
+      p.includes('sessao');
+
+    const isTheater =
+      p.includes('teatro') ||
+      p.includes('peça') ||
+      p.includes('peca') ||
+      p.includes('musical') ||
+      p.includes('cultura');
+
+    let filtered = events.filter((e) => matchedIds.includes(e.id));
+
+    // If user explicitly asked for rock/shows, purge MOVIE and THEATER
+    if (isRockOrShow && !isCinema && !isTheater) {
+      filtered = filtered.filter((e) => e.category === 'CONCERT');
+    }
+    // If user explicitly asked for cinema/movies, purge CONCERT and THEATER
+    else if (isCinema && !isRockOrShow && !isTheater) {
+      filtered = filtered.filter((e) => e.category === 'MOVIE');
+    }
+    // If user explicitly asked for theater, purge CONCERT and MOVIE
+    else if (isTheater && !isRockOrShow && !isCinema) {
+      filtered = filtered.filter((e) => e.category === 'THEATER');
+    }
+
+    return filtered.map((e) => e.id);
+  }
+
   private static fallbackLocalSemantic(
     userPrompt: string,
     events: any[]
   ): AiConciergeResponse {
     const p = userPrompt.toLowerCase().trim();
-    let matched = events;
+    let matched: any[] = [];
     let recommendation = '';
-    let vibe = 'Recomendação Personalizada';
-    let tip = 'Dica: Conecte-se com sua conta para salvar seus ingressos na carteira digital.';
+    let vibe = 'Recomendação';
+    let tip = '';
 
-    // Romantic / Encontro a dois
+    // Rock / Metal / Shows / Festivais
     if (
+      p.includes('rock') ||
+      p.includes('metal') ||
+      p.includes('guns') ||
+      p.includes('metallica') ||
+      p.includes('show') ||
+      p.includes('festival') ||
+      p.includes('banda') ||
+      p.includes('música') ||
+      p.includes('musica')
+    ) {
+      matched = events.filter((e) => {
+        const title = e.title.toLowerCase();
+        const desc = (e.description || '').toLowerCase();
+
+        if (p.includes('rock') || p.includes('metal') || p.includes('guns') || p.includes('metallica')) {
+          return (
+            e.category === 'CONCERT' &&
+            (title.includes('rock') ||
+              title.includes('guns') ||
+              title.includes('metallica') ||
+              title.includes('metal') ||
+              desc.includes('rock') ||
+              desc.includes('metal'))
+          );
+        }
+
+        return e.category === 'CONCERT';
+      });
+
+      if (matched.length === 0) {
+        matched = events.filter((e) => e.category === 'CONCERT');
+      }
+
+      vibe = 'Rock & Shows Ao Vivo';
+      recommendation = 'Aqui estão os shows de rock e concertos ao vivo disponíveis no catálogo.';
+      tip = 'Dica: Ouça as faixas mais tocadas no player do Spotify integrado antes de ir!';
+    }
+    // Romantic / Encontro a dois
+    else if (
       p.includes('românt') ||
       p.includes('romant') ||
       p.includes('dois') ||
@@ -161,7 +275,7 @@ Retorne OBRIGATORIAMENTE um JSON válido com o seguinte formato:
       );
       vibe = 'Romântico & VIP';
       recommendation =
-        'Para um momento especial e romântico a dois, selecionei experiências aconchegantes com assentos marcados VIP, som imersivo e espetáculos envolventes.';
+        'Para um momento especial e romântico a dois, selecionei experiências com assentos marcados e conforto.';
       tip = 'Dica: Escolha assentos centrais nas fileiras C ou D para o melhor campo de visão!';
     }
     // Family / Crianças / Família
@@ -183,33 +297,8 @@ Retorne OBRIGATORIAMENTE um JSON válido com o seguinte formato:
       );
       vibe = 'Passeio em Família';
       recommendation =
-        'Para um passeio agradável em família, selecionei eventos com excelente infraestrutura, conforto e salas de exibição premium para todas as idades.';
-      tip = 'Dica: Chegue com 20 minutos de antecedência para garantir a melhor pipoca e acomodação.';
-    }
-    // Rock / Show / Amigos / Festivais
-    else if (
-      p.includes('amigo') ||
-      p.includes('rock') ||
-      p.includes('festival') ||
-      p.includes('galera') ||
-      p.includes('show') ||
-      p.includes('balada') ||
-      p.includes('animad') ||
-      p.includes('música') ||
-      p.includes('musica')
-    ) {
-      matched = events.filter(
-        (e) =>
-          e.category === 'CONCERT' ||
-          e.type === 'GENERAL_ADMISSION' ||
-          e.title.toLowerCase().includes('rock') ||
-          e.title.toLowerCase().includes('festival') ||
-          e.title.toLowerCase().includes('coldplay')
-      );
-      vibe = 'Rock & Festival com Amigos';
-      recommendation =
-        'Para curtir e vibrar com os amigos, separei os shows e festivais mais eletrizantes com área de pista e integração com setlist oficial no Spotify!';
-      tip = 'Dica: Ouça as faixas mais tocadas no player do Spotify integrado na página do evento antes de ir!';
+        'Para um passeio agradável em família, selecionei eventos com excelente conforto para todas as idades.';
+      tip = 'Dica: Chegue com 20 minutos de antecedência para garantir a melhor acomodação.';
     }
     // Cinema
     else if (
@@ -222,7 +311,7 @@ Retorne OBRIGATORIAMENTE um JSON válido com o seguinte formato:
       matched = events.filter((e) => e.category === 'MOVIE');
       vibe = 'Cinema IMAX & Dolby Atmos';
       recommendation =
-        'Para os amantes da sétima arte, aqui estão as melhores sessões com salas IMAX, som Dolby Atmos e poltronas reclináveis.';
+        'Para os amantes da sétima arte, aqui estão as melhores sessões de cinema.';
       tip = 'Dica: Sessões IMAX proporcionam até 40% a mais de imagem útil na tela.';
     }
     // Teatro & Cultura
@@ -235,7 +324,7 @@ Retorne OBRIGATORIAMENTE um JSON válido com o seguinte formato:
       matched = events.filter((e) => e.category === 'THEATER');
       vibe = 'Cultura & Teatro';
       recommendation =
-        'Aqui estão as melhores apresentações teatrais e culturais em cartaz com grandes atuações e narrativas marcantes.';
+        'Aqui estão as melhores apresentações teatrais e culturais em cartaz.';
     }
     // Semantic keywords fallback
     else {
@@ -247,10 +336,10 @@ Retorne OBRIGATORIAMENTE um JSON válido com o seguinte formato:
 
       if (candidates.length > 0) {
         matched = candidates;
-        recommendation = `Com base no que você descreveu ("${userPrompt}"), selecionei ${candidates.length} experiência(s) com alta afinidade ao seu estilo.`;
+        recommendation = `Aqui estão as melhores opções selecionadas para você.`;
       } else {
         matched = events;
-        recommendation = `Entendi sua preferência por "${userPrompt}". Apresento os principais destaques disponíveis no momento!`;
+        recommendation = `Aqui estão os principais destaques disponíveis no momento.`;
       }
     }
 
@@ -260,7 +349,7 @@ Retorne OBRIGATORIAMENTE um JSON válido com o seguinte formato:
       suggestedVibe: vibe,
       highlightTip: tip,
       isGeminiActive: false,
-      modelUsed: 'Mecanismo Semântico Inteligente Local (Adicione GEMINI_API_KEY no .env para ativar a IA em nuvem)',
+      modelUsed: 'Mecanismo Semântico Inteligente Passfy',
     };
   }
 }

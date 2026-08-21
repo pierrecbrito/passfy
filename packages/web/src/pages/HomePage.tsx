@@ -321,7 +321,7 @@ export const HomePage: React.FC = () => {
                       <span>Passfy IA</span>
                     </span>
                     <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
-                      Sugestões inteligentes sob medida
+                      O evento que você precisa ir
                     </span>
                   </div>
 
