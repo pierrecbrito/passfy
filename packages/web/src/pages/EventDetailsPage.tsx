@@ -1389,20 +1389,17 @@ export const EventDetailsPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Conteúdo de Pagamento: Cartão de Crédito com Stripe Test Gateway */}
+                  {/* Conteúdo de Pagamento: Cartão de Crédito */}
                   {paymentMethod === 'CREDIT_CARD' && (
                     <div className="space-y-3.5 p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                      {/* Header Badge Stripe */}
+                      {/* Header Pagamento */}
                       <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
                         <div className="flex items-center gap-1.5">
-                          <CreditCard className="w-4 h-4 text-[#635BFF]" />
-                          <span className="text-xs font-black text-slate-900 tracking-tight">
-                            Stripe Gateway
+                          <CreditCard className="w-4 h-4 text-slate-700" />
+                          <span className="text-xs font-bold text-slate-900">
+                            Pagamento
                           </span>
                         </div>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#635BFF]/10 text-[#635BFF] border border-[#635BFF]/20">
-                          Modo de Testes Oficial
-                        </span>
                       </div>
 
                       {/* Quick 1-Click Stripe Test Cards Matrix */}
@@ -1560,6 +1557,17 @@ export const EventDetailsPage: React.FC = () => {
                               className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#635BFF]/30 focus:border-[#635BFF] shadow-2xs"
                             />
                           </div>
+                        </div>
+
+                        {/* Símbolo Discreto Stripe no canto inferior direito */}
+                        <div className="flex justify-end items-center gap-1.5 pt-1 text-slate-400">
+                          <span className="text-[10px] font-medium text-slate-400">Powered by</span>
+                          <span className="inline-flex items-center text-[#635BFF] font-black text-xs tracking-tight">
+                            <svg className="w-3.5 h-3.5 fill-current mr-0.5" viewBox="0 0 24 24">
+                              <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
+                            </svg>
+                            stripe
+                          </span>
                         </div>
                       </div>
                     </div>
