@@ -10,5 +10,6 @@ ticketRoutes.get('/share/:shareToken', TicketController.getShareable);
 // Customer protected routes
 ticketRoutes.get('/me', ensureAuthenticated, TicketController.getMyTickets);
 ticketRoutes.get('/:id', ensureAuthenticated, TicketController.getById);
+ticketRoutes.post('/:id/return', ensureAuthenticated, TicketController.returnToStock);
 
 export { ticketRoutes };

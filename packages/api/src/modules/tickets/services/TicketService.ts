@@ -1,5 +1,7 @@
 import { prisma } from '../../../core/database/prisma';
 import { AppError } from '../../../core/errors/AppError';
+import { SocketService } from '../../../core/websocket/socketServer';
+import { TicketStatus } from '@prisma/client';
 import QRCode from 'qrcode';
 
 export class TicketService {
@@ -111,5 +113,86 @@ export class TicketService {
       ...ticket,
       qrDataUrl,
     };
+  }
+
+  /**
+   * Return a ticket to stock (Cancelation by the customer)
+   */
+  static async returnTicketToStock(ticketId: string, userId: string) {
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      include: {
+        event: true,
+        seat: true,
+      },
+    });
+
+    if (!ticket) {
+      throw new AppError('Ingresso não encontrado.', 404, 'TICKET_NOT_FOUND');
+    }
+
+    if (ticket.userId !== userId) {
+      throw new AppError('Você não tem permissão para devolver este ingresso.', 403, 'FORBIDDEN');
+    }
+
+    if (ticket.status === TicketStatus.CANCELLED) {
+      throw new AppError('Este ingresso já foi devolvido ao estoque.', 400, 'TICKET_ALREADY_CANCELLED');
+    }
+
+    if (ticket.status === TicketStatus.USED) {
+      throw new AppError(
+        'Não é possível devolver um ingresso que já foi validado na portaria.',
+        400,
+        'TICKET_ALREADY_USED'
+      );
+    }
+
+    if (new Date(ticket.event.date).getTime() < Date.now()) {
+      throw new AppError(
+        'Não é possível devolver ingressos de eventos que já ocorreram.',
+        400,
+        'EVENT_ALREADY_OCCURRED'
+      );
+    }
+
+    // Atomic transaction
+    const updatedTicket = await prisma.$transaction(async (tx) => {
+      // 1. Cancel the ticket
+      const cancelled = await tx.ticket.update({
+        where: { id: ticketId },
+        data: {
+          status: TicketStatus.CANCELLED,
+        },
+        include: {
+          event: true,
+          seat: true,
+        },
+      });
+
+      // 2. If it was seated, free the seat back to stock
+      if (ticket.seatId) {
+        await tx.seat.update({
+          where: { id: ticket.seatId },
+          data: {
+            isAvailable: true,
+          },
+        });
+      }
+
+      return cancelled;
+    });
+
+    // 3. Real-time WebSocket synchronization if seated
+    if (ticket.seatId && ticket.seat) {
+      SocketService.broadcastSeatsUpdated(ticket.eventId, [
+        {
+          id: ticket.seat.id,
+          label: ticket.seat.label,
+          isAvailable: true,
+        },
+      ]);
+    }
+
+    return updatedTicket;
   }
 }

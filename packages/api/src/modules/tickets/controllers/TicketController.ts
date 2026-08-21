@@ -20,4 +20,14 @@ export class TicketController {
     const ticket = await TicketService.getTicketById(id, userId);
     return res.status(200).json({ ticket });
   }
+
+  static async returnToStock(req: Request, res: Response): Promise<Response> {
+    const userId = req.user!.id;
+    const { id } = req.params;
+    const ticket = await TicketService.returnTicketToStock(id, userId);
+    return res.status(200).json({
+      message: 'Ingresso devolvido ao estoque com sucesso!',
+      ticket,
+    });
+  }
 }

@@ -5,6 +5,8 @@ import { RoleSwitcher } from './components/RoleSwitcher';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 
+import { ProtectedRoute } from './components/ProtectedRoute';
+
 // Pages
 import { LandingPage } from './pages/LandingPage';
 import { HomePage } from './pages/HomePage';
@@ -58,18 +60,46 @@ const AppLayout: React.FC = () => {
           <Route path="/order-success" element={<OrderSuccessPage />} />
           <Route path="/ticket/:shareToken" element={<PublicTicketPage />} />
 
-          {/* Customer Routes */}
-          <Route path="/my-tickets" element={<MyTicketsPage />} />
+          {/* Customer Protected Routes */}
+          <Route
+            path="/my-tickets"
+            element={
+              <ProtectedRoute allowedRoles={['CUSTOMER', 'ORGANIZER']}>
+                <MyTicketsPage />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* Organizer Routes */}
-          <Route path="/organizer/create" element={<OrganizerCreatePage />} />
-          <Route path="/organizer/dashboard" element={<OrganizerDashboardPage />} />
+          {/* Organizer Strictly Protected Routes (No Customer or Gatekeeper allowed) */}
+          <Route
+            path="/organizer/create"
+            element={
+              <ProtectedRoute allowedRoles={['ORGANIZER']}>
+                <OrganizerCreatePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/organizer/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['ORGANIZER']}>
+                <OrganizerDashboardPage />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* Gatekeeper Routes */}
-          <Route path="/gatekeeper" element={<GatekeeperPage />} />
+          {/* Gatekeeper Strictly Protected Routes */}
+          <Route
+            path="/gatekeeper"
+            element={
+              <ProtectedRoute allowedRoles={['GATEKEEPER', 'ORGANIZER']}>
+                <GatekeeperPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
       </main>
       <Footer />

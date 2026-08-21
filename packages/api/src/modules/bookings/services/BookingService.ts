@@ -310,7 +310,7 @@ export class BookingService {
 
     // 4. Broadcast real-time WebSocket seat updates to all connected users
     if (checkoutResult.status === 'APPROVED' && event.type === 'SEATED' && seatIds && seatIds.length > 0) {
-      let updatedSeats = checkoutResult.tickets
+      let updatedSeats: Array<{ id: string; label?: string; isAvailable: boolean }> = checkoutResult.tickets
         .filter((t: any) => t.seat)
         .map((t: any) => ({
           id: t.seat.id,
