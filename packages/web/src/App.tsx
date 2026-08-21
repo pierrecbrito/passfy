@@ -17,6 +17,7 @@ import { OrganizerCreatePage } from './pages/OrganizerCreatePage';
 import { OrganizerDashboardPage } from './pages/OrganizerDashboardPage';
 import { GatekeeperPage } from './pages/GatekeeperPage';
 import { OrderSuccessPage } from './pages/OrderSuccessPage';
+import { SupportWidget } from './components/SupportWidget';
 
 const AppLayout: React.FC = () => {
   const location = useLocation();
@@ -72,6 +73,7 @@ const AppLayout: React.FC = () => {
         </Routes>
       </main>
       <Footer />
+      <SupportWidget />
     </div>
   );
 };
