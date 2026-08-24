@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
+import { env } from '../../../core/config/env';
 
 let _cachedToken: string | null = null;
 let _tokenExpiresAt = 0;
 
 async function getSpotifyToken(): Promise<string | null> {
-  const clientId = process.env.SPOTIFY_CLIENT_ID || '5e9ebcc8e6494386bbfcee3defcdae79';
-  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET || '866edc7b625c45f189e5d663812c78b0';
+  const clientId = env.SPOTIFY_CLIENT_ID || process.env.SPOTIFY_CLIENT_ID;
+  const clientSecret = env.SPOTIFY_CLIENT_SECRET || process.env.SPOTIFY_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) return null;
 

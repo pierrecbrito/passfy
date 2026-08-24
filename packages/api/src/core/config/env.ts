@@ -14,14 +14,13 @@ const envSchema = z.object({
         .string()
         .default(
           process.env.DATABASE_URL ||
-            'postgresql://postgres.lqukhxcyuwupvqiexwwx:P13rr3Br1t0%21%40%23@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true'
+            'postgresql://passfy_user:passfy_password@localhost:5432/passfy_db?schema=public'
         ),
   DIRECT_URL: z
     .string()
     .optional()
     .default(
-      process.env.DIRECT_URL ||
-        'postgresql://postgres.lqukhxcyuwupvqiexwwx:P13rr3Br1t0%21%40%23@aws-0-sa-east-1.pooler.supabase.com:5432/postgres'
+      process.env.DIRECT_URL || ''
     ),
   JWT_SECRET: isTest
     ? z.string().default('test_jwt_secret_key_for_automated_tests_only_passfy')
